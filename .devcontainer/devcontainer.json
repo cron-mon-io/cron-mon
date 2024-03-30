@@ -1,0 +1,29 @@
+{
+    "build": {
+        "dockerfile": "./Dockerfile",
+        "context": ".."
+    },
+    "runArgs": [
+        "--name",
+        "cron-mon-dev"
+    ],
+    "remoteEnv": {
+        "LOCAL_USER_PATH": "/usr/cron-mon"
+    },
+    "remoteUser": "root",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "[rust]": {
+                    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+                    "editor.formatOnSave": true
+                }
+            },
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "rust-lang.rust-analyzer",
+                "tamasfe.even-better-toml"
+            ]
+        }
+    }
+}

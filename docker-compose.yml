@@ -1,0 +1,23 @@
+version: '3.7'
+services:
+
+  service:    
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile
+    container_name: cron-mon-api
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./:/usr/app
+    ports:
+      - 8000:8000
+    command: cargo run
+    networks:
+      - default
+      - rusty-network
+
+networks:
+  rusty-network:
+    driver: bridge
+    name: rusty-network
