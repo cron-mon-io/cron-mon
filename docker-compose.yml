@@ -1,7 +1,7 @@
 version: '3.7'
 services:
 
-  service:    
+  service:
     build:
       context: .
       dockerfile: ./api/Dockerfile
@@ -9,7 +9,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ./:/usr/app
+      - ./api:/usr/cron-mon/api
     ports:
       - 8000:8000
     command: cargo run
