@@ -1,0 +1,43 @@
+{
+  "build": {
+    "dockerfile": "./Dockerfile",
+    "context": ".."
+  },
+  "runArgs": ["--name", "cron-mon-dev"],
+  "remoteEnv": {
+    "LOCAL_USER_PATH": "/usr/cron-mon"
+  },
+  "remoteUser": "root",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "[rust]": {
+          "editor.defaultFormatter": "rust-lang.rust-analyzer",
+          "editor.formatOnSave": true
+        },
+        "[typescript]": {
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit"
+          },
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[vue]": {
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit"
+          },
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "Vue.volar"
+      ]
+    }
+  }
+}
