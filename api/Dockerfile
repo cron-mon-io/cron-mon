@@ -4,4 +4,4 @@ RUN rustup component add rustfmt
 
 WORKDIR /usr/cron-mon/api
 
-COPY . .
+COPY ./api .
