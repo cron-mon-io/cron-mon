@@ -1,10 +1,10 @@
 version: '3.7'
 services:
 
-  service:
+  api:
     build:
-      context: .
       dockerfile: ./api/Dockerfile
+      context: .
     container_name: cron-mon-api
     stdin_open: true
     tty: true
@@ -13,6 +13,22 @@ services:
     ports:
       - 8000:8000
     command: cargo run
+    networks:
+      - default
+      - rusty-network
+
+  app:
+    build:
+      dockerfile: ./app/Dockerfile
+      context: .
+    container_name: cron-mon-app
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./app:/usr/cron-mon/app
+    ports:
+      - 3000:3000
+    command: npm run dev
     networks:
       - default
       - rusty-network

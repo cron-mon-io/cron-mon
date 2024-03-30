@@ -1,10 +1,16 @@
-install: build-api-container
+install: build-containers npm-install
 
-build-api-container:
+build-containers:
 	docker compose build
 
-build-api-binary:
-	docker compose run --rm --no-deps service bash -c 'cargo build --release'
+npm-install:
+	docker compose run --rm app bash -c 'npm install'
+
+build-api:
+	docker compose run --rm --no-deps api bash -c 'cargo build --release'
+
+build-app:
+	docker compose run --rm --no-deps app bash -c  'npm run build'
 
 run:
-	docker compose up --force-recreate service
+	docker compose up --force-recreate api
