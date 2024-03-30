@@ -13,4 +13,4 @@ build-app:
 	docker compose run --rm --no-deps app bash -c  'npm run build'
 
 run:
-	docker compose up --force-recreate api
+	docker compose up --force-recreate api app
