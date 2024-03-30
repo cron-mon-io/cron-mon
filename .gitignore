@@ -1,0 +1,6 @@
+# Rust stuff
+api/target
+
+# NodeJS stuff
+api/dist
+api/node_modules
