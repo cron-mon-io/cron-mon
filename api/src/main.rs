@@ -1,16 +1,17 @@
 #[macro_use]
 extern crate rocket;
 
+pub mod application;
+pub mod domain;
+pub mod infrastructure;
+
 use crate::application::routes;
 use rocket::http::Status;
 use rocket::serde::json::Json;
-use rocket::serde::Serialize;
 use rocket::Request;
-
-mod application;
+use serde::Serialize;
 
 #[derive(Serialize)]
-#[serde(crate = "rocket::serde")]
 struct ErrorResponse {
     status: String,
     message: String,
@@ -27,6 +28,9 @@ fn default(_status: Status, _req: &Request) -> Json<ErrorResponse> {
 #[launch]
 fn rocket() -> _ {
     rocket::build()
-        .mount("/", routes![routes::health::health])
+        .mount(
+            "/",
+            routes![routes::health::health, routes::list_monitors::list_monitors],
+        )
         .register("/", catchers![default])
 }
