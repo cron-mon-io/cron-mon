@@ -12,6 +12,9 @@ services:
       - ./api:/usr/cron-mon/api
     ports:
       - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
     command: cargo run
     networks:
       - default
@@ -32,6 +35,23 @@ services:
     networks:
       - default
       - rusty-network
+
+  db:
+    container_name: cron-mon-db
+    image: bitnami/postgresql:16.1.0
+    environment:
+      POSTGRESQL_USERNAME: cron-mon-api
+      POSTGRES_PASSWORD: itsasecret
+      POSTGRESQL_DATABASE: cron-mon
+    ports:
+      - 54320:5432
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   rusty-network:
