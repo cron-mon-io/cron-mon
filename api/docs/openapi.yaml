@@ -1,0 +1,270 @@
+openapi: 3.0.3
+info:
+  description: |
+    The Cron-Mon API.
+
+    TODO:
+    * Authentication
+    * Pagination
+  version: 0.1.0
+  title: Cron-Mon API
+tags:
+  - name: Monitors
+    description: "Operations on monitors"
+servers:
+  - url: /api/v1
+
+paths:
+  /monitors:
+    get:
+      tags:
+        - Monitors
+      summary: List monitors
+      description: |
+        Returns all monitors.
+
+        TODO:
+        * Pagination
+        * Query parameters for filtering/ searching.
+      responses:
+        "200":
+          description: |
+            A list of Monitors, ordered alphabetically by Monitor name.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  paging:
+                    $ref: "#/components/schemas/Paging"
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Monitor"
+              example:
+                paging:
+                  total: 2
+                data:
+                  - monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
+                    name: "foo-backup.sh"
+                    expected_duration: 1320
+                    grace_duration: 300
+                    jobs:
+                      - start_time: "2024-03-31T20:54:00"
+                        end_time: null
+                        status: null
+                      - start_time: "2024-03-31T12:35:00"
+                        end_time: "2024-03-31T12:59:00"
+                        status: "success"
+                  - monitor_id: "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
+                    name: "analyse-bar.py"
+                    expected_duration: 21600
+                    grace_duration: 1800
+                    jobs: []
+        "400":
+          $ref: "#/components/responses/BadInputError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    post:
+      tags:
+        - Monitors
+      summary: "Create a new Monitor"
+      requestBody:
+        description: "The new Monitor to create."
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - name
+                - expected_duration
+                - grace_duration
+              properties:
+                name:
+                  description: "The name of the Monitor"
+                  type: string
+                expected_duration:
+                  description: "The expected duration of the monitored job, in seconds"
+                  type: integer
+                  format: int32
+                  minimum: 0
+                grace_duration:
+                  description: "The numbers of seconds of grace to give to the jobs duration"
+                  type: integer
+                  format: int32
+                  minimum: 0
+            example:
+              name: "weekly-foobar"
+              expected_duration: 43200
+              grace_duration: 7200
+      responses:
+        "201":
+          description: The newly created Monitor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Monitor"
+              example:
+                data:
+                  monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
+                  name: "weekly-foobar"
+                  expected_duration: 43200
+                  grace_duration: 7200
+                  jobs: []
+        "400":
+          $ref: "#/components/responses/BadInputError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /monitors/{monitor_id}:
+    get:
+      tags:
+        - Monitors
+      summary: "Retrieve a single Monitor"
+      parameters:
+        - in: path
+          name: monitor_id
+          description: "The ID of the Monitor to retrieve."
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "The retrieved Monitor."
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Monitor"
+              example:
+                data:
+                  template_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
+                  name: "Yodel shipping label"
+                  width: 210000
+                  height: 148000
+                  variants: ["default", "promo"]
+                  resources: ["common.css"]
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  responses:
+    BadInputError:
+      description: "Bad input parameter"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+          example:
+            message: "Bad input"
+    NotFoundError:
+      description: "Item not found."
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+          example:
+            message: "Not Found"
+    ServiceError:
+      description: |
+        Something went wrong within the API. Details of which will be in
+        `message`.
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+          example:
+            message: "Something went wrong"
+  schemas:
+    Monitor:
+      description: A cronjob monitor
+      type: object
+      required:
+        - monitor_id
+        - name
+        - expected_duration
+        - grace_duration
+        - jobs
+      properties:
+        monitor_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the Monitor
+        name:
+          type: string
+          description: The name of the Monitor
+        expected_duration:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: |
+            The expected duration of the monitored job, in seconds. If the duration of a
+            job exceeds this, it is considered _late_.
+        grace_duration:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: |
+            The number of seconds _grace_ given to the job's duration. If the duration of
+            a job exceeds `expected_duration` + `grace_duration` it is considered to have
+            failed.
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+    Job:
+      description: A monitored job
+      type: object
+      required:
+        - start_time
+        - end_time
+        - status
+      properties:
+        start_time:
+          type: string
+          format: date-time
+          description: The time that the job started
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: The time that the job ended (unless it's still running)
+        status:
+          type: string
+          nullable: true
+          description: The result of the job (if it's finished)
+    Paging:
+      description: "Pagination information"
+      type: object
+      required:
+        - total
+      properties:
+        total:
+          type: integer
+          format: int32
+          minimum: 0
+          description: The total number of entities in the response.
