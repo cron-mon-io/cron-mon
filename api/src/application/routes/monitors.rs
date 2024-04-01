@@ -1,8 +1,16 @@
-use rocket::serde::json::{json, Value};
+use rocket::serde::json::{json, Json, Value};
+use serde::Deserialize;
 use uuid::{uuid, Uuid};
 
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::paging::Paging;
+
+#[derive(Deserialize)]
+pub struct NewMonitor {
+    name: String,
+    expected_duration: u32,
+    grace_duration: u32,
+}
 
 #[get("/monitors")]
 pub fn list_monitors() -> Value {
@@ -22,6 +30,18 @@ pub fn list_monitors() -> Value {
             },
         ],
         "paging": Paging { total: 2 },
+    }]
+}
+
+#[post("/monitors", data = "<monitor>")]
+pub fn create_monitor(monitor: Json<NewMonitor>) -> Value {
+    json![{
+        "data": Monitor {
+            monitor_id: Uuid::new_v4(),
+            name: monitor.name.clone(),
+            expected_duration: monitor.expected_duration,
+            grace_duration: monitor.grace_duration
+        }
     }]
 }
 

@@ -16,6 +16,7 @@ fn rocket() -> _ {
             routes![
                 health::health,
                 monitors::list_monitors,
+                monitors::create_monitor,
                 monitors::get_monitor
             ],
         )
