@@ -1,5 +1,5 @@
 use rocket::serde::json::{json, Value};
-use uuid::uuid;
+use uuid::{uuid, Uuid};
 
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::paging::Paging;
@@ -22,5 +22,17 @@ pub fn list_monitors() -> Value {
             },
         ],
         "paging": Paging { total: 2 },
+    }]
+}
+
+#[get("/monitors/<monitor_id>")]
+pub fn get_monitor(monitor_id: Uuid) -> Value {
+    json![{
+        "data": Monitor {
+            monitor_id,
+            name: "foo".to_owned(),
+            expected_duration: 1234,
+            grace_duration: 30,
+        }
     }]
 }

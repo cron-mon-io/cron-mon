@@ -5,7 +5,7 @@ pub mod application;
 pub mod domain;
 pub mod infrastructure;
 
-use crate::application::routes;
+use crate::application::routes::{health, monitors};
 use rocket::fs::FileServer;
 
 #[launch]
@@ -14,9 +14,9 @@ fn rocket() -> _ {
         .mount(
             "/api/v1/",
             routes![
-                routes::health::health,
-                routes::list_monitors::list_monitors,
-                routes::get_monitor::get_monitor
+                health::health,
+                monitors::list_monitors,
+                monitors::get_monitor
             ],
         )
         .mount("/api/v1/docs", FileServer::from("/usr/cron-mon/api/docs"))
