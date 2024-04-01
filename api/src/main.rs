@@ -6,6 +6,7 @@ pub mod domain;
 pub mod infrastructure;
 
 use crate::application::routes;
+use rocket::fs::FileServer;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::Request;
@@ -29,8 +30,9 @@ fn default(_status: Status, _req: &Request) -> Json<ErrorResponse> {
 fn rocket() -> _ {
     rocket::build()
         .mount(
-            "/",
+            "/api/v1/",
             routes![routes::health::health, routes::list_monitors::list_monitors],
         )
+        .mount("/api/v1/docs", FileServer::from("/usr/cron-mon/api/docs"))
         .register("/", catchers![default])
 }
