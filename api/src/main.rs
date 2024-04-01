@@ -13,7 +13,11 @@ fn rocket() -> _ {
     rocket::build()
         .mount(
             "/api/v1/",
-            routes![routes::health::health, routes::list_monitors::list_monitors],
+            routes![
+                routes::health::health,
+                routes::list_monitors::list_monitors,
+                routes::get_monitor::get_monitor
+            ],
         )
         .mount("/api/v1/docs", FileServer::from("/usr/cron-mon/api/docs"))
 }
