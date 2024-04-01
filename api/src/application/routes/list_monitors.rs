@@ -1,20 +1,13 @@
-use rocket::serde::json::Json;
-use serde::Serialize;
+use rocket::serde::json::{json, Value};
 use uuid::uuid;
 
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::paging::Paging;
 
-#[derive(Serialize)]
-pub struct MonitorList {
-    data: Vec<Monitor>,
-    paging: Paging,
-}
-
 #[get("/monitors")]
-pub fn list_monitors() -> Json<MonitorList> {
-    Json(MonitorList {
-        data: vec![
+pub fn list_monitors() -> Value {
+    json![{
+        "data": vec![
             Monitor {
                 monitor_id: uuid!["1ae45ad1-6972-4ea7-b4c4-93be7893ae3e"],
                 name: "foo".to_owned(),
@@ -28,6 +21,6 @@ pub fn list_monitors() -> Json<MonitorList> {
                 grace_duration: 60,
             },
         ],
-        paging: Paging { total: 2 },
-    })
+        "paging": Paging { total: 2 },
+    }]
 }
