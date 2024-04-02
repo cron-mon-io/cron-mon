@@ -40,11 +40,11 @@ services:
 
   db:
     container_name: cron-mon-db
-    image: bitnami/postgresql:16.1.0
+    image: public.ecr.aws/docker/library/postgres:16.1
     environment:
-      POSTGRESQL_USERNAME: cron-mon-api
+      POSTGRES_USER: cron-mon-api
       POSTGRES_PASSWORD: itsasecret
-      POSTGRESQL_DATABASE: cron-mon
+      POSTGRES_DB: cron-mon
     ports:
       - 54320:5432
     volumes:
