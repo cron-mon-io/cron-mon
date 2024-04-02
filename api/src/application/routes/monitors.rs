@@ -1,36 +1,31 @@
+use diesel::prelude::*;
 use rocket::serde::json::{json, Json, Value};
 use serde::Deserialize;
-use uuid::{uuid, Uuid};
+use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
+use crate::infrastructure::database;
+use crate::infrastructure::db_schema::monitor::dsl;
 use crate::infrastructure::paging::Paging;
 
 #[derive(Deserialize)]
 pub struct NewMonitor {
     name: String,
-    expected_duration: u32,
-    grace_duration: u32,
+    expected_duration: i32,
+    grace_duration: i32,
 }
 
 #[get("/monitors")]
 pub fn list_monitors() -> Value {
-    json![{
-        "data": vec![
-            Monitor {
-                monitor_id: uuid!["1ae45ad1-6972-4ea7-b4c4-93be7893ae3e"],
-                name: "foo".to_owned(),
-                expected_duration: 1234,
-                grace_duration: 30,
-            },
-            Monitor {
-                monitor_id: uuid!["be1d0d3f-ff8c-4294-9b42-521108deeae6"],
-                name: "bar".to_owned(),
-                expected_duration: 5678,
-                grace_duration: 60,
-            },
-        ],
-        "paging": Paging { total: 2 },
-    }]
+    let connection = &mut database::establish_connection();
+    let monitors = dsl::monitor
+        .filter(dsl::name.eq("db-backup.py"))
+        .limit(10)
+        .select(Monitor::as_select())
+        .load(connection)
+        .expect("Error retrieving monitors");
+
+    json![{"data": monitors, "paging": Paging { total: monitors.len() }}]
 }
 
 #[post("/monitors", data = "<monitor>")]
