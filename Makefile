@@ -1,4 +1,4 @@
-install: build-containers npm-install
+install: build-containers npm-install migrate
 
 build-containers:
 	docker compose build
@@ -14,3 +14,12 @@ build-app:
 
 run:
 	docker compose up --force-recreate api app
+
+migration:
+	docker compose run --rm api diesel migration generate $(name)
+
+migrate:
+	docker compose run --rm api diesel migration run
+
+migrate-redo:
+	docker compose run --rm api diesel migration redo
