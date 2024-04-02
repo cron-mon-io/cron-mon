@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Serialize, Queryable, Selectable)]
+#[derive(Serialize, Queryable, Selectable, Insertable)]
 #[diesel(table_name = crate::infrastructure::db_schema::monitor)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Monitor {
