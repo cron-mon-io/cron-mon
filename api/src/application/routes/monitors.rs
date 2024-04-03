@@ -19,9 +19,9 @@ pub struct NewMonitor {
 pub fn list_monitors() -> Value {
     let connection = &mut database::establish_connection();
     let monitors = dsl::monitor
+        .select(Monitor::as_select())
         .filter(dsl::name.eq("db-backup.py"))
         .limit(10)
-        .select(Monitor::as_select())
         .load(connection)
         .expect("Error retrieving monitors");
 
@@ -48,13 +48,16 @@ pub fn create_monitor(new_monitor: Json<NewMonitor>) -> Value {
 }
 
 #[get("/monitors/<monitor_id>")]
-pub fn get_monitor(monitor_id: Uuid) -> Value {
-    json![{
-        "data": Monitor {
-            monitor_id,
-            name: "foo".to_owned(),
-            expected_duration: 1234,
-            grace_duration: 30,
-        }
-    }]
+pub fn get_monitor(monitor_id: Uuid) -> Option<Value> {
+    let connection = &mut database::establish_connection();
+    let monitor_entity = dsl::monitor
+        .select(Monitor::as_select())
+        .find(monitor_id)
+        .first(connection)
+        .optional();
+
+    return match monitor_entity {
+        Ok(mon) => Some(json![{"data": mon}]),
+        Err(error) => panic!("Error retrieving monitor: {:?}", error),
+    };
 }
