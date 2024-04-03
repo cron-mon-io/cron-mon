@@ -10,7 +10,6 @@ ENV PATH=/root/.cargo/bin:$PATH
 RUN cargo install diesel_cli --no-default-features --features postgres
 
 ENV PATH /usr/cron-mon/app/node_modules/.bin:$PATH
-USER root
 
 WORKDIR /usr/cron-mon
 COPY . .

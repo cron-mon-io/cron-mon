@@ -7,7 +7,6 @@
   "remoteEnv": {
     "LOCAL_USER_PATH": "/usr/cron-mon"
   },
-  "remoteUser": "root",
   "customizations": {
     "vscode": {
       "settings": {
