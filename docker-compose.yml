@@ -55,6 +55,22 @@ services:
       timeout: 5s
       retries: 5
 
+  seeder:
+    container_name: cron-mon-db-seeder
+    build:
+      dockerfile: ./api/src/infrastructure/seeding/Dockerfile
+      context: .
+    environment:
+      PGHOST: cron-mon-db
+      PGUSER: cron-mon-api
+      PGPASSWORD: itsasecret
+      PGDATABASE: cron-mon
+    volumes:
+      - ./api/src/infrastructure/seeding/seeds.sql:/usr/share/seeds.sql
+    depends_on:
+      db:
+        condition: service_healthy
+
 networks:
   rusty-network:
     driver: bridge

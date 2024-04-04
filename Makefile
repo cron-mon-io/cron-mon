@@ -1,4 +1,4 @@
-install: build-containers npm-install migrate
+install: build-containers npm-install migrate seed
 
 build-containers:
 	docker compose build
@@ -23,3 +23,6 @@ migrate:
 
 migrate-redo:
 	docker compose run --rm api diesel migration redo
+
+seed:
+	docker compose run --rm seeder psql -f /usr/share/seeds.sql
