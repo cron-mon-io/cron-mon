@@ -1,4 +1,4 @@
-FROM node:20.12-slim
+FROM public.ecr.aws/docker/library/node:20.12-slim
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
