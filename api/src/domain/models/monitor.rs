@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::infrastructure::db_schema::monitor;
 
 // TODO: Make this a data model in infrastructure.
-#[derive(Serialize, Queryable, Identifiable, Selectable, Insertable)]
+#[derive(Serialize, Queryable, Identifiable, Selectable, Insertable, AsChangeset)]
 #[diesel(table_name = monitor)]
 #[diesel(primary_key(monitor_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]

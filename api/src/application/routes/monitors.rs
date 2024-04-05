@@ -61,7 +61,8 @@ pub fn get_monitor(monitor_id: Uuid) -> Option<Value> {
                 let jobs = Job::belonging_to(&model)
                     .select(Job::as_select())
                     .load(connection)
-                    .unwrap();
+                    .expect("Failed to load monitors jobs");
+                // TODO handle monitors without jobs.
 
                 Some(json![{
                     "data": {
@@ -94,6 +95,88 @@ pub fn delete_monitor(monitor_id: Uuid) -> rocket::http::Status {
                 rocket::http::Status::Ok
             }
             None => rocket::http::Status::NotFound,
+        },
+        Err(error) => panic!("Error retrieving monitor: {:?}", error),
+    }
+}
+
+#[get("/monitors/<monitor_id>/<new_name>")]
+pub fn update_monitor(monitor_id: Uuid, new_name: String) -> Option<Value> {
+    let connection = &mut database::establish_connection();
+    let monitor_entity = monitor::table
+        .select(Monitor::as_select())
+        .find(monitor_id)
+        .first(connection)
+        .optional();
+
+    match monitor_entity {
+        Ok(mon) => match mon {
+            Some(mut model) => {
+                model.name = new_name;
+
+                diesel::update(&model)
+                    .set(&model)
+                    .execute(connection)
+                    .expect("Failed to Update monitor");
+
+                Some(json![{
+                    "data": {
+                        "monitor": model
+                    }
+                }])
+            }
+            None => None,
+        },
+        Err(error) => panic!("Error retrieving monitor: {:?}", error),
+    }
+}
+
+#[get("/monitors/<monitor_id>/<new_name>/<new_status>")]
+pub fn update_monitor_and_jobs(
+    monitor_id: Uuid,
+    new_name: String,
+    new_status: String,
+) -> Option<Value> {
+    let connection = &mut database::establish_connection();
+    let monitor_entity = monitor::table
+        .select(Monitor::as_select())
+        .find(monitor_id)
+        .first(connection)
+        .optional();
+
+    match monitor_entity {
+        Ok(mon) => match mon {
+            Some(mut model) => {
+                let mut jobs = Job::belonging_to(&model)
+                    .select(Job::as_select())
+                    .load(connection)
+                    .expect("Failed to load monitors jobs");
+                // TODO handle monitors without jobs.
+
+                model.name = new_name;
+
+                diesel::update(&model)
+                    .set(&model)
+                    .execute(connection)
+                    .expect("Failed to update monitor");
+
+                jobs[0].status = Some(new_status);
+
+                for j in &jobs {
+                    diesel::update(&j)
+                        .set(j)
+                        .execute(connection)
+                        .expect("Failed to update monitor's job");
+                }
+
+                Some(json![{
+                    "data": {
+                        "monitor": model,
+                        "jobs": jobs
+                    }
+                }])
+            }
+            None => None,
         },
         Err(error) => panic!("Error retrieving monitor: {:?}", error),
     }

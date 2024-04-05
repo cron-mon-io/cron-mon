@@ -7,7 +7,7 @@ use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::db_schema::job;
 
 // TODO: Make this a data model in infrastructure.
-#[derive(Serialize, Queryable, Identifiable, Selectable, Associations)]
+#[derive(Serialize, Queryable, Identifiable, Selectable, Associations, AsChangeset)]
 #[diesel(belongs_to(Monitor))]
 #[diesel(table_name = job)]
 #[diesel(primary_key(job_id))]
