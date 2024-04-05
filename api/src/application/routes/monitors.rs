@@ -55,17 +55,23 @@ pub fn get_monitor(monitor_id: Uuid) -> Option<Value> {
         .first(connection)
         .optional();
 
-    return match monitor_entity {
-        Ok(mon) => {
-            if mon.is_none() {
-                return None;
+    match monitor_entity {
+        Ok(mon) => match mon {
+            Some(model) => {
+                let jobs = Job::belonging_to(&model)
+                    .select(Job::as_select())
+                    .load(connection)
+                    .unwrap();
+
+                Some(json![{
+                    "data": {
+                        "monitor": model,
+                        "jobs": jobs
+                    }
+                }])
             }
-            let jobs = Job::belonging_to(&mon?)
-                .select(Job::as_select())
-                .load(connection)
-                .unwrap();
-            Some(json![{"data": {"monitor": &mon, "jobs": jobs}}])
-        }
+            None => None,
+        },
         Err(error) => panic!("Error retrieving monitor: {:?}", error),
-    };
+    }
 }
