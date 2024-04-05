@@ -2,8 +2,12 @@ use diesel::prelude::*;
 use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Serialize, Queryable, Selectable, Insertable)]
-#[diesel(table_name = crate::infrastructure::db_schema::monitor)]
+use crate::infrastructure::db_schema::monitor;
+
+// TODO: Make this a data model in infrastructure.
+#[derive(Serialize, Queryable, Identifiable, Selectable, Insertable)]
+#[diesel(table_name = monitor)]
+#[diesel(primary_key(monitor_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Monitor {
     pub monitor_id: Uuid,

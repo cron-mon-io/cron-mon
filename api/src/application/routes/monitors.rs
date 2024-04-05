@@ -3,9 +3,10 @@ use rocket::serde::json::{json, Json, Value};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::database;
-use crate::infrastructure::db_schema::monitor::{self, dsl};
+use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::paging::Paging;
 
 #[derive(Deserialize)]
@@ -18,10 +19,8 @@ pub struct NewMonitor {
 #[get("/monitors")]
 pub fn list_monitors() -> Value {
     let connection = &mut database::establish_connection();
-    let monitors = dsl::monitor
+    let monitors = monitor::dsl::monitor
         .select(Monitor::as_select())
-        .filter(dsl::name.eq("db-backup.py"))
-        .limit(10)
         .load(connection)
         .expect("Error retrieving monitors");
 
@@ -50,14 +49,23 @@ pub fn create_monitor(new_monitor: Json<NewMonitor>) -> Value {
 #[get("/monitors/<monitor_id>")]
 pub fn get_monitor(monitor_id: Uuid) -> Option<Value> {
     let connection = &mut database::establish_connection();
-    let monitor_entity = dsl::monitor
+    let monitor_entity = monitor::table
         .select(Monitor::as_select())
         .find(monitor_id)
         .first(connection)
         .optional();
 
     return match monitor_entity {
-        Ok(mon) => Some(json![{"data": mon}]),
+        Ok(mon) => {
+            if mon.is_none() {
+                return None;
+            }
+            let jobs = Job::belonging_to(&mon?)
+                .select(Job::as_select())
+                .load(connection)
+                .unwrap();
+            Some(json![{"data": {"monitor": &mon, "jobs": jobs}}])
+        }
         Err(error) => panic!("Error retrieving monitor: {:?}", error),
     };
 }
