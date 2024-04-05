@@ -3,10 +3,9 @@ use diesel::prelude::*;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::db_schema::job;
+use crate::infrastructure::models::monitor::Monitor;
 
-// TODO: Make this a data model in infrastructure.
 #[derive(Serialize, Queryable, Identifiable, Selectable, Associations, AsChangeset)]
 #[diesel(belongs_to(Monitor))]
 #[diesel(table_name = job)]

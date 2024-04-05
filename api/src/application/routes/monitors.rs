@@ -3,10 +3,10 @@ use rocket::serde::json::{json, Json, Value};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::domain::models::job::Job;
-use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::database;
 use crate::infrastructure::db_schema::monitor;
+use crate::infrastructure::models::job::Job;
+use crate::infrastructure::models::monitor::Monitor;
 use crate::infrastructure::paging::Paging;
 
 #[derive(Deserialize)]
