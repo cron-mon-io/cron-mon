@@ -4,11 +4,10 @@
     "dockerfile": "./Dockerfile",
     "context": ".."
   },
-  "runArgs": ["--name", "cron-mon-dev"],
-  "remoteEnv": {
-    "LOCAL_USER_PATH": "/usr/cron-mon"
-  },
-  "workspaceFolder": "/usr/cron-mon",
+  "runArgs": [
+    "--name",
+    "cron-mon-dev"
+  ],
   "customizations": {
     "vscode": {
       "settings": {
