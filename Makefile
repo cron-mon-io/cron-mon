@@ -26,3 +26,7 @@ migrate-redo:
 
 seed:
 	docker compose run --rm seeder psql -f /usr/share/seeds.sql
+
+delete-postgres-volume:
+	# Can't delete the volume when PostgreSQL is running.
+	docker compose down db && docker volume rm cron-mon-postgres-data

@@ -48,7 +48,7 @@ services:
     ports:
       - 54320:5432
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
@@ -75,3 +75,7 @@ networks:
   rusty-network:
     driver: bridge
     name: rusty-network
+
+volumes:
+  postgres-data:
+    name: cron-mon-postgres-data
