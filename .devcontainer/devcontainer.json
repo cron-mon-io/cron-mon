@@ -36,7 +36,9 @@
         "ms-azuretools.vscode-docker",
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
-        "Vue.volar"
+        "Vue.volar",
+        "ms-vscode.makefile-tools",
+        "tamasfe.even-better-toml"
       ]
     }
   }
