@@ -1,3 +1,7 @@
+-- Remove all existing data to ensure seeding doesn't fail due to unique constraints.
+DELETE FROM job;
+DELETE FROM monitor;
+
 -- Monitors.
 INSERT INTO monitor
     (monitor_id, "name", expected_duration, grace_duration)
