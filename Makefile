@@ -15,6 +15,11 @@ build-app:
 run:
 	docker compose up --force-recreate api app
 
+test: test-api
+
+test-api:
+	docker compose run --rm --no-deps api bash -c 'cargo test'
+
 migration:
 	docker compose run --rm api diesel migration generate $(name)
 
