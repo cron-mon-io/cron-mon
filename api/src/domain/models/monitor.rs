@@ -30,9 +30,10 @@ impl Monitor {
             .iter()
             .filter_map(|job| {
                 if job.in_progress() {
-                    return Some(job.clone());
+                    Some(job.clone())
+                } else {
+                    None
                 }
-                None
             })
             .collect()
     }
