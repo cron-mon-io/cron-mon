@@ -70,4 +70,13 @@ impl<'a> MonitorRepository<'a> {
 
         Ok(())
     }
+
+    pub fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
+        // TODO: Test me
+        let (monitor_data, _) = <(MonitorData, Vec<JobData>)>::from(monitor);
+
+        diesel::delete(&monitor_data).execute(self.db)?;
+
+        Ok(())
+    }
 }

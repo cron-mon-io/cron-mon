@@ -65,23 +65,14 @@ pub fn get_monitor(monitor_id: Uuid) -> Option<Value> {
 #[delete("/monitors/<monitor_id>")]
 pub fn delete_monitor(monitor_id: Uuid) -> rocket::http::Status {
     let connection = &mut database::establish_connection();
-    let monitor_entity = monitor::table
-        .select(MonitorData::as_select())
-        .find(monitor_id)
-        .first(connection)
-        .optional();
+    let mut repo = MonitorRepository::new(connection);
 
-    match monitor_entity {
-        Ok(mon) => match mon {
-            Some(model) => {
-                diesel::delete(&model)
-                    .execute(connection)
-                    .expect("Failed to delete monitor");
-                rocket::http::Status::Ok
-            }
-            None => rocket::http::Status::NotFound,
-        },
-        Err(error) => panic!("Error retrieving monitor: {:?}", error),
+    let monitor = repo.get(monitor_id).expect("Could not retrieve monitor");
+    if let Some(mon) = monitor {
+        repo.delete(&mon).expect("Failed to delete monitor");
+        rocket::http::Status::Ok
+    } else {
+        rocket::http::Status::NotFound
     }
 }
 
