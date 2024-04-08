@@ -59,7 +59,11 @@ pub fn get_monitor(monitor_id: Uuid) -> Option<Value> {
     let mut repo = MonitorRepository::new(connection);
     let monitor = repo.get(monitor_id).expect("Error retrieving Monitor");
 
-    Some(json![{"data": monitor}])
+    if let Some(mon) = monitor {
+        Some(json![{"data": mon}])
+    } else {
+        None
+    }
 }
 
 #[delete("/monitors/<monitor_id>")]
