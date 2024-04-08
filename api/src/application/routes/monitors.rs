@@ -3,6 +3,7 @@ use rocket::serde::json::{json, Json, Value};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::database;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
@@ -11,7 +12,7 @@ use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
 #[derive(Deserialize)]
-pub struct NewMonitor {
+pub struct NewMonitorData {
     name: String,
     expected_duration: i32,
     grace_duration: i32,
@@ -38,20 +39,16 @@ pub fn list_monitors() -> Value {
 }
 
 #[post("/monitors", data = "<new_monitor>")]
-pub fn create_monitor(new_monitor: Json<NewMonitor>) -> Value {
-    let mon = MonitorData {
-        monitor_id: Uuid::new_v4(),
-        name: new_monitor.name.clone(),
-        expected_duration: new_monitor.expected_duration,
-        grace_duration: new_monitor.grace_duration,
-    };
+pub fn create_monitor(new_monitor: Json<NewMonitorData>) -> Value {
+    let mon = Monitor::new(
+        new_monitor.name.clone(),
+        new_monitor.expected_duration,
+        new_monitor.grace_duration,
+    );
 
     let connection = &mut database::establish_connection();
-    diesel::insert_into(monitor::table)
-        .values(&mon)
-        .returning(MonitorData::as_returning())
-        .get_result(connection)
-        .expect("Error saving new monitor");
+    let mut repo = MonitorRepository::new(connection);
+    let _ = repo.add(&mon).expect("Error saving new monitor");
 
     json![{"data": mon}]
 }

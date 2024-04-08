@@ -7,7 +7,7 @@ use crate::domain::models::job::Job;
 use crate::infrastructure::db_schema::job;
 use crate::infrastructure::models::monitor::MonitorData;
 
-#[derive(Serialize, Queryable, Identifiable, Selectable, Associations, AsChangeset)]
+#[derive(Serialize, Queryable, Identifiable, Selectable, Insertable, Associations, AsChangeset)]
 #[diesel(belongs_to(MonitorData, foreign_key = monitor_id))]
 #[diesel(table_name = job)]
 #[diesel(primary_key(job_id))]
