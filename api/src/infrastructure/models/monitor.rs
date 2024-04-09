@@ -1,12 +1,11 @@
 use diesel::prelude::*;
-use serde::Serialize;
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 
-#[derive(Serialize, Queryable, Identifiable, Selectable, Insertable, AsChangeset)]
+#[derive(Queryable, Identifiable, Selectable, Insertable, AsChangeset)]
 #[diesel(table_name = monitor)]
 #[diesel(primary_key(monitor_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
