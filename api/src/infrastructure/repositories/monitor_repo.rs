@@ -71,6 +71,21 @@ impl<'a> MonitorRepository<'a> {
         Ok(())
     }
 
+    pub fn update(&mut self, monitor: &Monitor) -> Result<(), Error> {
+        // TODO: Test me
+        let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
+
+        diesel::update(&monitor_data)
+            .set(&monitor_data)
+            .execute(self.db)?;
+
+        for j in job_datas {
+            diesel::update(&j).set(&j).execute(self.db)?;
+        }
+
+        Ok(())
+    }
+
     pub fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
         // TODO: Test me
         let (monitor_data, _) = <(MonitorData, Vec<JobData>)>::from(monitor);
