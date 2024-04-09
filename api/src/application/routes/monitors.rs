@@ -1,9 +1,10 @@
 use rocket::serde::json::{json, Json, Value};
+use rocket_db_pools::Connection;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
-use crate::infrastructure::database;
+use crate::infrastructure::database::Db;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
@@ -15,10 +16,9 @@ pub struct NewMonitorData {
 }
 
 #[get("/monitors")]
-pub fn list_monitors() -> Value {
-    let connection = &mut database::establish_connection();
-    let mut repo = MonitorRepository::new(connection);
-    let monitors = repo.all().expect("Error retrieving Monitors");
+pub async fn list_monitors(mut connection: Connection<Db>) -> Value {
+    let mut repo = MonitorRepository::new(&mut **connection);
+    let monitors = repo.all().await.expect("Error retrieving Monitors");
 
     json![{
         "data": monitors
@@ -35,25 +35,29 @@ pub fn list_monitors() -> Value {
 }
 
 #[post("/monitors", data = "<new_monitor>")]
-pub fn create_monitor(new_monitor: Json<NewMonitorData>) -> Value {
+pub async fn create_monitor(
+    mut connection: Connection<Db>,
+    new_monitor: Json<NewMonitorData>,
+) -> Value {
     let mon = Monitor::new(
         new_monitor.name.clone(),
         new_monitor.expected_duration,
         new_monitor.grace_duration,
     );
 
-    let connection = &mut database::establish_connection();
-    let mut repo = MonitorRepository::new(connection);
-    let _ = repo.add(&mon).expect("Error saving new monitor");
+    let mut repo = MonitorRepository::new(&mut **connection);
+    let _ = repo.add(&mon).await.expect("Error saving new monitor");
 
     json![{"data": mon}]
 }
 
 #[get("/monitors/<monitor_id>")]
-pub fn get_monitor(monitor_id: Uuid) -> Option<Value> {
-    let connection = &mut database::establish_connection();
-    let mut repo = MonitorRepository::new(connection);
-    let monitor = repo.get(monitor_id).expect("Error retrieving Monitor");
+pub async fn get_monitor(mut connection: Connection<Db>, monitor_id: Uuid) -> Option<Value> {
+    let mut repo = MonitorRepository::new(&mut **connection);
+    let monitor = repo
+        .get(monitor_id)
+        .await
+        .expect("Error retrieving Monitor");
 
     if let Some(mon) = monitor {
         Some(json![{"data": mon}])
@@ -63,13 +67,18 @@ pub fn get_monitor(monitor_id: Uuid) -> Option<Value> {
 }
 
 #[delete("/monitors/<monitor_id>")]
-pub fn delete_monitor(monitor_id: Uuid) -> rocket::http::Status {
-    let connection = &mut database::establish_connection();
-    let mut repo = MonitorRepository::new(connection);
+pub async fn delete_monitor(
+    mut connection: Connection<Db>,
+    monitor_id: Uuid,
+) -> rocket::http::Status {
+    let mut repo = MonitorRepository::new(&mut **connection);
 
-    let monitor = repo.get(monitor_id).expect("Could not retrieve monitor");
+    let monitor = repo
+        .get(monitor_id)
+        .await
+        .expect("Could not retrieve monitor");
     if let Some(mon) = monitor {
-        repo.delete(&mon).expect("Failed to delete monitor");
+        repo.delete(&mon).await.expect("Failed to delete monitor");
         rocket::http::Status::Ok
     } else {
         rocket::http::Status::NotFound
@@ -77,32 +86,45 @@ pub fn delete_monitor(monitor_id: Uuid) -> rocket::http::Status {
 }
 
 #[get("/monitors/<monitor_id>/<new_name>")]
-pub fn update_monitor(monitor_id: Uuid, new_name: String) -> Option<Value> {
-    let connection = &mut database::establish_connection();
-    let mut repo = MonitorRepository::new(connection);
+pub async fn update_monitor(
+    mut connection: Connection<Db>,
+    monitor_id: Uuid,
+    new_name: String,
+) -> Option<Value> {
+    let mut repo = MonitorRepository::new(&mut **connection);
 
-    let mut monitor = repo.get(monitor_id).expect("Failed to retrieve monitor")?;
+    let mut monitor = repo
+        .get(monitor_id)
+        .await
+        .expect("Failed to retrieve monitor")?;
     monitor.name = new_name;
 
-    repo.update(&monitor).expect("Failed to update monitor");
+    repo.update(&monitor)
+        .await
+        .expect("Failed to update monitor");
 
     Some(json![{"data": monitor}])
 }
 
 #[get("/monitors/<monitor_id>/<new_name>/<new_status>")]
-pub fn update_monitor_and_jobs(
+pub async fn update_monitor_and_jobs(
+    mut connection: Connection<Db>,
     monitor_id: Uuid,
     new_name: String,
     new_status: String,
 ) -> Option<Value> {
-    let connection = &mut database::establish_connection();
-    let mut repo = MonitorRepository::new(connection);
+    let mut repo = MonitorRepository::new(&mut **connection);
 
-    let mut monitor = repo.get(monitor_id).expect("Failed to retrieve monitor")?;
+    let mut monitor = repo
+        .get(monitor_id)
+        .await
+        .expect("Failed to retrieve monitor")?;
     monitor.name = new_name;
     monitor.jobs[0].status = Some(new_status);
 
-    repo.update(&monitor).expect("Failed to update monitor");
+    repo.update(&monitor)
+        .await
+        .expect("Failed to update monitor");
 
     Some(json![{"data": monitor}])
 }
