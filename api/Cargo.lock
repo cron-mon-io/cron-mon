@@ -224,6 +224,7 @@ dependencies = [
 name = "cron-mon-api"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "chrono",
  "diesel",
  "diesel-async",

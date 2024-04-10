@@ -3,10 +3,12 @@ use rocket_db_pools::Connection;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::application::services::create_monitor::CreateMonitorService;
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::database::Db;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
+use crate::infrastructure::repositories::{Add, All, Delete, Get, Update};
 
 #[derive(Deserialize)]
 pub struct NewMonitorData {
@@ -39,14 +41,16 @@ pub async fn create_monitor(
     mut connection: Connection<Db>,
     new_monitor: Json<NewMonitorData>,
 ) -> Value {
-    let mon = Monitor::new(
-        new_monitor.name.clone(),
-        new_monitor.expected_duration,
-        new_monitor.grace_duration,
-    );
-
     let mut repo = MonitorRepository::new(&mut **connection);
-    let _ = repo.add(&mon).await.expect("Error saving new monitor");
+    let mut service = CreateMonitorService::new(&mut repo);
+
+    let mon = service
+        .create(
+            new_monitor.name.clone(),
+            new_monitor.expected_duration,
+            new_monitor.grace_duration,
+        )
+        .await;
 
     json![{"data": mon}]
 }

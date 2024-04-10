@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
@@ -9,6 +10,8 @@ use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 use crate::infrastructure::models::monitor::MonitorData;
 
+use crate::infrastructure::repositories::{Add, All, Delete, Get, Update};
+
 pub struct MonitorRepository<'a> {
     db: &'a mut AsyncPgConnection,
 }
@@ -17,8 +20,11 @@ impl<'a> MonitorRepository<'a> {
     pub fn new(db: &'a mut AsyncPgConnection) -> Self {
         Self { db }
     }
+}
 
-    pub async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, Error> {
+#[async_trait]
+impl<'a> Get<Monitor> for MonitorRepository<'a> {
+    async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, Error> {
         // TODO: Test me
         let monitor_data = monitor::table
             .select(MonitorData::as_select())
@@ -39,8 +45,11 @@ impl<'a> MonitorRepository<'a> {
             Ok(None)
         }
     }
+}
 
-    pub async fn all(&mut self) -> Result<Vec<Monitor>, Error> {
+#[async_trait]
+impl<'a> All<Monitor> for MonitorRepository<'a> {
+    async fn all(&mut self) -> Result<Vec<Monitor>, Error> {
         // TODO: Test me
         let all_monitor_data = monitor::dsl::monitor
             .select(MonitorData::as_select())
@@ -59,8 +68,11 @@ impl<'a> MonitorRepository<'a> {
             .map(|(job_datas, monitor_data)| (monitor_data, job_datas).into())
             .collect::<Vec<Monitor>>())
     }
+}
 
-    pub async fn add(&mut self, monitor: &Monitor) -> Result<(), Error> {
+#[async_trait]
+impl<'a> Add<Monitor> for MonitorRepository<'a> {
+    async fn add(&mut self, monitor: &Monitor) -> Result<(), Error> {
         // TODO: Test me
         let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
 
@@ -76,8 +88,11 @@ impl<'a> MonitorRepository<'a> {
 
         Ok(())
     }
+}
 
-    pub async fn update(&mut self, monitor: &Monitor) -> Result<(), Error> {
+#[async_trait]
+impl<'a> Update<Monitor> for MonitorRepository<'a> {
+    async fn update(&mut self, monitor: &Monitor) -> Result<(), Error> {
         // TODO: Test me
         let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
 
@@ -92,8 +107,11 @@ impl<'a> MonitorRepository<'a> {
 
         Ok(())
     }
+}
 
-    pub async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
+#[async_trait]
+impl<'a> Delete<Monitor> for MonitorRepository<'a> {
+    async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
         // TODO: Test me
         let (monitor_data, _) = <(MonitorData, Vec<JobData>)>::from(monitor);
 
