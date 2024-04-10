@@ -1,6 +1,6 @@
-use rocket_db_pools::diesel::pg::AsyncPgConnection;
-use rocket_db_pools::diesel::prelude::*;
-use rocket_db_pools::diesel::result::Error;
+use diesel::prelude::*;
+use diesel::result::Error;
+use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
