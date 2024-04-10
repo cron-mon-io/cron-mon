@@ -4,3 +4,10 @@ ident = "Cron Mon API"
 
 [default.databases.monitors]
 url = "postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon"
+
+[debug]
+address = "0.0.0.0"
+ident = "Cron Mon API - debug"
+
+[debug.databases.monitors]
+url = "postgres://cron-mon-api:itsasecret@host.docker.internal:54320/cron-mon"

@@ -6,7 +6,9 @@
   },
   "runArgs": [
     "--name",
-    "cron-mon-dev"
+    "cron-mon-dev",
+    "--add-host",
+    "host.docker.internal:host-gateway"
   ],
   "customizations": {
     "vscode": {
@@ -38,7 +40,8 @@
         "tamasfe.even-better-toml",
         "Vue.volar",
         "ms-vscode.makefile-tools",
-        "tamasfe.even-better-toml"
+        "tamasfe.even-better-toml",
+        "vadimcn.vscode-lldb"
       ]
     }
   }

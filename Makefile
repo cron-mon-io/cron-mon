@@ -15,6 +15,15 @@ build-app:
 run:
 	docker compose up --force-recreate api app
 
+# The `run-debug-deps-for-*` commands are to allow debug sessions to be run for
+# the API or front-end app through the development container's debugger, while
+# still running the other parts required for the whole system.
+run-debug-deps-for-api:
+	docker compose up app db
+
+run-debug-deps-for-app:
+	docker compose up api db
+
 test: test-api
 
 test-api:
@@ -32,6 +41,7 @@ migrate-redo:
 seed:
 	docker compose run --rm seeder psql -f /usr/share/seeds.sql
 
+
+# Can't delete the volume when PostgreSQL is running.
 delete-postgres-volume:
-	# Can't delete the volume when PostgreSQL is running.
 	docker compose down db && docker volume rm cron-mon-postgres-data
