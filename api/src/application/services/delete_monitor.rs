@@ -13,6 +13,7 @@ impl<'a, T: Get<Monitor> + Delete<Monitor>> DeleteMonitorService<'a, T> {
     }
 
     pub async fn delete_by_id(&mut self, monitor_id: Uuid) -> bool {
+        // TODO: Test me
         let monitor = self
             .repo
             .get(monitor_id)

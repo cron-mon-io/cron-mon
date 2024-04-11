@@ -19,6 +19,7 @@ impl<'a> CreateMonitorService<'a> {
         expected_duration: i32,
         grace_duration: i32,
     ) -> Monitor {
+        // TODO: Test me
         let mon = Monitor::new(name, expected_duration, grace_duration);
 
         let _ = self.repo.add(&mon).await.expect("Error saving new monitor");
