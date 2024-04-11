@@ -2,7 +2,7 @@ use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::repositories::Add;
 
 pub struct CreateMonitorService<'a> {
-    repo: &'a mut (dyn Add<Monitor> + Sync + Send + 'a),
+    repo: &'a mut (dyn Add<Monitor> + Sync + Send),
 }
 
 impl<'a> CreateMonitorService<'a> {
