@@ -4,10 +4,11 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::application::services::create_monitor::CreateMonitorService;
+use crate::application::services::delete_monitor::DeleteMonitorService;
 use crate::infrastructure::database::Db;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
-use crate::infrastructure::repositories::{All, Delete, Get, Update};
+use crate::infrastructure::repositories::{All, Get, Update};
 
 #[derive(Deserialize)]
 pub struct NewMonitorData {
@@ -75,13 +76,10 @@ pub async fn delete_monitor(
     monitor_id: Uuid,
 ) -> rocket::http::Status {
     let mut repo = MonitorRepository::new(&mut **connection);
+    let mut service = DeleteMonitorService::new(&mut repo);
 
-    let monitor = repo
-        .get(monitor_id)
-        .await
-        .expect("Could not retrieve monitor");
-    if let Some(mon) = monitor {
-        repo.delete(&mon).await.expect("Failed to delete monitor");
+    let deleted = service.delete_by_id(monitor_id).await;
+    if deleted {
         rocket::http::Status::Ok
     } else {
         rocket::http::Status::NotFound
