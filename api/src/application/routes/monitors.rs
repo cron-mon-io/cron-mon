@@ -106,26 +106,3 @@ pub async fn update_monitor(
 
     Some(json![{"data": monitor}])
 }
-
-#[get("/monitors/<monitor_id>/<new_name>/<new_status>")]
-pub async fn update_monitor_and_jobs(
-    mut connection: Connection<Db>,
-    monitor_id: Uuid,
-    new_name: String,
-    new_status: String,
-) -> Option<Value> {
-    let mut repo = MonitorRepository::new(&mut **connection);
-
-    let mut monitor = repo
-        .get(monitor_id)
-        .await
-        .expect("Failed to retrieve monitor")?;
-    monitor.name = new_name;
-    monitor.jobs[0].status = Some(new_status);
-
-    repo.update(&monitor)
-        .await
-        .expect("Failed to update monitor");
-
-    Some(json![{"data": monitor}])
-}
