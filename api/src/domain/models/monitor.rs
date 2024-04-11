@@ -25,6 +25,12 @@ impl Monitor {
         }
     }
 
+    pub fn edit_details(&mut self, name: String, expected_duration: i32, grace_duration: i32) {
+        self.name = name;
+        self.expected_duration = expected_duration;
+        self.grace_duration = grace_duration;
+    }
+
     pub fn jobs_in_progress(&self) -> Vec<Job> {
         self.jobs
             .iter()
@@ -74,6 +80,17 @@ mod tests {
         assert_eq!(mon.grace_duration, 600);
         assert!(mon.jobs_in_progress().is_empty());
         assert!(mon.jobs.is_empty());
+    }
+
+    #[test]
+    fn editing_monitors() {
+        let mut mon = Monitor::new("new-monitor".to_owned(), 3600, 600);
+
+        mon.edit_details("new-name".to_owned(), 360, 60);
+
+        assert_eq!(mon.name, "new-name".to_owned());
+        assert_eq!(mon.expected_duration, 360);
+        assert_eq!(mon.grace_duration, 60);
     }
 
     #[test]

@@ -5,13 +5,14 @@ use uuid::Uuid;
 
 use crate::application::services::create_monitor::CreateMonitorService;
 use crate::application::services::delete_monitor::DeleteMonitorService;
+use crate::application::services::update_monitor::UpdateMonitorService;
 use crate::infrastructure::database::Db;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
-use crate::infrastructure::repositories::{All, Get, Update};
+use crate::infrastructure::repositories::{All, Get};
 
 #[derive(Deserialize)]
-pub struct NewMonitorData {
+pub struct MonitorData {
     name: String,
     expected_duration: i32,
     grace_duration: i32,
@@ -39,7 +40,7 @@ pub async fn list_monitors(mut connection: Connection<Db>) -> Value {
 #[post("/monitors", data = "<new_monitor>")]
 pub async fn create_monitor(
     mut connection: Connection<Db>,
-    new_monitor: Json<NewMonitorData>,
+    new_monitor: Json<MonitorData>,
 ) -> Value {
     let mut repo = MonitorRepository::new(&mut **connection);
     let mut service = CreateMonitorService::new(&mut repo);
@@ -86,23 +87,23 @@ pub async fn delete_monitor(
     }
 }
 
-#[get("/monitors/<monitor_id>/<new_name>")]
+#[patch("/monitors/<monitor_id>", data = "<updated_monitor>")]
 pub async fn update_monitor(
     mut connection: Connection<Db>,
     monitor_id: Uuid,
-    new_name: String,
+    updated_monitor: Json<MonitorData>,
 ) -> Option<Value> {
     let mut repo = MonitorRepository::new(&mut **connection);
+    let mut service = UpdateMonitorService::new(&mut repo);
 
-    let mut monitor = repo
-        .get(monitor_id)
-        .await
-        .expect("Failed to retrieve monitor")?;
-    monitor.name = new_name;
+    let mon = service
+        .update_by_id(
+            monitor_id,
+            updated_monitor.name.clone(),
+            updated_monitor.expected_duration,
+            updated_monitor.grace_duration,
+        )
+        .await?;
 
-    repo.update(&monitor)
-        .await
-        .expect("Failed to update monitor");
-
-    Some(json![{"data": monitor}])
+    Some(json![{"data": mon}])
 }
