@@ -11,6 +11,7 @@
             "program": "${workspaceFolder}/api/target/debug/cron-mon-api",
             "args": [],
             "cwd": "${workspaceFolder}/api",
+            "initCommands":["settings set target.disable-aslr false"],
             "env": {
                 "RUST_BACKTRACE": "full"
             }
