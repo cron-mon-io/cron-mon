@@ -2,15 +2,15 @@ use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::repositories::Add;
 
 pub struct CreateMonitorService<'a> {
-    repo: &'a mut (dyn Add<Monitor> + 'a),
+    repo: &'a mut (dyn Add<Monitor> + Sync + Send + 'a),
 }
 
 impl<'a> CreateMonitorService<'a> {
-    pub fn new(repo: &'a mut dyn Add<Monitor>) -> Self {
+    pub fn new(repo: &'a mut (dyn Add<Monitor> + Sync + Send)) -> Self {
         Self { repo }
     }
 
-    pub async fn create(
+    pub async fn create_by_attributes(
         &mut self,
         name: String,
         expected_duration: i32,

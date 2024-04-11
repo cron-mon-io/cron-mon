@@ -4,11 +4,10 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::application::services::create_monitor::CreateMonitorService;
-use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::database::Db;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
-use crate::infrastructure::repositories::{Add, All, Delete, Get, Update};
+use crate::infrastructure::repositories::{All, Delete, Get, Update};
 
 #[derive(Deserialize)]
 pub struct NewMonitorData {
@@ -45,7 +44,7 @@ pub async fn create_monitor(
     let mut service = CreateMonitorService::new(&mut repo);
 
     let mon = service
-        .create(
+        .create_by_attributes(
             new_monitor.name.clone(),
             new_monitor.expected_duration,
             new_monitor.grace_duration,
