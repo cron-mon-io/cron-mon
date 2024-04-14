@@ -1,34 +1,29 @@
 #[macro_use]
 extern crate rocket;
 
-use rocket::http::Status;
-use rocket::serde::json::Json;
-use rocket::serde::Serialize;
-use rocket::Request;
+pub mod application;
+pub mod domain;
+pub mod infrastructure;
 
-#[derive(Serialize)]
-#[serde(crate = "rocket::serde")]
-struct ErrorResponse {
-    status: String,
-    message: String,
-}
-
-#[get("/health")]
-fn index() -> &'static str {
-    "pong"
-}
-
-#[catch(default)]
-fn default(_status: Status, _req: &Request) -> Json<ErrorResponse> {
-    return Json(ErrorResponse {
-        status: "error".to_owned(),
-        message: "Oh dear".to_owned(),
-    });
-}
+use crate::application::routes::{health, monitors};
+use crate::infrastructure::database::Db;
+use rocket::fs::FileServer;
+use rocket_db_pools::Database;
 
 #[launch]
 fn rocket() -> _ {
     rocket::build()
-        .mount("/", routes![index])
-        .register("/", catchers![default])
+        .attach(Db::init())
+        .mount(
+            "/api/v1/",
+            routes![
+                health::health,
+                monitors::list_monitors,
+                monitors::create_monitor,
+                monitors::get_monitor,
+                monitors::delete_monitor,
+                monitors::update_monitor
+            ],
+        )
+        .mount("/api/v1/docs", FileServer::from("/usr/cron-mon/api/docs"))
 }

@@ -1,4 +1,4 @@
-FROM node:20.12-slim
+FROM public.ecr.aws/docker/library/node:20.12-slim
 
 WORKDIR /usr/cron-mon/app
 

@@ -8,10 +8,15 @@ services:
     container_name: cron-mon-api
     stdin_open: true
     tty: true
+    environment:
+      DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
     volumes:
       - ./api:/usr/cron-mon/api
     ports:
       - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
     command: cargo run
     networks:
       - default
@@ -33,7 +38,49 @@ services:
       - default
       - rusty-network
 
+  db:
+    container_name: cron-mon-db
+    image: public.ecr.aws/docker/library/postgres:16.1
+    environment:
+      POSTGRES_USER: cron-mon-api
+      POSTGRES_PASSWORD: itsasecret
+      POSTGRES_DB: cron-mon
+    ports:
+      - 54320:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: [
+      "postgres",
+      "-c",
+      "log_statement=all"
+    ]
+
+  seeder:
+    container_name: cron-mon-db-seeder
+    build:
+      dockerfile: ./api/src/infrastructure/seeding/Dockerfile
+      context: .
+    environment:
+      PGHOST: cron-mon-db
+      PGUSER: cron-mon-api
+      PGPASSWORD: itsasecret
+      PGDATABASE: cron-mon
+    volumes:
+      - ./api/src/infrastructure/seeding/seeds.sql:/usr/share/seeds.sql
+    depends_on:
+      db:
+        condition: service_healthy
+
 networks:
   rusty-network:
     driver: bridge
     name: rusty-network
+
+volumes:
+  postgres-data:
+    name: cron-mon-postgres-data

@@ -1,0 +1,4 @@
+ALTER TABLE job
+DROP CONSTRAINT fk_monitor_job;
+
+DROP TABLE job;

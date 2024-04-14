@@ -1,13 +1,15 @@
 {
+  "name": "Rust x Node.js",
   "build": {
     "dockerfile": "./Dockerfile",
     "context": ".."
   },
-  "runArgs": ["--name", "cron-mon-dev"],
-  "remoteEnv": {
-    "LOCAL_USER_PATH": "/usr/cron-mon"
-  },
-  "remoteUser": "root",
+  "runArgs": [
+    "--name",
+    "cron-mon-dev",
+    "--add-host",
+    "host.docker.internal:host-gateway"
+  ],
   "customizations": {
     "vscode": {
       "settings": {
@@ -36,7 +38,10 @@
         "ms-azuretools.vscode-docker",
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
-        "Vue.volar"
+        "Vue.volar",
+        "ms-vscode.makefile-tools",
+        "tamasfe.even-better-toml",
+        "vadimcn.vscode-lldb"
       ]
     }
   }
