@@ -7,3 +7,6 @@ api/node_modules
 
 # PostgreSQL
 data
+
+# Miscellaneous
+.DS_Store
