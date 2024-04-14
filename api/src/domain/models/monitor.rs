@@ -77,7 +77,8 @@ impl Monitor {
         }
     }
 
-    fn get_job(&mut self, job_id: Uuid) -> Option<&mut Job> {
+    /// Retrieve a Job from the Monitor by its Job ID.
+    pub fn get_job(&mut self, job_id: Uuid) -> Option<&mut Job> {
         self.jobs.iter_mut().find(|job| job.job_id == job_id)
     }
 }
