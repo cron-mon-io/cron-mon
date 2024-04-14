@@ -4,16 +4,25 @@ use uuid::Uuid;
 use crate::domain::errors::FinishJobError;
 use crate::domain::models::job::Job;
 
+/// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
+/// part of the Cron Mon domain.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Monitor {
+    /// The unique identifier for the Monitor.
     pub monitor_id: Uuid,
+    /// The Monitor's name (typically the command or filename that the cronjob will invoke).
     pub name: String,
+    /// The expected duration of the monitored cronjob, in seconds.
     pub expected_duration: i32,
+    /// The amount of time, in seconds, to allow the monitored cronjob to overrun by before
+    /// considering them late.
     pub grace_duration: i32,
+    /// The history of jobs that have been monitored.
     pub jobs: Vec<Job>,
 }
 
 impl Monitor {
+    /// Instatiate a new Monitor.
     pub fn new(name: String, expected_duration: i32, grace_duration: i32) -> Self {
         // TODO: Add validation checks.
         Self {
@@ -25,12 +34,14 @@ impl Monitor {
         }
     }
 
+    /// Modify the Monitor's details.
     pub fn edit_details(&mut self, name: String, expected_duration: i32, grace_duration: i32) {
         self.name = name;
         self.expected_duration = expected_duration;
         self.grace_duration = grace_duration;
     }
 
+    /// Retrieve the jobs currently in progress.
     pub fn jobs_in_progress(&self) -> Vec<Job> {
         self.jobs
             .iter()
@@ -44,12 +55,15 @@ impl Monitor {
             .collect()
     }
 
+    /// Start a new job
     pub fn start_job(&mut self) -> Job {
         let new_job = Job::start();
         self.jobs.push(new_job.clone());
         new_job
     }
 
+    /// Finish a job. Note that this will return a `FinishJobError` is a Job with the given `job_id`
+    /// cannot be found in the Monitor, or if the Job isn't currently in progress.
     pub fn finish_job(
         &mut self,
         job_id: Uuid,

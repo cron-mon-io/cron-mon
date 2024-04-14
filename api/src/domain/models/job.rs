@@ -5,16 +5,24 @@ use uuid::Uuid;
 
 use crate::domain::errors::FinishJobError;
 
+/// The Job struct represents a monitored job, encapsulating the time it started, the time it
+/// finished, the resulting status and any output that it produced.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Job {
+    /// The unique identifier for the Job.
     pub job_id: Uuid,
+    /// The time that the Job started.
     pub start_time: NaiveDateTime,
+    /// The time that the job finished, if it isn't currently in progress.
     pub end_time: Option<NaiveDateTime>,
+    /// The Job's resultant status, if it isn't currently in progress.
     pub status: Option<String>,
+    /// Any output from the Job, if it isn't currently in progress.
     pub output: Option<String>,
 }
 
 impl Job {
+    /// Start a Job.
     pub fn start() -> Self {
         Job {
             job_id: Uuid::new_v4(),
@@ -24,6 +32,9 @@ impl Job {
             output: None,
         }
     }
+
+    /// Finish the Job. Note that if the Job isn't currently in progress, this will return a
+    /// `FinishJobError`.
     pub fn finish(&mut self, status: String, output: Option<String>) -> Result<(), FinishJobError> {
         if !self.in_progress() {
             return Err(FinishJobError::JobAlreadyFinished);
@@ -36,6 +47,7 @@ impl Job {
         Ok(())
     }
 
+    /// Ascertain whether or not the Job is currently in progress.
     pub fn in_progress(&self) -> bool {
         self.end_time.is_none()
     }

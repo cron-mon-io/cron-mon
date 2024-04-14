@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 
+/// An error that might occur when finishing a Job.
 #[derive(Clone, Debug, PartialEq)]
 pub enum FinishJobError {
     JobNotFound,
