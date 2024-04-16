@@ -2,13 +2,13 @@ use uuid::Uuid;
 
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
-use crate::infrastructure::repositories::{Get, Update};
+use crate::infrastructure::repositories::{Get, Save};
 
-pub struct StartJobService<'a, T: Get<Monitor> + Update<Monitor>> {
+pub struct StartJobService<'a, T: Get<Monitor> + Save<Monitor>> {
     repo: &'a mut T,
 }
 
-impl<'a, T: Get<Monitor> + Update<Monitor>> StartJobService<'a, T> {
+impl<'a, T: Get<Monitor> + Save<Monitor>> StartJobService<'a, T> {
     pub fn new(repo: &'a mut T) -> Self {
         Self { repo }
     }
@@ -23,14 +23,7 @@ impl<'a, T: Get<Monitor> + Update<Monitor>> StartJobService<'a, T> {
             .unwrap();
 
         let job = monitor.start_job();
-        // TODO: Make this work! Currently fails as we're using `UPDATE` rather than `INSERT INTO`.
-        // Might be time to keep track of data we've retrieved in the repo, which would also allow
-        // us to not have to invoke a query for every job in the monitor, regardless of whether or
-        // not they've actually changed.
-        self.repo
-            .update(&monitor)
-            .await
-            .expect("Failed to save Job");
+        self.repo.save(&monitor).await.expect("Failed to save Job");
 
         job
     }
