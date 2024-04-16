@@ -20,14 +20,14 @@ pub struct JobData {
     pub monitor_id: Uuid,
 }
 
-impl Into<Job> for JobData {
+impl Into<Job> for &JobData {
     fn into(self) -> Job {
         Job {
             job_id: self.job_id,
             start_time: self.start_time,
             end_time: self.end_time,
-            status: self.status,
-            output: self.output,
+            status: self.status.clone(),
+            output: self.output.clone(),
         }
     }
 }

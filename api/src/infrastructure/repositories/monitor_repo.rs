@@ -39,8 +39,7 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
                 .load(self.db)
                 .await?;
             // TODO handle monitors without jobs.
-
-            Ok(Some((monitor, jobs).into()))
+            Ok(Some((&monitor, &jobs).into()))
         } else {
             Ok(None)
         }
@@ -65,7 +64,7 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
             .grouped_by(&all_monitor_data)
             .into_iter()
             .zip(all_monitor_data)
-            .map(|(job_datas, monitor_data)| (monitor_data, job_datas).into())
+            .map(|(job_datas, monitor_data)| (&monitor_data, &job_datas).into())
             .collect::<Vec<Monitor>>())
     }
 }

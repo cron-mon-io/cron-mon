@@ -16,15 +16,15 @@ pub struct MonitorData {
     pub grace_duration: i32,
 }
 
-impl Into<Monitor> for (MonitorData, Vec<JobData>) {
+impl Into<Monitor> for (&MonitorData, &Vec<JobData>) {
     fn into(self) -> Monitor {
         // TODO: Test me
         Monitor {
             monitor_id: self.0.monitor_id,
-            name: self.0.name,
+            name: self.0.name.clone(),
             expected_duration: self.0.expected_duration,
             grace_duration: self.0.grace_duration,
-            jobs: self.1.into_iter().map(JobData::into).collect(),
+            jobs: self.1.iter().map(|jd: &JobData| jd.into()).collect(),
         }
     }
 }
