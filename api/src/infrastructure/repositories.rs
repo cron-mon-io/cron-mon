@@ -25,6 +25,11 @@ pub trait Update<T> {
 }
 
 #[async_trait]
+pub trait Save<T> {
+    async fn save(&mut self, entity: &T) -> Result<(), Error>;
+}
+
+#[async_trait]
 pub trait Delete<T> {
     async fn delete(&mut self, entity: &T) -> Result<(), Error>;
 }

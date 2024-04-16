@@ -124,6 +124,48 @@ impl<'a> Update<Monitor> for MonitorRepository<'a> {
 }
 
 #[async_trait]
+impl<'a> Save<Monitor> for MonitorRepository<'a> {
+    async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
+        // TODO: Test me
+        let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
+        let cached_data = self.data.get(&monitor.monitor_id);
+        if let Some(cached) = cached_data {
+            diesel::update(&monitor_data)
+                .set(&monitor_data)
+                .execute(self.db)
+                .await?;
+
+            let job_ids = &cached.1.iter().map(|j| j.job_id).collect::<Vec<Uuid>>();
+            for j in &job_datas {
+                if job_ids.contains(&j.job_id) {
+                    diesel::update(j).set(j).execute(self.db).await?;
+                } else {
+                    diesel::insert_into(job::table)
+                        .values(j)
+                        .execute(self.db)
+                        .await?;
+                }
+            }
+        } else {
+            diesel::insert_into(monitor::table)
+                .values(&monitor_data)
+                .execute(self.db)
+                .await?;
+
+            diesel::insert_into(job::table)
+                .values(&job_datas)
+                .execute(self.db)
+                .await?;
+        }
+
+        self.data
+            .insert(monitor.monitor_id, (monitor_data, job_datas));
+
+        Ok(())
+    }
+}
+
+#[async_trait]
 impl<'a> Delete<Monitor> for MonitorRepository<'a> {
     async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
         // TODO: Test me
