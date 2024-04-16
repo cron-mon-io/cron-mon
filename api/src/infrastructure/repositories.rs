@@ -15,16 +15,6 @@ pub trait All<T> {
 }
 
 #[async_trait]
-pub trait Add<T> {
-    async fn add(&mut self, entity: &T) -> Result<(), Error>;
-}
-
-#[async_trait]
-pub trait Update<T> {
-    async fn update(&mut self, entity: &T) -> Result<(), Error>;
-}
-
-#[async_trait]
 pub trait Save<T> {
     async fn save(&mut self, entity: &T) -> Result<(), Error>;
 }

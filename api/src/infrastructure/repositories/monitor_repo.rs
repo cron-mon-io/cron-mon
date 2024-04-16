@@ -12,7 +12,7 @@ use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 use crate::infrastructure::models::monitor::MonitorData;
 
-use crate::infrastructure::repositories::{Add, All, Delete, Get, Save, Update};
+use crate::infrastructure::repositories::{All, Delete, Get, Save};
 
 pub struct MonitorRepository<'a> {
     db: &'a mut AsyncPgConnection,
@@ -78,48 +78,6 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
             .zip(all_monitor_data)
             .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
             .collect::<Vec<Monitor>>())
-    }
-}
-
-#[async_trait]
-impl<'a> Add<Monitor> for MonitorRepository<'a> {
-    async fn add(&mut self, monitor: &Monitor) -> Result<(), Error> {
-        // TODO: Test me
-        let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
-
-        diesel::insert_into(monitor::table)
-            .values(&monitor_data)
-            .execute(self.db)
-            .await?;
-
-        diesel::insert_into(job::table)
-            .values(&job_datas)
-            .execute(self.db)
-            .await?;
-
-        self.data
-            .insert(monitor.monitor_id, (monitor_data, job_datas));
-
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl<'a> Update<Monitor> for MonitorRepository<'a> {
-    async fn update(&mut self, monitor: &Monitor) -> Result<(), Error> {
-        // TODO: Test me
-        let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
-
-        diesel::update(&monitor_data)
-            .set(&monitor_data)
-            .execute(self.db)
-            .await?;
-
-        for j in job_datas {
-            diesel::update(&j).set(&j).execute(self.db).await?;
-        }
-
-        Ok(())
     }
 }
 
