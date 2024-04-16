@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use diesel::prelude::*;
 use diesel::result::Error;
@@ -10,15 +12,25 @@ use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 use crate::infrastructure::models::monitor::MonitorData;
 
-use crate::infrastructure::repositories::{Add, All, Delete, Get, Update};
+use crate::infrastructure::repositories::{Add, All, Delete, Get, Save, Update};
 
 pub struct MonitorRepository<'a> {
     db: &'a mut AsyncPgConnection,
+    data: HashMap<Uuid, (MonitorData, Vec<JobData>)>,
 }
 
 impl<'a> MonitorRepository<'a> {
     pub fn new(db: &'a mut AsyncPgConnection) -> Self {
-        Self { db }
+        Self {
+            db,
+            data: HashMap::new(),
+        }
+    }
+
+    fn db_to_monitor(&mut self, monitor_data: MonitorData, job_datas: Vec<JobData>) -> Monitor {
+        let mon: Monitor = (&monitor_data, &job_datas).into();
+        self.data.insert(mon.monitor_id, (monitor_data, job_datas));
+        mon
     }
 }
 
@@ -39,7 +51,7 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
                 .load(self.db)
                 .await?;
             // TODO handle monitors without jobs.
-            Ok(Some((&monitor, &jobs).into()))
+            Ok(Some(self.db_to_monitor(monitor, jobs)))
         } else {
             Ok(None)
         }
@@ -64,7 +76,7 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
             .grouped_by(&all_monitor_data)
             .into_iter()
             .zip(all_monitor_data)
-            .map(|(job_datas, monitor_data)| (&monitor_data, &job_datas).into())
+            .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
             .collect::<Vec<Monitor>>())
     }
 }
@@ -84,6 +96,9 @@ impl<'a> Add<Monitor> for MonitorRepository<'a> {
             .values(&job_datas)
             .execute(self.db)
             .await?;
+
+        self.data
+            .insert(monitor.monitor_id, (monitor_data, job_datas));
 
         Ok(())
     }
