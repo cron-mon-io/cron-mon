@@ -22,12 +22,12 @@ pub struct JobData {
 
 impl Into<Job> for &JobData {
     fn into(self) -> Job {
-        Job {
-            job_id: self.job_id,
-            start_time: self.start_time,
-            end_time: self.end_time,
-            succeeded: self.succeeded,
-            output: self.output.clone(),
-        }
+        Job::new(
+            self.job_id,
+            self.start_time,
+            self.end_time,
+            self.succeeded,
+            self.output.clone(),
+        )
     }
 }

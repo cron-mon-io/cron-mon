@@ -22,6 +22,31 @@ pub struct Job {
 }
 
 impl Job {
+    /// Construct a Job instance.
+    pub fn new(
+        job_id: Uuid,
+        start_time: NaiveDateTime,
+        end_time: Option<NaiveDateTime>,
+        succeeded: Option<bool>,
+        output: Option<String>,
+    ) -> Self {
+        // Job's must either have no end_time, succeeded or output, or _all_ of said attributes.
+        if end_time.is_some() || succeeded.is_some() || output.is_some() {
+            if end_time.is_none() || succeeded.is_none() || output.is_none() {
+                // TODO: Figure out a nicer way of handling this - probably need to return
+                // Result<Self, Err> and propogate it up through the levels?
+                panic!("Job is in an invalid state!");
+            }
+        }
+        Job {
+            job_id,
+            start_time,
+            end_time,
+            succeeded,
+            output,
+        }
+    }
+
     /// Start a Job.
     pub fn start() -> Self {
         Job {
