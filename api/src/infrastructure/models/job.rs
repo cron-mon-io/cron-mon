@@ -15,7 +15,7 @@ pub struct JobData {
     pub job_id: Uuid,
     pub start_time: NaiveDateTime,
     pub end_time: Option<NaiveDateTime>,
-    pub status: Option<String>,
+    pub succeeded: Option<bool>,
     pub output: Option<String>,
     pub monitor_id: Uuid,
 }
@@ -26,7 +26,7 @@ impl Into<Job> for &JobData {
             job_id: self.job_id,
             start_time: self.start_time,
             end_time: self.end_time,
-            status: self.status.clone(),
+            succeeded: self.succeeded,
             output: self.output.clone(),
         }
     }

@@ -17,7 +17,7 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> FinishJobService<'a, T> {
         &mut self,
         monitor_id: Uuid,
         job_id: Uuid,
-        status: &String,
+        succeeded: bool,
         output: &Option<String>,
     ) -> Job {
         // TODO: Test me
@@ -28,7 +28,7 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> FinishJobService<'a, T> {
             .expect("Could not retrieve monitor")
             .unwrap();
 
-        let job = self.finish_job(&mut monitor, job_id, &status, &output);
+        let job = self.finish_job(&mut monitor, job_id, succeeded, &output);
 
         self.repo.save(&monitor).await.expect("Failed to save Job");
 
@@ -39,13 +39,13 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> FinishJobService<'a, T> {
         &self,
         monitor: &mut Monitor,
         job_id: Uuid,
-        status: &String,
+        succeeded: bool,
         output: &Option<String>,
     ) -> Job {
         let job = monitor
             .get_job(job_id)
             .expect("Failed to find job within monitor");
-        job.finish(status.clone(), output.clone())
+        job.finish(succeeded, output.clone())
             .expect("Failed to finish job");
 
         job.clone()

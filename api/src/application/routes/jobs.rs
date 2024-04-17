@@ -11,7 +11,7 @@ use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
 #[derive(Deserialize)]
 pub struct FinishJobInfo {
-    status: String,
+    succeeded: bool,
     output: Option<String>,
 }
 
@@ -51,7 +51,7 @@ pub async fn finish_job(
         .finish_job_for_monitor(
             monitor_id,
             job_id,
-            &finish_job_info.status,
+            finish_job_info.succeeded,
             &finish_job_info.output,
         )
         .await;

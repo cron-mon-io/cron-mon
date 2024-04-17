@@ -15,8 +15,8 @@ pub struct Job {
     pub start_time: NaiveDateTime,
     /// The time that the job finished, if it isn't currently in progress.
     pub end_time: Option<NaiveDateTime>,
-    /// The Job's resultant status, if it isn't currently in progress.
-    pub status: Option<String>,
+    /// Whether or not the Job finished successfully, if it isn't currently in progress.
+    pub succeeded: Option<bool>,
     /// Any output from the Job, if it isn't currently in progress.
     pub output: Option<String>,
 }
@@ -28,19 +28,23 @@ impl Job {
             job_id: Uuid::new_v4(),
             start_time: Utc::now().naive_utc(),
             end_time: None,
-            status: None,
+            succeeded: None,
             output: None,
         }
     }
 
     /// Finish the Job. Note that if the Job isn't currently in progress, this will return a
     /// `FinishJobError`.
-    pub fn finish(&mut self, status: String, output: Option<String>) -> Result<(), FinishJobError> {
+    pub fn finish(
+        &mut self,
+        succeeded: bool,
+        output: Option<String>,
+    ) -> Result<(), FinishJobError> {
         if !self.in_progress() {
             return Err(FinishJobError::JobAlreadyFinished);
         }
 
-        self.status = Some(status);
+        self.succeeded = Some(succeeded);
         self.output = output;
         self.end_time = Some(Utc::now().naive_utc());
 
@@ -62,7 +66,7 @@ mod tests {
         let job = Job::start();
 
         assert_eq!(job.end_time, None);
-        assert_eq!(job.status, None);
+        assert_eq!(job.succeeded, None);
         assert_eq!(job.output, None);
 
         // New jobs should always be in progress.
@@ -73,16 +77,16 @@ mod tests {
     fn finishing_jobs() {
         let mut job = Job::start();
 
-        let result1 = job.finish("success".to_owned(), None);
+        let result1 = job.finish(true, None);
         assert!(result1.is_ok());
         assert_eq!(job.in_progress(), false);
-        assert_eq!(job.status, Some("success".to_owned()));
+        assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);
 
         // Cannot finish a job again once it's been finished.
-        let result2 = job.finish("error".to_owned(), Some("It won't wrong".to_owned()));
+        let result2 = job.finish(false, Some("It won't wrong".to_owned()));
         assert_eq!(result2.unwrap_err(), FinishJobError::JobAlreadyFinished);
-        assert_eq!(job.status, Some("success".to_owned()));
+        assert_eq!(job.succeeded, Some(false));
         assert_eq!(job.output, None);
     }
 }
