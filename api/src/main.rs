@@ -24,7 +24,8 @@ fn rocket() -> _ {
                 monitors::delete_monitor,
                 monitors::update_monitor,
                 jobs::get_job,
-                jobs::start_job
+                jobs::start_job,
+                jobs::finish_job,
             ],
         )
         .mount("/api/v1/docs", FileServer::from("/usr/cron-mon/api/docs"))
