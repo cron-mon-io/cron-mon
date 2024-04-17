@@ -14,7 +14,7 @@ VALUES
 
 -- Jobs.
 INSERT INTO job
-    (job_id, monitor_id, start_time, end_time, "status", "output")
+    (job_id, monitor_id, start_time, end_time, succeeded, "output")
 VALUES
     -- db-backup.py (job in flight, failed a few days ago, otherwise all OK)
     (
@@ -30,7 +30,7 @@ VALUES
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '1 DAY',
         CURRENT_TIMESTAMP - INTERVAL '23 HOURS - 29 MINUTES',
-        'success',
+        TRUE,
         'Database successfully backed up'
     ),
     (
@@ -38,7 +38,7 @@ VALUES
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '2 DAY',
         CURRENT_TIMESTAMP - INTERVAL '1 DAY - 23 HOURS - 1 MINUTE',
-        'error',
+        FALSE,
         'Could not connect to database'
     ),
     (
@@ -46,7 +46,7 @@ VALUES
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '3 DAY',
         CURRENT_TIMESTAMP - INTERVAL '2 DAYS - 23 HOURS - 28 MINUTES',
-        'success',
+        TRUE,
         'Database successfully backed up'
     ),
     (
@@ -54,7 +54,7 @@ VALUES
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '4 DAY',
         CURRENT_TIMESTAMP - INTERVAL '3 DAYS - 23 HOURS - 32 MINUTES',
-        'success',
+        TRUE,
         'Database successfully backed up'
     ),
     (
@@ -62,7 +62,7 @@ VALUES
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '5 DAY',
         CURRENT_TIMESTAMP - INTERVAL '4 DAYS - 23 HOURS - 22 MINUTES',
-        'success',
+        TRUE,
         'Database successfully backed up'
     ),
     -- generate-orders.sh (never managed to finish)
@@ -105,7 +105,7 @@ VALUES
         '309a68f1-d6a2-4312-8012-49c1b9b9af25',
         CURRENT_TIMESTAMP - INTERVAL '1 DAY',
         CURRENT_TIMESTAMP - INTERVAL '23 HOURS - 2 MINUTES',
-        'error',
+        FALSE,
         'Corrupted manifest detected'
     ),
     (
@@ -113,7 +113,7 @@ VALUES
         '309a68f1-d6a2-4312-8012-49c1b9b9af25',
         CURRENT_TIMESTAMP - INTERVAL '2 DAYS',
         CURRENT_TIMESTAMP - INTERVAL '1 DAY - 23 HOURS - 43 MINUTES',
-        'error',
+        FALSE,
         'Received SIGKILL -9'
     ),
     (
@@ -121,7 +121,7 @@ VALUES
         '309a68f1-d6a2-4312-8012-49c1b9b9af25',
         CURRENT_TIMESTAMP - INTERVAL '3 DAYS',
         CURRENT_TIMESTAMP - INTERVAL '2 DAYS - 23 HOURS - 13 MINUTES',
-        'error',
+        FALSE,
         'Timed out waiting for manifest API connection'
     ),
     -- bill-and-invoice (multiple jobs in flight)
@@ -154,6 +154,6 @@ VALUES
         '0798c530-34a4-4452-b2dc-f8140fd498d5',
         CURRENT_TIMESTAMP - INTERVAL '3 HOURS - 55 MINUTES',
         CURRENT_TIMESTAMP - INTERVAL '6 HOURS - 25 MINUTES',
-        'success',
+        TRUE,
         '{"bills_processed": 1234, "invoiced_generated": 325}'
     );

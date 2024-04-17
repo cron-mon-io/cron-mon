@@ -8,8 +8,8 @@ diesel::table! {
         monitor_id -> Uuid,
         start_time -> Timestamp,
         end_time -> Nullable<Timestamp>,
-        status -> Nullable<Varchar>,
         output -> Nullable<Text>,
+        succeeded -> Nullable<Bool>,
     }
 }
 
@@ -26,4 +26,7 @@ diesel::table! {
 
 diesel::joinable!(job -> monitor (monitor_id));
 
-diesel::allow_tables_to_appear_in_same_query!(job, monitor,);
+diesel::allow_tables_to_appear_in_same_query!(
+    job,
+    monitor,
+);
