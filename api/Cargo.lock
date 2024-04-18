@@ -231,6 +231,7 @@ dependencies = [
  "rocket",
  "rocket_db_pools",
  "serde",
+ "tokio",
  "uuid",
 ]
 

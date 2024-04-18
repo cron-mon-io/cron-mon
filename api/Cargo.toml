@@ -13,4 +13,5 @@ diesel-async = { version = "0.4.1", features = ["postgres"] }
 rocket = { version = "0.5.0", features = ["json", "uuid"] }
 rocket_db_pools = { version = "0.1.0", features = ["diesel_postgres" ]}
 serde = { version = "1.0", features = ["derive"] }
+tokio = "1.37.0"
 uuid = { version = "1.8.0", features = ["v4", "serde", "fast-rng", "macro-diagnostics"] }
