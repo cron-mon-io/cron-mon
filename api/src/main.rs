@@ -7,12 +7,12 @@ pub mod infrastructure;
 
 use rocket::fs::FileServer;
 use rocket_db_pools::Database;
-use tokio::{spawn, time};
 
 use crate::application::routes::{health, jobs, monitors};
 use crate::infrastructure::database::{establish_connection, Db};
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 use crate::infrastructure::repositories::All;
+use crate::infrastructure::threading::run_periodically_in_background;
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
@@ -36,27 +36,22 @@ async fn main() -> Result<(), rocket::Error> {
         .ignite()
         .await?;
 
-    spawn(async move {
-        let mut interval = time::interval(time::Duration::from_secs(10));
-        loop {
-            interval.tick().await;
+    run_periodically_in_background(10, || async move {
+        println!("Beginning check for late Jobs...");
+        let mut db = establish_connection().await;
+        let mut repo = MonitorRepository::new(&mut db);
 
-            println!("Beginning check for late Jobs...");
-            let mut db = establish_connection().await;
-            let mut repo = MonitorRepository::new(&mut db);
-
-            let mons = repo.all().await.expect("Failed to get montiors");
-            for mon in &mons {
-                let in_progress_tasks = mon.jobs_in_progress();
-                println!(
-                    "Monitor '{}' ({}) has {} tasks in progress",
-                    &mon.name,
-                    &mon.monitor_id,
-                    in_progress_tasks.len()
-                );
-            }
-            println!("Check for late Jobs complete\n");
+        let mons = repo.all().await.expect("Failed to get montiors");
+        for mon in &mons {
+            let in_progress_tasks = mon.jobs_in_progress();
+            println!(
+                "Monitor '{}' ({}) has {} tasks in progress",
+                &mon.name,
+                &mon.monitor_id,
+                in_progress_tasks.len()
+            );
         }
+        println!("Check for late Jobs complete\n");
     });
 
     app.launch().await?;
