@@ -10,8 +10,7 @@ use rocket_db_pools::Database;
 
 use crate::application::routes::{health, jobs, monitors};
 use crate::infrastructure::database::{establish_connection, Db};
-use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
-use crate::infrastructure::repositories::All;
+use crate::infrastructure::repositories::monitor_repo::{GetWithLateJobs, MonitorRepository};
 use crate::infrastructure::threading::run_periodically_in_background;
 
 #[rocket::main]
@@ -41,14 +40,17 @@ async fn main() -> Result<(), rocket::Error> {
         let mut db = establish_connection().await;
         let mut repo = MonitorRepository::new(&mut db);
 
-        let mons = repo.all().await.expect("Failed to get montiors");
+        let mons = repo
+            .get_with_late_jobs()
+            .await
+            .expect("Failed to get montiors");
         for mon in &mons {
-            let in_progress_tasks = mon.jobs_in_progress();
+            let late_jobs = mon.late_jobs();
             println!(
-                "Monitor '{}' ({}) has {} tasks in progress",
+                "Monitor '{}' ({}) has {} late jobs",
                 &mon.name,
                 &mon.monitor_id,
-                in_progress_tasks.len()
+                late_jobs.len()
             );
         }
         println!("Check for late Jobs complete\n");

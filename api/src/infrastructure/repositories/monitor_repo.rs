@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
+use diesel::dsl::sql;
 use diesel::prelude::*;
 use diesel::result::Error;
+use diesel::sql_types::Bool;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use uuid::Uuid;
 
@@ -31,6 +33,53 @@ impl<'a> MonitorRepository<'a> {
         let mon: Monitor = (&monitor_data, &job_datas).into();
         self.data.insert(mon.monitor_id, (monitor_data, job_datas));
         mon
+    }
+}
+
+#[async_trait]
+pub trait GetWithLateJobs {
+    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error>;
+}
+
+#[async_trait]
+impl<'a> GetWithLateJobs for MonitorRepository<'a> {
+    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
+        // Get all late jobs.
+        let late_jobs: Vec<JobData> = job::dsl::job
+            .inner_join(monitor::table)
+            .filter(job::end_time.is_null())
+            // TODO: Refactor this into a constant - or better yet, use Diesel stuff!
+            .filter(sql::<Bool>(r#"CURRENT_TIMESTAMP > "job"."start_time" + (("monitor"."expected_duration" + "monitor"."grace_duration") * INTERVAL '1 SECOND') "#)) // TODO: Figure this bit out
+            .select(JobData::as_select())
+            .load(self.db)
+            .await?;
+
+        // Get the monitors that the late jobs belong too.
+        // TODO: Refactor the below as it's very close to what we're doing in `all`.
+        let monitor_datas = monitor::table
+            .select(MonitorData::as_select())
+            .filter(
+                monitor::monitor_id.eq_any(
+                    late_jobs
+                        .iter()
+                        .map(|j| j.monitor_id)
+                        .collect::<Vec<Uuid>>(),
+                ),
+            )
+            .load(self.db)
+            .await?;
+
+        let jobs = JobData::belonging_to(&monitor_datas)
+            .select(JobData::as_select())
+            .load(self.db)
+            .await?;
+
+        Ok(jobs
+            .grouped_by(&monitor_datas)
+            .into_iter()
+            .zip(monitor_datas)
+            .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
+            .collect::<Vec<Monitor>>())
     }
 }
 
