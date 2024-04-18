@@ -67,17 +67,18 @@ impl Monitor {
     pub fn finish_job(
         &mut self,
         job_id: Uuid,
-        status: String,
+        succeeded: bool,
         output: Option<String>,
     ) -> Result<(), FinishJobError> {
         let job = self.get_job(job_id);
         match job {
-            Some(j) => Ok(j.finish(status, output)?),
+            Some(j) => Ok(j.finish(succeeded, output)?),
             None => Err(FinishJobError::JobNotFound),
         }
     }
 
-    fn get_job(&mut self, job_id: Uuid) -> Option<&mut Job> {
+    /// Retrieve a Job from the Monitor by its Job ID.
+    pub fn get_job(&mut self, job_id: Uuid) -> Option<&mut Job> {
         self.jobs.iter_mut().find(|job| job.job_id == job_id)
     }
 }
@@ -133,12 +134,12 @@ mod tests {
 
         assert_eq!(mon.jobs_in_progress().len(), 1);
 
-        let result1 = mon.finish_job(job1.job_id, "success".to_owned(), None);
+        let result1 = mon.finish_job(job1.job_id, true, None);
 
         assert!(result1.is_ok());
         assert_eq!(mon.jobs_in_progress().len(), 0);
 
-        let result2 = mon.finish_job(Uuid::new_v4(), "failure".to_owned(), None);
+        let result2 = mon.finish_job(Uuid::new_v4(), false, None);
         assert_eq!(result2.unwrap_err(), FinishJobError::JobNotFound);
     }
 }

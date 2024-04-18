@@ -1,13 +1,13 @@
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
-use crate::infrastructure::repositories::{Get, Update};
+use crate::infrastructure::repositories::{Get, Save};
 
-pub struct UpdateMonitorService<'a, T: Get<Monitor> + Update<Monitor>> {
+pub struct UpdateMonitorService<'a, T: Get<Monitor> + Save<Monitor>> {
     repo: &'a mut T,
 }
 
-impl<'a, T: Get<Monitor> + Update<Monitor>> UpdateMonitorService<'a, T> {
+impl<'a, T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<'a, T> {
     pub fn new(repo: &'a mut T) -> Self {
         Self { repo }
     }
@@ -29,7 +29,7 @@ impl<'a, T: Get<Monitor> + Update<Monitor>> UpdateMonitorService<'a, T> {
         monitor.edit_details(new_name, new_expected, new_grace);
 
         self.repo
-            .update(&monitor)
+            .save(&monitor)
             .await
             .expect("Failed to update monitor");
 

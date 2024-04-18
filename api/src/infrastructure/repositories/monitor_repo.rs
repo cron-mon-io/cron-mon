@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use diesel::prelude::*;
 use diesel::result::Error;
@@ -10,15 +12,25 @@ use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 use crate::infrastructure::models::monitor::MonitorData;
 
-use crate::infrastructure::repositories::{Add, All, Delete, Get, Update};
+use crate::infrastructure::repositories::{All, Delete, Get, Save};
 
 pub struct MonitorRepository<'a> {
     db: &'a mut AsyncPgConnection,
+    data: HashMap<Uuid, (MonitorData, Vec<JobData>)>,
 }
 
 impl<'a> MonitorRepository<'a> {
     pub fn new(db: &'a mut AsyncPgConnection) -> Self {
-        Self { db }
+        Self {
+            db,
+            data: HashMap::new(),
+        }
+    }
+
+    fn db_to_monitor(&mut self, monitor_data: MonitorData, job_datas: Vec<JobData>) -> Monitor {
+        let mon: Monitor = (&monitor_data, &job_datas).into();
+        self.data.insert(mon.monitor_id, (monitor_data, job_datas));
+        mon
     }
 }
 
@@ -39,8 +51,7 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
                 .load(self.db)
                 .await?;
             // TODO handle monitors without jobs.
-
-            Ok(Some((monitor, jobs).into()))
+            Ok(Some(self.db_to_monitor(monitor, jobs)))
         } else {
             Ok(None)
         }
@@ -65,45 +76,48 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
             .grouped_by(&all_monitor_data)
             .into_iter()
             .zip(all_monitor_data)
-            .map(|(job_datas, monitor_data)| (monitor_data, job_datas).into())
+            .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
             .collect::<Vec<Monitor>>())
     }
 }
 
 #[async_trait]
-impl<'a> Add<Monitor> for MonitorRepository<'a> {
-    async fn add(&mut self, monitor: &Monitor) -> Result<(), Error> {
+impl<'a> Save<Monitor> for MonitorRepository<'a> {
+    async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
         // TODO: Test me
         let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
+        let cached_data = self.data.get(&monitor.monitor_id);
+        if let Some(cached) = cached_data {
+            diesel::update(&monitor_data)
+                .set(&monitor_data)
+                .execute(self.db)
+                .await?;
 
-        diesel::insert_into(monitor::table)
-            .values(&monitor_data)
-            .execute(self.db)
-            .await?;
+            let job_ids = &cached.1.iter().map(|j| j.job_id).collect::<Vec<Uuid>>();
+            for j in &job_datas {
+                if job_ids.contains(&j.job_id) {
+                    diesel::update(j).set(j).execute(self.db).await?;
+                } else {
+                    diesel::insert_into(job::table)
+                        .values(j)
+                        .execute(self.db)
+                        .await?;
+                }
+            }
+        } else {
+            diesel::insert_into(monitor::table)
+                .values(&monitor_data)
+                .execute(self.db)
+                .await?;
 
-        diesel::insert_into(job::table)
-            .values(&job_datas)
-            .execute(self.db)
-            .await?;
-
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl<'a> Update<Monitor> for MonitorRepository<'a> {
-    async fn update(&mut self, monitor: &Monitor) -> Result<(), Error> {
-        // TODO: Test me
-        let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
-
-        diesel::update(&monitor_data)
-            .set(&monitor_data)
-            .execute(self.db)
-            .await?;
-
-        for j in job_datas {
-            diesel::update(&j).set(&j).execute(self.db).await?;
+            diesel::insert_into(job::table)
+                .values(&job_datas)
+                .execute(self.db)
+                .await?;
         }
+
+        self.data
+            .insert(monitor.monitor_id, (monitor_data, job_datas));
 
         Ok(())
     }
