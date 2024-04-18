@@ -111,7 +111,7 @@ mod tests {
         // Cannot finish a job again once it's been finished.
         let result2 = job.finish(false, Some("It won't wrong".to_owned()));
         assert_eq!(result2.unwrap_err(), FinishJobError::JobAlreadyFinished);
-        assert_eq!(job.succeeded, Some(false));
+        assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);
     }
 }
