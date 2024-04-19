@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use diesel::dsl::sql;
+use diesel::dsl::now;
 use diesel::prelude::*;
 use diesel::result::Error;
-use diesel::sql_types::Bool;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use uuid::Uuid;
 
@@ -44,12 +43,14 @@ pub trait GetWithLateJobs {
 #[async_trait]
 impl<'a> GetWithLateJobs for MonitorRepository<'a> {
     async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
+        let in_progress_condition = job::end_time.is_null().and(now.gt(job::max_end_time));
+        let finished_condition = job::end_time
+            .is_not_null()
+            .and(job::end_time.assume_not_null().gt(job::max_end_time));
         // Get all late jobs.
         let late_jobs: Vec<JobData> = job::dsl::job
             .inner_join(monitor::table)
-            .filter(job::end_time.is_null())
-            // TODO: Refactor this into a constant - or better yet, use Diesel stuff!
-            .filter(sql::<Bool>(r#"CURRENT_TIMESTAMP > "job"."start_time" + (("monitor"."expected_duration" + "monitor"."grace_duration") * INTERVAL '1 SECOND') "#)) // TODO: Figure this bit out
+            .filter(in_progress_condition.or(finished_condition))
             .select(JobData::as_select())
             .load(self.db)
             .await?;
