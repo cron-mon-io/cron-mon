@@ -1,13 +1,13 @@
 use chrono::offset::Utc;
 use chrono::NaiveDateTime;
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
 use crate::domain::errors::FinishJobError;
 
 /// The Job struct represents a monitored job, encapsulating the time it started, the time it
 /// finished, the resulting status and any output that it produced.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug)]
 pub struct Job {
     /// The unique identifier for the Job.
     pub job_id: Uuid,
@@ -79,6 +79,46 @@ impl Job {
     /// Ascertain whether or not the Job is currently in progress.
     pub fn in_progress(&self) -> bool {
         self.end_time.is_none()
+    }
+
+    /// Get the duration of the Job, if it has finished.
+    pub fn duration(&self) -> Option<u64> {
+        // TODO: Test me.
+        if !self.in_progress() {
+            Some(
+                (self.end_time.unwrap() - self.start_time)
+                    .num_seconds()
+                    .unsigned_abs(),
+            )
+        } else {
+            None
+        }
+    }
+}
+
+impl Serialize for Job {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        #[derive(Serialize)]
+        struct SerializedJob {
+            // Standard attributes
+            job_id: Uuid,
+            start_time: NaiveDateTime,
+            end_time: Option<NaiveDateTime>,
+            succeeded: Option<bool>,
+            output: Option<String>,
+            // Computed attributes.
+            duration: Option<u64>,
+        }
+
+        SerializedJob {
+            job_id: self.job_id,
+            start_time: self.start_time,
+            end_time: self.end_time,
+            succeeded: self.succeeded,
+            output: self.output.clone(),
+            duration: self.duration(),
+        }
+        .serialize(serializer)
     }
 }
 

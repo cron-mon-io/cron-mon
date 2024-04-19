@@ -65,13 +65,11 @@ impl Monitor {
     /// successfully or in error.
     pub fn late_jobs(&self) -> Vec<&Job> {
         // TODO: More test cases!
+        let maximum_duration = self.maximum_duration();
         self.jobs
             .iter()
             .filter_map(|job| {
-                if job.in_progress()
-                    && (job.start_time
-                        + Duration::seconds((self.expected_duration + self.grace_duration) as i64))
-                        < Utc::now().naive_utc()
+                if job.in_progress() && (job.start_time + maximum_duration) < Utc::now().naive_utc()
                 {
                     Some(job)
                 } else {
@@ -109,6 +107,10 @@ impl Monitor {
     /// Retrieve a Job from the Monitor by its Job ID.
     pub fn get_job(&mut self, job_id: Uuid) -> Option<&mut Job> {
         self.jobs.iter_mut().find(|job| job.job_id == job_id)
+    }
+
+    fn maximum_duration(&self) -> chrono::TimeDelta {
+        Duration::seconds((self.expected_duration + self.grace_duration) as i64)
     }
 }
 
