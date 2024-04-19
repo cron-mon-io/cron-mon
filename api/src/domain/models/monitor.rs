@@ -95,10 +95,13 @@ impl Monitor {
         job_id: Uuid,
         succeeded: bool,
         output: Option<String>,
-    ) -> Result<(), FinishJobError> {
+    ) -> Result<&Job, FinishJobError> {
         let job = self.get_job(job_id);
         match job {
-            Some(j) => Ok(j.finish(succeeded, output)?),
+            Some(j) => {
+                j.finish(succeeded, output)?;
+                Ok(j)
+            }
             None => Err(FinishJobError::JobNotFound),
         }
     }
