@@ -1,13 +1,13 @@
 use chrono::offset::Utc;
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::domain::errors::FinishJobError;
 
 /// The Job struct represents a monitored job, encapsulating the time it started, the time it
 /// finished, the resulting status and any output that it produced.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Job {
     /// The unique identifier for the Job.
     pub job_id: Uuid,

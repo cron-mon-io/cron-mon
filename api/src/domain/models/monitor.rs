@@ -1,6 +1,6 @@
 use chrono::offset::Utc;
 use chrono::Duration;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::domain::errors::FinishJobError;
@@ -8,7 +8,7 @@ use crate::domain::models::job::Job;
 
 /// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
 /// part of the Cron Mon domain.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct Monitor {
     /// The unique identifier for the Monitor.
     pub monitor_id: Uuid,
