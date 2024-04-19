@@ -10,6 +10,7 @@ diesel::table! {
         end_time -> Nullable<Timestamp>,
         output -> Nullable<Text>,
         succeeded -> Nullable<Bool>,
+        max_end_time -> Timestamp,
     }
 }
 
