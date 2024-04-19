@@ -1,5 +1,5 @@
-use chrono::offset::Utc;
 use chrono::NaiveDateTime;
+use chrono::{offset::Utc, Duration};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
@@ -13,6 +13,8 @@ pub struct Job {
     pub job_id: Uuid,
     /// The time that the Job started.
     pub start_time: NaiveDateTime,
+    /// The maximum possible end time for the Job before it is considered late.
+    pub max_end_time: NaiveDateTime,
     /// The time that the job finished, if it isn't currently in progress.
     pub end_time: Option<NaiveDateTime>,
     /// Whether or not the Job finished successfully, if it isn't currently in progress.
@@ -26,6 +28,7 @@ impl Job {
     pub fn new(
         job_id: Uuid,
         start_time: NaiveDateTime,
+        max_end_time: NaiveDateTime,
         end_time: Option<NaiveDateTime>,
         succeeded: Option<bool>,
         output: Option<String>,
@@ -41,6 +44,7 @@ impl Job {
         Job {
             job_id,
             start_time,
+            max_end_time,
             end_time,
             succeeded,
             output,
@@ -48,10 +52,13 @@ impl Job {
     }
 
     /// Start a Job.
-    pub fn start() -> Self {
+    pub fn start(maximum_duration: u64) -> Self {
+        let now = Utc::now().naive_utc();
+
         Job {
             job_id: Uuid::new_v4(),
-            start_time: Utc::now().naive_utc(),
+            start_time: now,
+            max_end_time: now + Duration::seconds(maximum_duration as i64),
             end_time: None,
             succeeded: None,
             output: None,
@@ -81,6 +88,18 @@ impl Job {
         self.end_time.is_none()
     }
 
+    /// Ascertain wher or not the Job is late.
+    pub fn late(&self) -> bool {
+        // TODO: Test me
+        let end_time = if let Some(end_time) = self.end_time {
+            end_time
+        } else {
+            Utc::now().naive_utc()
+        };
+
+        end_time > self.max_end_time
+    }
+
     /// Get the duration of the Job, if it has finished.
     pub fn duration(&self) -> Option<u64> {
         // TODO: Test me.
@@ -97,6 +116,7 @@ impl Job {
 }
 
 impl Serialize for Job {
+    // TODO: Should this be in the infrastructure or presentation layer?
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         #[derive(Serialize)]
         struct SerializedJob {
@@ -108,6 +128,8 @@ impl Serialize for Job {
             output: Option<String>,
             // Computed attributes.
             duration: Option<u64>,
+            in_progress: bool,
+            late: bool,
         }
 
         SerializedJob {
@@ -117,6 +139,8 @@ impl Serialize for Job {
             succeeded: self.succeeded,
             output: self.output.clone(),
             duration: self.duration(),
+            in_progress: self.in_progress(),
+            late: self.late(),
         }
         .serialize(serializer)
     }
@@ -126,9 +150,11 @@ impl Serialize for Job {
 mod tests {
     use super::{FinishJobError, Job};
 
+    // TODO: Figure out how to test the time-based elements.
+
     #[test]
     fn starting_jobs() {
-        let job = Job::start();
+        let job = Job::start(300);
 
         assert_eq!(job.end_time, None);
         assert_eq!(job.succeeded, None);
@@ -140,7 +166,7 @@ mod tests {
 
     #[test]
     fn finishing_jobs() {
-        let mut job = Job::start();
+        let mut job = Job::start(300);
 
         let result1 = job.finish(true, None);
         assert!(result1.is_ok());

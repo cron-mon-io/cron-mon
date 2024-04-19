@@ -1,4 +1,3 @@
-use chrono::offset::Utc;
 use chrono::Duration;
 use serde::Serialize;
 use uuid::Uuid;
@@ -65,23 +64,17 @@ impl Monitor {
     /// successfully or in error.
     pub fn late_jobs(&self) -> Vec<&Job> {
         // TODO: More test cases!
-        let maximum_duration = self.maximum_duration();
         self.jobs
             .iter()
-            .filter_map(|job| {
-                if job.in_progress() && (job.start_time + maximum_duration) < Utc::now().naive_utc()
-                {
-                    Some(job)
-                } else {
-                    None
-                }
-            })
+            .filter_map(|job| if job.late() { Some(job) } else { None })
             .collect()
     }
 
     /// Start a new job
     pub fn start_job(&mut self) -> Job {
-        let new_job = Job::start();
+        // We give the job the _current_ maximum duration here so that if the monitor is modified,
+        // any previous and in progress jobs are not affected.
+        let new_job = Job::start(self.maximum_duration().num_seconds() as u64);
         self.jobs.push(new_job.clone());
         new_job
     }
@@ -118,9 +111,10 @@ impl Monitor {
 mod tests {
     use std::str::FromStr;
 
+    use chrono::offset::Utc;
     use rstest::rstest;
 
-    use super::{Duration, FinishJobError, Job, Monitor, Utc, Uuid};
+    use super::{Duration, FinishJobError, Job, Monitor, Uuid};
 
     #[test]
     fn creating_new_monitors() {
@@ -148,6 +142,7 @@ mod tests {
             .map(|i| Job {
                 job_id: i.0,
                 start_time: Utc::now().naive_utc() - Duration::seconds(i.1),
+                max_end_time: Utc::now().naive_utc() + Duration::seconds(300),
                 end_time: None,
                 succeeded: None,
                 output: None,
