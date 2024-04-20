@@ -111,7 +111,7 @@ impl Monitor {
 mod tests {
     use std::str::FromStr;
 
-    use chrono::offset::Utc;
+    use chrono::{offset::Utc, NaiveDateTime};
     use rstest::rstest;
 
     use super::{Duration, FinishJobError, Job, Monitor, Uuid};
@@ -130,19 +130,28 @@ mod tests {
     #[rstest]
     #[case(
         vec!(
-            (Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(), 350),
-            (Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(), 290)
+            (
+                Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
+                Utc::now().naive_utc()
+            ),
+            (
+                Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
+                Utc::now().naive_utc() + Duration::seconds(5)
+            )
         ),
         vec!(Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap())
     )]
-    fn checking_for_late_jobs(#[case] input: Vec<(Uuid, i64)>, #[case] expected_ids: Vec<Uuid>) {
+    fn checking_for_late_jobs(
+        #[case] input: Vec<(Uuid, NaiveDateTime)>,
+        #[case] expected_ids: Vec<Uuid>,
+    ) {
         let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
         mon.jobs = input
             .iter()
             .map(|i| Job {
                 job_id: i.0,
-                start_time: Utc::now().naive_utc() - Duration::seconds(i.1),
-                max_end_time: Utc::now().naive_utc() + Duration::seconds(300),
+                start_time: Utc::now().naive_utc() - Duration::seconds(200),
+                max_end_time: i.1,
                 end_time: None,
                 succeeded: None,
                 output: None,
