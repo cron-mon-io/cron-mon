@@ -206,15 +206,31 @@ mod tests {
     }
 
     #[rstest]
-    #[case(Utc::now().naive_utc() + Duration::seconds(10), false)]
-    #[case(Utc::now().naive_utc() - Duration::seconds(10), true)]
-    fn checking_if_job_is_late(#[case] max_end_time: NaiveDateTime, #[case] expected_late: bool) {
+    // Jobs still in progress - late checks made against current time.
+    #[case(Utc::now().naive_utc() + Duration::seconds(10), (None, None), false)]
+    #[case(Utc::now().naive_utc() - Duration::seconds(10), (None, None), true)]
+    // Finished Jobs - late checks made against end time.
+    #[case(
+        Utc::now().naive_utc(),
+        (Some(Utc::now().naive_utc() - Duration::seconds(10)), Some(true)),
+        false
+    )]
+    #[case(
+        Utc::now().naive_utc(),
+        (Some(Utc::now().naive_utc() + Duration::seconds(10)), Some(true)),
+        true
+    )]
+    fn checking_if_job_is_late(
+        #[case] max_end_time: NaiveDateTime,
+        #[case] result: (Option<NaiveDateTime>, Option<bool>),
+        #[case] expected_late: bool,
+    ) {
         let job = Job::new(
             Uuid::new_v4(),
             NaiveDateTime::parse_from_str("2024-04-20 20:30:30", "%Y-%m-%d %H:%M:%S").unwrap(),
             max_end_time,
-            None,
-            None,
+            result.0,
+            result.1,
             None,
         );
 
