@@ -55,14 +55,14 @@ impl Job {
     pub fn start(maximum_duration: u64) -> Self {
         let now = Utc::now().naive_utc();
 
-        Job {
-            job_id: Uuid::new_v4(),
-            start_time: now,
-            max_end_time: now + Duration::seconds(maximum_duration as i64),
-            end_time: None,
-            succeeded: None,
-            output: None,
-        }
+        Job::new(
+            Uuid::new_v4(),
+            now,
+            now + Duration::seconds(maximum_duration as i64),
+            None,
+            None,
+            None,
+        )
     }
 
     /// Finish the Job. Note that if the Job isn't currently in progress, this will return a
