@@ -90,7 +90,6 @@ impl Job {
 
     /// Ascertain wher or not the Job is late.
     pub fn late(&self) -> bool {
-        // TODO: Test me
         let end_time = if let Some(end_time) = self.end_time {
             end_time
         } else {
@@ -149,7 +148,7 @@ impl Serialize for Job {
 mod tests {
     use rstest::rstest;
 
-    use super::{FinishJobError, Job, NaiveDateTime, Uuid};
+    use super::{Duration, FinishJobError, Job, NaiveDateTime, Utc, Uuid};
 
     // TODO: Figure out how to test the time-based elements.
 
@@ -204,5 +203,21 @@ mod tests {
         );
 
         assert_eq!(job.duration(), expected_duration);
+    }
+
+    #[rstest]
+    #[case(Utc::now().naive_utc() + Duration::seconds(10), false)]
+    #[case(Utc::now().naive_utc() - Duration::seconds(10), true)]
+    fn checking_if_job_is_late(#[case] max_end_time: NaiveDateTime, #[case] expected_late: bool) {
+        let job = Job::new(
+            Uuid::new_v4(),
+            NaiveDateTime::parse_from_str("2024-04-20 20:30:30", "%Y-%m-%d %H:%M:%S").unwrap(),
+            max_end_time,
+            None,
+            None,
+            None,
+        );
+
+        assert_eq!(job.late(), expected_late);
     }
 }
