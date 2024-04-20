@@ -102,7 +102,6 @@ impl Job {
 
     /// Get the duration of the Job, if it has finished.
     pub fn duration(&self) -> Option<u64> {
-        // TODO: Test me.
         if !self.in_progress() {
             Some(
                 (self.end_time.unwrap() - self.start_time)
@@ -148,7 +147,9 @@ impl Serialize for Job {
 
 #[cfg(test)]
 mod tests {
-    use super::{FinishJobError, Job};
+    use rstest::rstest;
+
+    use super::{FinishJobError, Job, NaiveDateTime, Uuid};
 
     // TODO: Figure out how to test the time-based elements.
 
@@ -179,5 +180,29 @@ mod tests {
         assert_eq!(result2.unwrap_err(), FinishJobError::JobAlreadyFinished);
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);
+    }
+
+    #[rstest]
+    #[case(None, None, None)]
+    #[case(
+        Some(NaiveDateTime::parse_from_str("2024-04-20 20:36:00", "%Y-%m-%d %H:%M:%S").unwrap()),
+        Some(true),
+        Some(330)
+    )]
+    fn getting_job_duration(
+        #[case] end_time: Option<NaiveDateTime>,
+        #[case] succeeded: Option<bool>,
+        #[case] expected_duration: Option<u64>,
+    ) {
+        let job = Job::new(
+            Uuid::new_v4(),
+            NaiveDateTime::parse_from_str("2024-04-20 20:30:30", "%Y-%m-%d %H:%M:%S").unwrap(),
+            NaiveDateTime::parse_from_str("2024-04-20 20:40:00", "%Y-%m-%d %H:%M:%S").unwrap(),
+            end_time,
+            succeeded,
+            None,
+        );
+
+        assert_eq!(job.duration(), expected_duration);
     }
 }
