@@ -232,6 +232,7 @@ dependencies = [
  "rocket_db_pools",
  "rstest",
  "serde",
+ "serde_json",
  "tokio",
  "uuid",
 ]

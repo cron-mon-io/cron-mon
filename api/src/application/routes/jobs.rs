@@ -1,6 +1,7 @@
-use rocket::serde::json::{json, Json, Value};
+use rocket::serde::json::Json;
 use rocket_db_pools::Connection;
 use serde::Deserialize;
+use serde_json::{json, Value};
 use uuid::Uuid;
 
 use crate::application::services::fetch_job::FetchJobService;
