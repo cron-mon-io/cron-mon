@@ -33,9 +33,9 @@ impl Job {
         succeeded: Option<bool>,
         output: Option<String>,
     ) -> Self {
-        // Job's must either have no end_time, succeeded or output, or _all_ of said attributes.
-        if end_time.is_some() || succeeded.is_some() || output.is_some() {
-            if end_time.is_none() || succeeded.is_none() || output.is_none() {
+        // Job's must either have no end_time or succeeded, or both.
+        if end_time.is_some() || succeeded.is_some() {
+            if end_time.is_none() || succeeded.is_none() {
                 // TODO: Figure out a nicer way of handling this - probably need to return
                 // Result<Self, Err> and propogate it up through the levels?
                 panic!("Job is in an invalid state!");
