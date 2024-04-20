@@ -12,7 +12,6 @@ use crate::infrastructure::db_schema::job;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 use crate::infrastructure::models::monitor::MonitorData;
-
 use crate::infrastructure::repositories::{All, Delete, Get, Save};
 
 pub struct MonitorRepository<'a> {

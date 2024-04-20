@@ -9,8 +9,9 @@ use rocket::fs::FileServer;
 use rocket_db_pools::Database;
 
 use crate::application::routes::{health, jobs, monitors};
+use crate::application::services::process_late_jobs::ProcessLateJobsService;
 use crate::infrastructure::database::{establish_connection, Db};
-use crate::infrastructure::repositories::monitor_repo::{GetWithLateJobs, MonitorRepository};
+use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 use crate::infrastructure::threading::run_periodically_in_background;
 
 #[rocket::main]
@@ -36,24 +37,11 @@ async fn main() -> Result<(), rocket::Error> {
         .await?;
 
     run_periodically_in_background(10, || async move {
-        println!("Beginning check for late Jobs...");
         let mut db = establish_connection().await;
         let mut repo = MonitorRepository::new(&mut db);
+        let mut service = ProcessLateJobsService::new(&mut repo);
 
-        let mons = repo
-            .get_with_late_jobs()
-            .await
-            .expect("Failed to get montiors");
-        for mon in &mons {
-            let late_jobs = mon.late_jobs();
-            println!(
-                "Monitor '{}' ({}) has {} late jobs",
-                &mon.name,
-                &mon.monitor_id,
-                late_jobs.len()
-            );
-        }
-        println!("Check for late Jobs complete\n");
+        service.process_late_jobs().await;
     });
 
     app.launch().await?;
