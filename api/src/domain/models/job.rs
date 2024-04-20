@@ -146,7 +146,10 @@ impl Serialize for Job {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use rstest::rstest;
+    use serde_json::{json, Value};
 
     use super::{Duration, FinishJobError, Job, NaiveDateTime, Utc, Uuid};
 
@@ -235,5 +238,38 @@ mod tests {
         );
 
         assert_eq!(job.late(), expected_late);
+    }
+
+    #[test]
+    fn serialisation() {
+        let job = Job::new(
+            Uuid::from_str("4987dbd2-cbc6-4ea7-b9b4-0af4abb4c0d3").unwrap(),
+            NaiveDateTime::parse_from_str("2024-04-20 20:30:30", "%Y-%m-%d %H:%M:%S").unwrap(),
+            NaiveDateTime::parse_from_str("2024-04-20 20:45:30", "%Y-%m-%d %H:%M:%S").unwrap(),
+            Some(
+                NaiveDateTime::parse_from_str("2024-04-20 20:40:30", "%Y-%m-%d %H:%M:%S").unwrap(),
+            ),
+            Some(true),
+            None,
+        );
+
+        let serialized = json![{"job": job}];
+        assert_eq!(
+            serialized,
+            json![
+                {
+                    "job": {
+                        "job_id": "4987dbd2-cbc6-4ea7-b9b4-0af4abb4c0d3",
+                        "start_time": "2024-04-20T20:30:30",
+                        "end_time": "2024-04-20T20:40:30",
+                        "succeeded": true,
+                        "output": Value::Null,
+                        "duration": 600,
+                        "in_progress": false,
+                        "late": false,
+                    }
+                }
+            ]
+        );
     }
 }
