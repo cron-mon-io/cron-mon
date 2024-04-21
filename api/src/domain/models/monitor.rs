@@ -56,7 +56,6 @@ impl Monitor {
     /// `expected_duration + grace_duration`. Note that late Jobs can still finish, either
     /// successfully or in error.
     pub fn late_jobs(&self) -> Vec<&Job> {
-        // TODO: More test cases!
         self.jobs
             .iter()
             .filter_map(|job| if job.late() { Some(job) } else { None })
@@ -125,6 +124,19 @@ mod tests {
         vec!(
             (
                 Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
+                Utc::now().naive_utc() + Duration::seconds(5)
+            ),
+            (
+                Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
+                Utc::now().naive_utc() + Duration::seconds(5)
+            )
+        ),
+        vec!()
+    )]
+    #[case(
+        vec!(
+            (
+                Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
                 Utc::now().naive_utc()
             ),
             (
@@ -133,6 +145,22 @@ mod tests {
             )
         ),
         vec!(Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap())
+    )]
+    #[case(
+        vec!(
+            (
+                Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
+                Utc::now().naive_utc()
+            ),
+            (
+                Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
+                Utc::now().naive_utc()
+            )
+        ),
+        vec!(
+            Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
+            Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap()
+        )
     )]
     fn checking_for_late_jobs(
         #[case] input: Vec<(Uuid, NaiveDateTime)>,
