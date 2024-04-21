@@ -43,17 +43,10 @@ impl Monitor {
     }
 
     /// Retrieve the jobs currently in progress.
-    pub fn jobs_in_progress(&self) -> Vec<Job> {
-        // TODO: This definitely doesn't need to return copies!
+    pub fn jobs_in_progress(&self) -> Vec<&Job> {
         self.jobs
             .iter()
-            .filter_map(|job| {
-                if job.in_progress() {
-                    Some(job.clone())
-                } else {
-                    None
-                }
-            })
+            .filter_map(|job| if job.in_progress() { Some(job) } else { None })
             .collect()
     }
 
