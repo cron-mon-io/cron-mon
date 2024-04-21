@@ -28,26 +28,13 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> FinishJobService<'a, T> {
             .expect("Could not retrieve monitor")
             .unwrap();
 
-        let job = self.finish_job(&mut monitor, job_id, succeeded, &output);
+        let job = monitor
+            .finish_job(job_id, succeeded, output.clone())
+            .expect("Failed to finish job")
+            .clone();
 
         self.repo.save(&monitor).await.expect("Failed to save Job");
 
         job
-    }
-
-    fn finish_job(
-        &self,
-        monitor: &mut Monitor,
-        job_id: Uuid,
-        succeeded: bool,
-        output: &Option<String>,
-    ) -> Job {
-        let job = monitor
-            .get_job(job_id)
-            .expect("Failed to find job within monitor");
-        job.finish(succeeded, output.clone())
-            .expect("Failed to finish job");
-
-        job.clone()
     }
 }

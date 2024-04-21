@@ -5,14 +5,18 @@ pub mod application;
 pub mod domain;
 pub mod infrastructure;
 
-use crate::application::routes::{health, jobs, monitors};
-use crate::infrastructure::database::Db;
 use rocket::fs::FileServer;
 use rocket_db_pools::Database;
 
-#[launch]
-fn rocket() -> _ {
-    rocket::build()
+use crate::application::routes::{health, jobs, monitors};
+use crate::application::services::process_late_jobs::ProcessLateJobsService;
+use crate::infrastructure::database::{establish_connection, Db};
+use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
+use crate::infrastructure::threading::run_periodically_in_background;
+
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
+    let app = rocket::build()
         .attach(Db::init())
         .mount(
             "/api/v1/",
@@ -29,4 +33,18 @@ fn rocket() -> _ {
             ],
         )
         .mount("/api/v1/docs", FileServer::from("/usr/cron-mon/api/docs"))
+        .ignite()
+        .await?;
+
+    run_periodically_in_background(10, || async move {
+        let mut db = establish_connection().await;
+        let mut repo = MonitorRepository::new(&mut db);
+        let mut service = ProcessLateJobsService::new(&mut repo);
+
+        service.process_late_jobs().await;
+    });
+
+    app.launch().await?;
+
+    Ok(())
 }

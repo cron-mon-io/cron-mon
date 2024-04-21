@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize};
+use chrono::Duration;
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::domain::errors::FinishJobError;
@@ -6,7 +7,7 @@ use crate::domain::models::job::Job;
 
 /// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
 /// part of the Cron Mon domain.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct Monitor {
     /// The unique identifier for the Monitor.
     pub monitor_id: Uuid,
@@ -43,6 +44,7 @@ impl Monitor {
 
     /// Retrieve the jobs currently in progress.
     pub fn jobs_in_progress(&self) -> Vec<Job> {
+        // TODO: This definitely doesn't need to return copies!
         self.jobs
             .iter()
             .filter_map(|job| {
@@ -55,9 +57,24 @@ impl Monitor {
             .collect()
     }
 
+    /// Retrieve late jobs.
+    ///
+    /// Jobs are considered late once they have been running for more than
+    /// `expected_duration + grace_duration`. Note that late Jobs can still finish, either
+    /// successfully or in error.
+    pub fn late_jobs(&self) -> Vec<&Job> {
+        // TODO: More test cases!
+        self.jobs
+            .iter()
+            .filter_map(|job| if job.late() { Some(job) } else { None })
+            .collect()
+    }
+
     /// Start a new job
     pub fn start_job(&mut self) -> Job {
-        let new_job = Job::start();
+        // We give the job the _current_ maximum duration here so that if the monitor is modified,
+        // any previous and in progress jobs are not affected.
+        let new_job = Job::start(self.maximum_duration().num_seconds() as u64);
         self.jobs.push(new_job.clone());
         new_job
     }
@@ -69,10 +86,13 @@ impl Monitor {
         job_id: Uuid,
         succeeded: bool,
         output: Option<String>,
-    ) -> Result<(), FinishJobError> {
+    ) -> Result<&Job, FinishJobError> {
         let job = self.get_job(job_id);
         match job {
-            Some(j) => Ok(j.finish(succeeded, output)?),
+            Some(j) => {
+                j.finish(succeeded, output)?;
+                Ok(j)
+            }
             None => Err(FinishJobError::JobNotFound),
         }
     }
@@ -81,11 +101,21 @@ impl Monitor {
     pub fn get_job(&mut self, job_id: Uuid) -> Option<&mut Job> {
         self.jobs.iter_mut().find(|job| job.job_id == job_id)
     }
+
+    fn maximum_duration(&self) -> chrono::TimeDelta {
+        Duration::seconds((self.expected_duration + self.grace_duration) as i64)
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{FinishJobError, Monitor, Uuid};
+    use std::str::FromStr;
+
+    use chrono::{offset::Utc, NaiveDateTime};
+    use rstest::rstest;
+
+    use super::{Duration, FinishJobError, Job, Monitor, Uuid};
+
     #[test]
     fn creating_new_monitors() {
         let mon = Monitor::new("new-monitor".to_owned(), 3600, 600);
@@ -95,6 +125,41 @@ mod tests {
         assert_eq!(mon.grace_duration, 600);
         assert!(mon.jobs_in_progress().is_empty());
         assert!(mon.jobs.is_empty());
+    }
+
+    #[rstest]
+    #[case(
+        vec!(
+            (
+                Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
+                Utc::now().naive_utc()
+            ),
+            (
+                Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
+                Utc::now().naive_utc() + Duration::seconds(5)
+            )
+        ),
+        vec!(Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap())
+    )]
+    fn checking_for_late_jobs(
+        #[case] input: Vec<(Uuid, NaiveDateTime)>,
+        #[case] expected_ids: Vec<Uuid>,
+    ) {
+        let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+        mon.jobs = input
+            .iter()
+            .map(|i| Job {
+                job_id: i.0,
+                start_time: Utc::now().naive_utc() - Duration::seconds(200),
+                max_end_time: i.1,
+                end_time: None,
+                succeeded: None,
+                output: None,
+            })
+            .collect();
+
+        let late_jobs_ids: Vec<Uuid> = mon.late_jobs().iter().map(|job| job.job_id).collect();
+        assert_eq!(late_jobs_ids, expected_ids);
     }
 
     #[test]

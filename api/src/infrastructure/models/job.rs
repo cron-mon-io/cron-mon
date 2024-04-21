@@ -14,6 +14,7 @@ use crate::infrastructure::models::monitor::MonitorData;
 pub struct JobData {
     pub job_id: Uuid,
     pub start_time: NaiveDateTime,
+    pub max_end_time: NaiveDateTime,
     pub end_time: Option<NaiveDateTime>,
     pub succeeded: Option<bool>,
     pub output: Option<String>,
@@ -25,6 +26,7 @@ impl Into<Job> for &JobData {
         Job::new(
             self.job_id,
             self.start_time,
+            self.max_end_time,
             self.end_time,
             self.succeeded,
             self.output.clone(),

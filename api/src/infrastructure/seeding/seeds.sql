@@ -14,13 +14,14 @@ VALUES
 
 -- Jobs.
 INSERT INTO job
-    (job_id, monitor_id, start_time, end_time, succeeded, "output")
+    (job_id, monitor_id, start_time, max_end_time, end_time, succeeded, "output")
 VALUES
     -- db-backup.py (job in flight, failed a few days ago, otherwise all OK)
     (
         gen_random_uuid(),
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS',
         null,
         null,
         null
@@ -29,7 +30,8 @@ VALUES
         gen_random_uuid(),
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '1 DAY',
-        CURRENT_TIMESTAMP - INTERVAL '23 HOURS - 29 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '1 DAY',
+        CURRENT_TIMESTAMP - INTERVAL '23 HOURS 29 MINUTES',
         TRUE,
         'Database successfully backed up'
     ),
@@ -37,7 +39,8 @@ VALUES
         gen_random_uuid(),
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '2 DAY',
-        CURRENT_TIMESTAMP - INTERVAL '1 DAY - 23 HOURS - 1 MINUTE',
+        CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '2 DAY',
+        CURRENT_TIMESTAMP - INTERVAL '1 DAY 23 HOURS 1 MINUTE',
         FALSE,
         'Could not connect to database'
     ),
@@ -45,7 +48,8 @@ VALUES
         gen_random_uuid(),
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '3 DAY',
-        CURRENT_TIMESTAMP - INTERVAL '2 DAYS - 23 HOURS - 28 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '3 DAY',
+        CURRENT_TIMESTAMP - INTERVAL '2 DAYS 23 HOURS 28 MINUTES',
         TRUE,
         'Database successfully backed up'
     ),
@@ -53,7 +57,8 @@ VALUES
         gen_random_uuid(),
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '4 DAY',
-        CURRENT_TIMESTAMP - INTERVAL '3 DAYS - 23 HOURS - 32 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '4 DAY',
+        CURRENT_TIMESTAMP - INTERVAL '3 DAYS 23 HOURS 32 MINUTES',
         TRUE,
         'Database successfully backed up'
     ),
@@ -61,7 +66,8 @@ VALUES
         gen_random_uuid(),
         'c1bf0515-df39-448b-aa95-686360a33b36',
         CURRENT_TIMESTAMP - INTERVAL '5 DAY',
-        CURRENT_TIMESTAMP - INTERVAL '4 DAYS - 23 HOURS - 22 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '5 DAY',
+        CURRENT_TIMESTAMP - INTERVAL '4 DAYS 23 HOURS 22 MINUTES',
         TRUE,
         'Database successfully backed up'
     ),
@@ -70,6 +76,7 @@ VALUES
         gen_random_uuid(),
         'f0b291fe-bd41-4787-bc2d-1329903f7a6a',
         CURRENT_TIMESTAMP - INTERVAL '1 DAY',
+        CURRENT_TIMESTAMP + INTERVAL '6120 SECONDS' - INTERVAL '1 DAY',
         null,
         null,
         null
@@ -78,6 +85,7 @@ VALUES
         gen_random_uuid(),
         'f0b291fe-bd41-4787-bc2d-1329903f7a6a',
         CURRENT_TIMESTAMP - INTERVAL '2 DAY',
+        CURRENT_TIMESTAMP + INTERVAL '6120 SECONDS' - INTERVAL '2 DAY',
         null,
         null,
         null
@@ -86,6 +94,7 @@ VALUES
         gen_random_uuid(),
         'f0b291fe-bd41-4787-bc2d-1329903f7a6a',
         CURRENT_TIMESTAMP - INTERVAL '3 DAY',
+        CURRENT_TIMESTAMP + INTERVAL '6120 SECONDS' - INTERVAL '3 DAY',
         null,
         null,
         null
@@ -94,6 +103,7 @@ VALUES
         gen_random_uuid(),
         'f0b291fe-bd41-4787-bc2d-1329903f7a6a',
         CURRENT_TIMESTAMP - INTERVAL '4 DAY',
+        CURRENT_TIMESTAMP + INTERVAL '6120 SECONDS' - INTERVAL '4 DAY',
         null,
         null,
         null
@@ -104,7 +114,8 @@ VALUES
         gen_random_uuid(),
         '309a68f1-d6a2-4312-8012-49c1b9b9af25',
         CURRENT_TIMESTAMP - INTERVAL '1 DAY',
-        CURRENT_TIMESTAMP - INTERVAL '23 HOURS - 2 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '420 SECONDS' - INTERVAL '1 DAY',
+        CURRENT_TIMESTAMP - INTERVAL '23 HOURS 2 MINUTES',
         FALSE,
         'Corrupted manifest detected'
     ),
@@ -112,7 +123,8 @@ VALUES
         gen_random_uuid(),
         '309a68f1-d6a2-4312-8012-49c1b9b9af25',
         CURRENT_TIMESTAMP - INTERVAL '2 DAYS',
-        CURRENT_TIMESTAMP - INTERVAL '1 DAY - 23 HOURS - 43 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '420 SECONDS' - INTERVAL '2 DAYS',
+        CURRENT_TIMESTAMP - INTERVAL '1 DAY 23 HOURS 43 MINUTES',
         FALSE,
         'Received SIGKILL -9'
     ),
@@ -120,7 +132,8 @@ VALUES
         gen_random_uuid(),
         '309a68f1-d6a2-4312-8012-49c1b9b9af25',
         CURRENT_TIMESTAMP - INTERVAL '3 DAYS',
-        CURRENT_TIMESTAMP - INTERVAL '2 DAYS - 23 HOURS - 13 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '420 SECONDS' - INTERVAL '3 DAYS',
+        CURRENT_TIMESTAMP - INTERVAL '2 DAYS 23 HOURS 13 MINUTES',
         FALSE,
         'Timed out waiting for manifest API connection'
     ),
@@ -129,6 +142,7 @@ VALUES
         gen_random_uuid(),
         '0798c530-34a4-4452-b2dc-f8140fd498d5',
         CURRENT_TIMESTAMP - INTERVAL '24 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '12600 SECONDS' - INTERVAL '24 MINUTES',
         NULL,
         NULL,
         NULL
@@ -136,7 +150,8 @@ VALUES
     (
         gen_random_uuid(),
         '0798c530-34a4-4452-b2dc-f8140fd498d5',
-        CURRENT_TIMESTAMP - INTERVAL '1 HOUR - 30 MINUTES',
+        CURRENT_TIMESTAMP - INTERVAL '1 HOUR 30 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '12600 SECONDS' - INTERVAL '1 HOUR 30 MINUTES',
         NULL,
         NULL,
         NULL
@@ -144,7 +159,8 @@ VALUES
     (
         gen_random_uuid(),
         '0798c530-34a4-4452-b2dc-f8140fd498d5',
-        CURRENT_TIMESTAMP - INTERVAL '2 HOURS - 58 MINUTES',
+        CURRENT_TIMESTAMP - INTERVAL '2 HOURS 58 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '12600 SECONDS' - INTERVAL '2 HOURS 58 MINUTES',
         NULL,
         NULL,
         NULL
@@ -152,8 +168,9 @@ VALUES
     (
         gen_random_uuid(),
         '0798c530-34a4-4452-b2dc-f8140fd498d5',
-        CURRENT_TIMESTAMP - INTERVAL '3 HOURS - 55 MINUTES',
-        CURRENT_TIMESTAMP - INTERVAL '6 HOURS - 25 MINUTES',
+        CURRENT_TIMESTAMP - INTERVAL '3 HOURS 55 MINUTES',
+        CURRENT_TIMESTAMP + INTERVAL '12600 SECONDS' - INTERVAL '3 HOURS 55 MINUTES',
+        CURRENT_TIMESTAMP - INTERVAL '6 HOURS 25 MINUTES',
         TRUE,
         '{"bills_processed": 1234, "invoiced_generated": 325}'
     );

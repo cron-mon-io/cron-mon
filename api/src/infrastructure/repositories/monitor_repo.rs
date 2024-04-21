@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
+use diesel::dsl::now;
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
@@ -11,7 +12,6 @@ use crate::infrastructure::db_schema::job;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 use crate::infrastructure::models::monitor::MonitorData;
-
 use crate::infrastructure::repositories::{All, Delete, Get, Save};
 
 pub struct MonitorRepository<'a> {
@@ -31,6 +31,55 @@ impl<'a> MonitorRepository<'a> {
         let mon: Monitor = (&monitor_data, &job_datas).into();
         self.data.insert(mon.monitor_id, (monitor_data, job_datas));
         mon
+    }
+}
+
+#[async_trait]
+pub trait GetWithLateJobs {
+    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error>;
+}
+
+#[async_trait]
+impl<'a> GetWithLateJobs for MonitorRepository<'a> {
+    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
+        let in_progress_condition = job::end_time.is_null().and(now.gt(job::max_end_time));
+        let finished_condition = job::end_time
+            .is_not_null()
+            .and(job::end_time.assume_not_null().gt(job::max_end_time));
+        // Get all late jobs.
+        let late_jobs: Vec<JobData> = job::dsl::job
+            .inner_join(monitor::table)
+            .filter(in_progress_condition.or(finished_condition))
+            .select(JobData::as_select())
+            .load(self.db)
+            .await?;
+
+        // Get the monitors that the late jobs belong too.
+        // TODO: Refactor the below as it's very close to what we're doing in `all`.
+        let monitor_datas = monitor::table
+            .select(MonitorData::as_select())
+            .filter(
+                monitor::monitor_id.eq_any(
+                    late_jobs
+                        .iter()
+                        .map(|j| j.monitor_id)
+                        .collect::<Vec<Uuid>>(),
+                ),
+            )
+            .load(self.db)
+            .await?;
+
+        let jobs = JobData::belonging_to(&monitor_datas)
+            .select(JobData::as_select())
+            .load(self.db)
+            .await?;
+
+        Ok(jobs
+            .grouped_by(&monitor_datas)
+            .into_iter()
+            .zip(monitor_datas)
+            .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
+            .collect::<Vec<Monitor>>())
     }
 }
 

@@ -46,6 +46,7 @@ impl From<&Monitor> for (MonitorData, Vec<JobData>) {
                     job_id: job.job_id,
                     monitor_id: value.monitor_id,
                     start_time: job.start_time,
+                    max_end_time: job.max_end_time,
                     end_time: job.end_time,
                     succeeded: job.succeeded,
                     output: job.output.clone(),
