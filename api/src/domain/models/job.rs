@@ -153,7 +153,7 @@ mod tests {
 
     use super::{Duration, FinishJobError, Job, NaiveDateTime, Utc, Uuid};
 
-    // TODO: Figure out how to test the time-based elements.
+    // TODO: Figure out how to test the time-based elements. See https://tokio.rs/tokio/topics/testing
 
     #[test]
     fn starting_jobs() {
@@ -187,6 +187,8 @@ mod tests {
     #[rstest]
     #[case(None, None, None)]
     #[case(
+        // TODO: We do a lot of this in tests - find a nice way to extract this into a helper
+        // function.
         Some(NaiveDateTime::parse_from_str("2024-04-20 20:36:00", "%Y-%m-%d %H:%M:%S").unwrap()),
         Some(true),
         Some(330)

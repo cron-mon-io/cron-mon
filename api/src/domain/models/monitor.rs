@@ -123,6 +123,8 @@ mod tests {
     #[case(
         vec!(
             (
+                // TODO: We do a lot of this in tests - find a nice way to extract this into a
+                // helper function.
                 Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
                 Utc::now().naive_utc() + Duration::seconds(5)
             ),
@@ -171,6 +173,8 @@ mod tests {
             .iter()
             .map(|i| Job {
                 job_id: i.0,
+                // TODO: We do a lot of this in tests - find a nice way to extract this into a
+                // helper function.
                 start_time: Utc::now().naive_utc() - Duration::seconds(200),
                 max_end_time: i.1,
                 end_time: None,
