@@ -4,15 +4,12 @@ use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::repositories::Get;
 
-// For some reason we need to implement Sync and Send here to avoid a compilation error where this
-// application service is used in the `POST /monitors` route. But we _don't_ need it for the
-// `DeleteMonitorSerivce`...?
-pub struct FetchJobService<'a> {
-    repo: &'a mut (dyn Get<Monitor> + Sync + Send),
+pub struct FetchJobService<'a, T: Get<Monitor>> {
+    repo: &'a mut T,
 }
 
-impl<'a> FetchJobService<'a> {
-    pub fn new(repo: &'a mut (dyn Get<Monitor> + Sync + Send)) -> Self {
+impl<'a, T: Get<Monitor>> FetchJobService<'a, T> {
+    pub fn new(repo: &'a mut T) -> Self {
         Self { repo }
     }
 

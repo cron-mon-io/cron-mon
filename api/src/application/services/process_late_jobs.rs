@@ -1,14 +1,11 @@
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 
-// For some reason we need to implement Sync and Send here to avoid a compilation error where this
-// application service is used in the `POST /monitors` route. But we _don't_ need it for the
-// `DeleteMonitorSerivce`...?
-pub struct ProcessLateJobsService<'a> {
-    repo: &'a mut (dyn GetWithLateJobs + Sync + Send),
+pub struct ProcessLateJobsService<'a, T: GetWithLateJobs> {
+    repo: &'a mut T,
 }
 
-impl<'a> ProcessLateJobsService<'a> {
-    pub fn new(repo: &'a mut (dyn GetWithLateJobs + Sync + Send)) -> Self {
+impl<'a, T: GetWithLateJobs> ProcessLateJobsService<'a, T> {
+    pub fn new(repo: &'a mut T) -> Self {
         Self { repo }
     }
 

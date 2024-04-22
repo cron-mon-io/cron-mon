@@ -1,15 +1,12 @@
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::repositories::Save;
 
-// For some reason we need to implement Sync and Send here to avoid a compilation error where this
-// application service is used in the `POST /monitors` route. But we _don't_ need it for the
-// `DeleteMonitorSerivce`...?
-pub struct CreateMonitorService<'a> {
-    repo: &'a mut (dyn Save<Monitor> + Sync + Send),
+pub struct CreateMonitorService<'a, T: Save<Monitor>> {
+    repo: &'a mut T,
 }
 
-impl<'a> CreateMonitorService<'a> {
-    pub fn new(repo: &'a mut (dyn Save<Monitor> + Sync + Send)) -> Self {
+impl<'a, T: Save<Monitor>> CreateMonitorService<'a, T> {
+    pub fn new(repo: &'a mut T) -> Self {
         Self { repo }
     }
 
