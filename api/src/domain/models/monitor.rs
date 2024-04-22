@@ -7,7 +7,7 @@ use crate::domain::models::job::Job;
 
 /// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
 /// part of the Cron Mon domain.
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Monitor {
     /// The unique identifier for the Monitor.
     pub monitor_id: Uuid,

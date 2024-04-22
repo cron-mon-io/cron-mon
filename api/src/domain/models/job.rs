@@ -7,7 +7,7 @@ use crate::domain::errors::FinishJobError;
 
 /// The Job struct represents a monitored job, encapsulating the time it started, the time it
 /// finished, the resulting status and any output that it produced.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Job {
     /// The unique identifier for the Job.
     pub job_id: Uuid,
