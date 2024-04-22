@@ -1,12 +1,30 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use async_trait::async_trait;
+use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::result::Error;
+use rstest::*;
+use tokio::test;
 use uuid::Uuid;
 
+use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 use crate::infrastructure::repositories::{All, Delete, Get, Save};
+
+// Utility functions for testing.
+pub fn gen_uuid(uuid: &str) -> Uuid {
+    Uuid::from_str(uuid).unwrap()
+}
+
+pub fn gen_abs_datetime(ts: &str) -> NaiveDateTime {
+    NaiveDateTime::parse_from_str(ts, "%Y-%m-%d %H:%M:%S").unwrap()
+}
+
+pub fn gen_relative_datetime(seconds: i64) -> NaiveDateTime {
+    Utc::now().naive_utc() + Duration::seconds(seconds)
+}
 
 pub struct TestRepository {
     data: HashMap<Uuid, Monitor>,
@@ -75,175 +93,146 @@ impl Delete<Monitor> for TestRepository {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use std::str::FromStr;
-
-    use chrono::{Duration, NaiveDateTime, Utc};
-    use rstest::*;
-    use tokio::test;
-    use uuid::Uuid;
-
-    use crate::domain::models::job::Job;
-    use crate::infrastructure::repositories::monitor::GetWithLateJobs;
-    use crate::infrastructure::repositories::test_repo::TestRepository;
-    use crate::infrastructure::repositories::{All, Delete, Get, Save};
-
-    use super::Monitor;
-
-    fn gen_uuid(uuid: &str) -> Uuid {
-        Uuid::from_str(uuid).unwrap()
-    }
-
-    fn gen_abs_datetime(ts: &str) -> NaiveDateTime {
-        NaiveDateTime::parse_from_str(ts, "%Y-%m-%d %H:%M:%S").unwrap()
-    }
-
-    fn gen_relative_datetime(seconds: i64) -> NaiveDateTime {
-        Utc::now().naive_utc() + Duration::seconds(seconds)
-    }
-
-    #[fixture]
-    fn repo() -> TestRepository {
-        TestRepository::new(vec![
-            Monitor {
-                monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-                name: "background-task.sh".to_owned(),
-                expected_duration: 300,
-                grace_duration: 100,
-                jobs: vec![
-                    Job::start(400),
-                    Job::new(
-                        gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                        gen_relative_datetime(-500),
-                        gen_relative_datetime(-100),
-                        Some(gen_relative_datetime(-200)),
-                        Some(true),
-                        None,
-                    ),
-                ],
-            },
-            Monitor {
-                monitor_id: gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"),
-                name: "python -m generate-orders.py".to_owned(),
-                expected_duration: 1_800,
-                grace_duration: 300,
-                jobs: vec![],
-            },
-            Monitor {
-                monitor_id: gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b"),
-                name: "get-pending-orders | generate invoices".to_owned(),
-                expected_duration: 21_600,
-                grace_duration: 1_800,
-                jobs: vec![Job::new(
-                    gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
-                    gen_abs_datetime("2024-04-22 02:30:00"),
-                    gen_abs_datetime("2024-04-22 09:00:00"),
-                    Some(gen_abs_datetime("2024-04-22 09:45:00")), // late!
+#[fixture]
+fn repo() -> TestRepository {
+    TestRepository::new(vec![
+        Monitor {
+            monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+            name: "background-task.sh".to_owned(),
+            expected_duration: 300,
+            grace_duration: 100,
+            jobs: vec![
+                Job::start(400),
+                Job::new(
+                    gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                    gen_relative_datetime(-500),
+                    gen_relative_datetime(-100),
+                    Some(gen_relative_datetime(-200)),
                     Some(true),
                     None,
-                )],
-            },
-        ])
-    }
+                ),
+            ],
+        },
+        Monitor {
+            monitor_id: gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"),
+            name: "python -m generate-orders.py".to_owned(),
+            expected_duration: 1_800,
+            grace_duration: 300,
+            jobs: vec![],
+        },
+        Monitor {
+            monitor_id: gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b"),
+            name: "get-pending-orders | generate invoices".to_owned(),
+            expected_duration: 21_600,
+            grace_duration: 1_800,
+            jobs: vec![Job::new(
+                gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
+                gen_abs_datetime("2024-04-22 02:30:00"),
+                gen_abs_datetime("2024-04-22 09:00:00"),
+                Some(gen_abs_datetime("2024-04-22 09:45:00")), // late!
+                Some(true),
+                None,
+            )],
+        },
+    ])
+}
 
-    #[rstest]
-    #[test]
-    async fn test_get_with_late_jobs(mut repo: TestRepository) {
-        let monitors_with_late_jobs = repo
-            .get_with_late_jobs()
-            .await
-            .expect("Failed to get monitors with late jobs");
+#[rstest]
+#[test]
+async fn test_get_with_late_jobs(mut repo: TestRepository) {
+    let monitors_with_late_jobs = repo
+        .get_with_late_jobs()
+        .await
+        .expect("Failed to get monitors with late jobs");
 
-        assert_eq!(monitors_with_late_jobs.len(), 1);
-        assert_eq!(
-            monitors_with_late_jobs[0].monitor_id,
-            gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
-        );
-    }
+    assert_eq!(monitors_with_late_jobs.len(), 1);
+    assert_eq!(
+        monitors_with_late_jobs[0].monitor_id,
+        gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
+    );
+}
 
-    #[rstest]
-    #[test]
-    async fn test_get(mut repo: TestRepository) {
-        let monitor = repo
-            .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
-            .await
-            .expect("Error when retrieving monitors")
-            .unwrap();
+#[rstest]
+#[test]
+async fn test_get(mut repo: TestRepository) {
+    let monitor = repo
+        .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
+        .await
+        .expect("Error when retrieving monitors")
+        .unwrap();
 
-        assert_eq!(
-            monitor,
-            Monitor {
-                monitor_id: gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"),
-                name: "python -m generate-orders.py".to_owned(),
-                expected_duration: 1_800,
-                grace_duration: 300,
-                jobs: vec![],
-            }
-        );
+    assert_eq!(
+        monitor,
+        Monitor {
+            monitor_id: gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"),
+            name: "python -m generate-orders.py".to_owned(),
+            expected_duration: 1_800,
+            grace_duration: 300,
+            jobs: vec![],
+        }
+    );
 
-        let should_be_none = repo
-            .get(gen_uuid("7a3152a3-cf23-4b0b-8522-417a1eeb09d0"))
-            .await
-            .expect("Error when retrieving monitors");
-        assert_eq!(should_be_none, None);
-    }
+    let should_be_none = repo
+        .get(gen_uuid("7a3152a3-cf23-4b0b-8522-417a1eeb09d0"))
+        .await
+        .expect("Error when retrieving monitors");
+    assert_eq!(should_be_none, None);
+}
 
-    #[rstest]
-    #[test]
-    async fn test_all(mut repo: TestRepository) {
-        let monitors = repo.all().await.expect("Error when retrieving monitors");
-        let mut monitor_ids = monitors
-            .iter()
-            .map(|monitor| monitor.monitor_id.to_string())
-            .collect::<Vec<String>>();
-        monitor_ids.sort();
-        assert_eq!(
-            monitor_ids,
-            vec![
-                "41ebffb4-a188-48e9-8ec1-61380085cde3".to_owned(),
-                "841bdefb-e45c-4361-a8cb-8d247f4a088b".to_owned(),
-                "d01b6b65-8320-4445-9271-304eefa192c0".to_owned(),
-            ]
-        )
-    }
+#[rstest]
+#[test]
+async fn test_all(mut repo: TestRepository) {
+    let monitors = repo.all().await.expect("Error when retrieving monitors");
+    let mut monitor_ids = monitors
+        .iter()
+        .map(|monitor| monitor.monitor_id.to_string())
+        .collect::<Vec<String>>();
+    monitor_ids.sort();
+    assert_eq!(
+        monitor_ids,
+        vec![
+            "41ebffb4-a188-48e9-8ec1-61380085cde3".to_owned(),
+            "841bdefb-e45c-4361-a8cb-8d247f4a088b".to_owned(),
+            "d01b6b65-8320-4445-9271-304eefa192c0".to_owned(),
+        ]
+    )
+}
 
-    #[rstest]
-    #[test]
-    async fn test_save(mut repo: TestRepository) {
-        let should_be_none = repo
-            .get(gen_uuid("7a3152a3-cf23-4b0b-8522-417a1eeb09d0"))
-            .await
-            .expect("Error when retrieving monitors");
-        assert!(should_be_none.is_none());
+#[rstest]
+#[test]
+async fn test_save(mut repo: TestRepository) {
+    let should_be_none = repo
+        .get(gen_uuid("7a3152a3-cf23-4b0b-8522-417a1eeb09d0"))
+        .await
+        .expect("Error when retrieving monitors");
+    assert!(should_be_none.is_none());
 
-        let monitor = Monitor::new("new monitor".to_owned(), 120, 10);
-        repo.save(&monitor).await.expect("Error saving monitor");
+    let monitor = Monitor::new("new monitor".to_owned(), 120, 10);
+    repo.save(&monitor).await.expect("Error saving monitor");
 
-        let should_not_be_none = repo
-            .get(monitor.monitor_id)
-            .await
-            .expect("Error retrieving new monitor");
-        assert!(should_not_be_none.is_some());
-    }
+    let should_not_be_none = repo
+        .get(monitor.monitor_id)
+        .await
+        .expect("Error retrieving new monitor");
+    assert!(should_not_be_none.is_some());
+}
 
-    #[rstest]
-    #[test]
-    async fn test_delete(mut repo: TestRepository) {
-        let monitor = repo
-            .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
-            .await
-            .expect("Error when retrieving monitors")
-            .unwrap();
+#[rstest]
+#[test]
+async fn test_delete(mut repo: TestRepository) {
+    let monitor = repo
+        .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
+        .await
+        .expect("Error when retrieving monitors")
+        .unwrap();
 
-        repo.delete(&monitor)
-            .await
-            .expect("Failed to delete monitor");
+    repo.delete(&monitor)
+        .await
+        .expect("Failed to delete monitor");
 
-        let should_now_be_none = repo
-            .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
-            .await
-            .expect("Error when retrieving monitors");
-        assert!(should_now_be_none.is_none());
-    }
+    let should_now_be_none = repo
+        .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
+        .await
+        .expect("Error when retrieving monitors");
+    assert!(should_now_be_none.is_none());
 }
