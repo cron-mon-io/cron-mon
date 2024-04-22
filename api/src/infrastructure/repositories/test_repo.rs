@@ -5,7 +5,7 @@ use diesel::result::Error;
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
-use crate::infrastructure::repositories::monitor_repo::GetWithLateJobs;
+use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 use crate::infrastructure::repositories::{All, Delete, Get, Save};
 
 pub struct TestRepository {
@@ -85,7 +85,7 @@ mod tests {
     use uuid::Uuid;
 
     use crate::domain::models::job::Job;
-    use crate::infrastructure::repositories::monitor_repo::GetWithLateJobs;
+    use crate::infrastructure::repositories::monitor::GetWithLateJobs;
     use crate::infrastructure::repositories::test_repo::TestRepository;
     use crate::infrastructure::repositories::{All, Delete, Get, Save};
 

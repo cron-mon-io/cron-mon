@@ -1,4 +1,4 @@
-use crate::infrastructure::repositories::monitor_repo::GetWithLateJobs;
+use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 
 // For some reason we need to implement Sync and Send here to avoid a compilation error where this
 // application service is used in the `POST /monitors` route. But we _don't_ need it for the

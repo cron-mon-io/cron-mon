@@ -1,3 +1,4 @@
+pub mod monitor;
 pub mod monitor_repo;
 pub mod test_repo;
 
