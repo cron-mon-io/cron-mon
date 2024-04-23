@@ -1,12 +1,16 @@
+use crate::infrastructure::notify::NotifyLateJob;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 
-pub struct ProcessLateJobsService<'a, T: GetWithLateJobs> {
-    repo: &'a mut T,
+pub struct ProcessLateJobsService<'a, Repo: GetWithLateJobs, Notifier: NotifyLateJob> {
+    repo: &'a mut Repo,
+    notifier: &'a mut Notifier,
 }
 
-impl<'a, T: GetWithLateJobs> ProcessLateJobsService<'a, T> {
-    pub fn new(repo: &'a mut T) -> Self {
-        Self { repo }
+impl<'a, Repo: GetWithLateJobs, Notifier: NotifyLateJob>
+    ProcessLateJobsService<'a, Repo, Notifier>
+{
+    pub fn new(repo: &'a mut Repo, notifier: &'a mut Notifier) -> Self {
+        Self { repo, notifier }
     }
 
     pub async fn process_late_jobs(&mut self) {
@@ -19,14 +23,11 @@ impl<'a, T: GetWithLateJobs> ProcessLateJobsService<'a, T> {
             .expect("Failed to retrieve Monitors with late jobs");
 
         for mon in &monitors_with_late_jobs {
-            let late_jobs = mon.late_jobs();
-            // TODO: Send notifications here.
-            println!(
-                "Monitor '{}' ({}) has {} late jobs",
-                &mon.name,
-                &mon.monitor_id,
-                late_jobs.len()
-            );
+            for late_job in mon.late_jobs() {
+                self.notifier
+                    .notify_late_job(&mon.name, late_job)
+                    .expect("Failed to notify job is late");
+            }
         }
 
         println!("Check for late Jobs complete\n");
