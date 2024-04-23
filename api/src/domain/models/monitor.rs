@@ -2,7 +2,7 @@ use chrono::Duration;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::domain::errors::FinishJobError;
+use crate::domain::errors::JobError;
 use crate::domain::models::job::Job;
 
 /// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
@@ -71,21 +71,21 @@ impl Monitor {
         new_job
     }
 
-    /// Finish a job. Note that this will return a `FinishJobError` is a Job with the given `job_id`
+    /// Finish a job. Note that this will return a `JobError` is a Job with the given `job_id`
     /// cannot be found in the Monitor, or if the Job isn't currently in progress.
     pub fn finish_job(
         &mut self,
         job_id: Uuid,
         succeeded: bool,
         output: Option<String>,
-    ) -> Result<&Job, FinishJobError> {
+    ) -> Result<&Job, JobError> {
         let job = self.get_job(job_id);
         match job {
             Some(j) => {
                 j.finish(succeeded, output)?;
                 Ok(j)
             }
-            None => Err(FinishJobError::JobNotFound),
+            None => Err(JobError::JobNotFound),
         }
     }
 
@@ -106,7 +106,7 @@ mod tests {
     use chrono::{offset::Utc, NaiveDateTime};
     use rstest::rstest;
 
-    use super::{Duration, FinishJobError, Job, Monitor, Uuid};
+    use super::{Duration, Job, JobError, Monitor, Uuid};
 
     #[test]
     fn creating_new_monitors() {
@@ -230,6 +230,6 @@ mod tests {
         assert_eq!(mon.jobs_in_progress().len(), 0);
 
         let result2 = mon.finish_job(Uuid::new_v4(), false, None);
-        assert_eq!(result2.unwrap_err(), FinishJobError::JobNotFound);
+        assert_eq!(result2.unwrap_err(), JobError::JobNotFound);
     }
 }
