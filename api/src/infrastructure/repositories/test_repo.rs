@@ -187,7 +187,10 @@ async fn test_all(mut repo: TestRepository) {
         .iter()
         .map(|monitor| monitor.monitor_id.to_string())
         .collect::<Vec<String>>();
+
+    // Order the data so we can reliably perform assertions on it.
     monitor_ids.sort();
+
     assert_eq!(
         monitor_ids,
         vec![
