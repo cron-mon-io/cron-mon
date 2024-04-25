@@ -15,6 +15,9 @@ build-app:
 run:
 	docker compose up api app
 
+run-monitor:
+	docker compose up monitor
+
 # The `run-debug-deps-for-*` commands are to allow debug sessions to be run for
 # the API or front-end app through the development container's debugger, while
 # still running the other parts required for the whole system.

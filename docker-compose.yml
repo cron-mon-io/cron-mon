@@ -38,6 +38,25 @@ services:
       - default
       - rusty-network
 
+  monitor:
+    build:
+      dockerfile: ./api/Dockerfile
+      context: .
+    container_name: cron-mon-monitor
+    stdin_open: true
+    tty: true
+    environment:
+      DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
+    volumes:
+      - ./api:/usr/cron-mon/api
+    depends_on:
+      db:
+        condition: service_healthy
+    command: cargo run --bin monitor
+    networks:
+      - default
+      - rusty-network
+
   db:
     container_name: cron-mon-db
     image: public.ecr.aws/docker/library/postgres:16.1
