@@ -2,12 +2,12 @@ use chrono::Duration;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::domain::errors::FinishJobError;
+use crate::domain::errors::JobError;
 use crate::domain::models::job::Job;
 
 /// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
 /// part of the Cron Mon domain.
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Monitor {
     /// The unique identifier for the Monitor.
     pub monitor_id: Uuid,
@@ -43,17 +43,10 @@ impl Monitor {
     }
 
     /// Retrieve the jobs currently in progress.
-    pub fn jobs_in_progress(&self) -> Vec<Job> {
-        // TODO: This definitely doesn't need to return copies!
+    pub fn jobs_in_progress(&self) -> Vec<&Job> {
         self.jobs
             .iter()
-            .filter_map(|job| {
-                if job.in_progress() {
-                    Some(job.clone())
-                } else {
-                    None
-                }
-            })
+            .filter_map(|job| if job.in_progress() { Some(job) } else { None })
             .collect()
     }
 
@@ -63,7 +56,6 @@ impl Monitor {
     /// `expected_duration + grace_duration`. Note that late Jobs can still finish, either
     /// successfully or in error.
     pub fn late_jobs(&self) -> Vec<&Job> {
-        // TODO: More test cases!
         self.jobs
             .iter()
             .filter_map(|job| if job.late() { Some(job) } else { None })
@@ -79,21 +71,21 @@ impl Monitor {
         new_job
     }
 
-    /// Finish a job. Note that this will return a `FinishJobError` is a Job with the given `job_id`
+    /// Finish a job. Note that this will return a `JobError` is a Job with the given `job_id`
     /// cannot be found in the Monitor, or if the Job isn't currently in progress.
     pub fn finish_job(
         &mut self,
         job_id: Uuid,
         succeeded: bool,
         output: Option<String>,
-    ) -> Result<&Job, FinishJobError> {
+    ) -> Result<&Job, JobError> {
         let job = self.get_job(job_id);
         match job {
             Some(j) => {
                 j.finish(succeeded, output)?;
                 Ok(j)
             }
-            None => Err(FinishJobError::JobNotFound),
+            None => Err(JobError::JobNotFound),
         }
     }
 
@@ -114,7 +106,7 @@ mod tests {
     use chrono::{offset::Utc, NaiveDateTime};
     use rstest::rstest;
 
-    use super::{Duration, FinishJobError, Job, Monitor, Uuid};
+    use super::{Duration, Job, JobError, Monitor, Uuid};
 
     #[test]
     fn creating_new_monitors() {
@@ -131,6 +123,21 @@ mod tests {
     #[case(
         vec!(
             (
+                // TODO: We do a lot of this in tests - find a nice way to extract this into a
+                // helper function.
+                Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
+                Utc::now().naive_utc() + Duration::seconds(5)
+            ),
+            (
+                Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
+                Utc::now().naive_utc() + Duration::seconds(5)
+            )
+        ),
+        vec!()
+    )]
+    #[case(
+        vec!(
+            (
                 Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
                 Utc::now().naive_utc()
             ),
@@ -141,6 +148,22 @@ mod tests {
         ),
         vec!(Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap())
     )]
+    #[case(
+        vec!(
+            (
+                Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
+                Utc::now().naive_utc()
+            ),
+            (
+                Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
+                Utc::now().naive_utc()
+            )
+        ),
+        vec!(
+            Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
+            Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap()
+        )
+    )]
     fn checking_for_late_jobs(
         #[case] input: Vec<(Uuid, NaiveDateTime)>,
         #[case] expected_ids: Vec<Uuid>,
@@ -150,6 +173,8 @@ mod tests {
             .iter()
             .map(|i| Job {
                 job_id: i.0,
+                // TODO: We do a lot of this in tests - find a nice way to extract this into a
+                // helper function.
                 start_time: Utc::now().naive_utc() - Duration::seconds(200),
                 max_end_time: i.1,
                 end_time: None,
@@ -205,6 +230,6 @@ mod tests {
         assert_eq!(mon.jobs_in_progress().len(), 0);
 
         let result2 = mon.finish_job(Uuid::new_v4(), false, None);
-        assert_eq!(result2.unwrap_err(), FinishJobError::JobNotFound);
+        assert_eq!(result2.unwrap_err(), JobError::JobNotFound);
     }
 }

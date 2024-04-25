@@ -12,6 +12,7 @@ use crate::infrastructure::db_schema::job;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 use crate::infrastructure::models::monitor::MonitorData;
+use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 use crate::infrastructure::repositories::{All, Delete, Get, Save};
 
 pub struct MonitorRepository<'a> {
@@ -32,11 +33,6 @@ impl<'a> MonitorRepository<'a> {
         self.data.insert(mon.monitor_id, (monitor_data, job_datas));
         mon
     }
-}
-
-#[async_trait]
-pub trait GetWithLateJobs {
-    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error>;
 }
 
 #[async_trait]

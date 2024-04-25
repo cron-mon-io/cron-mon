@@ -11,6 +11,7 @@ use rocket_db_pools::Database;
 use crate::application::routes::{health, jobs, monitors};
 use crate::application::services::process_late_jobs::ProcessLateJobsService;
 use crate::infrastructure::database::{establish_connection, Db};
+use crate::infrastructure::notify::late_job_logger::LateJobNotifer;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 use crate::infrastructure::threading::run_periodically_in_background;
 
@@ -39,7 +40,8 @@ async fn main() -> Result<(), rocket::Error> {
     run_periodically_in_background(10, || async move {
         let mut db = establish_connection().await;
         let mut repo = MonitorRepository::new(&mut db);
-        let mut service = ProcessLateJobsService::new(&mut repo);
+        let mut notifier = LateJobNotifer::new();
+        let mut service = ProcessLateJobsService::new(&mut repo, &mut notifier);
 
         service.process_late_jobs().await;
     });

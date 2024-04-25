@@ -3,11 +3,11 @@ use chrono::{offset::Utc, Duration};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
-use crate::domain::errors::FinishJobError;
+use crate::domain::errors::JobError;
 
 /// The Job struct represents a monitored job, encapsulating the time it started, the time it
 /// finished, the resulting status and any output that it produced.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Job {
     /// The unique identifier for the Job.
     pub job_id: Uuid,
@@ -66,14 +66,10 @@ impl Job {
     }
 
     /// Finish the Job. Note that if the Job isn't currently in progress, this will return a
-    /// `FinishJobError`.
-    pub fn finish(
-        &mut self,
-        succeeded: bool,
-        output: Option<String>,
-    ) -> Result<(), FinishJobError> {
+    /// `JobError`.
+    pub fn finish(&mut self, succeeded: bool, output: Option<String>) -> Result<(), JobError> {
         if !self.in_progress() {
-            return Err(FinishJobError::JobAlreadyFinished);
+            return Err(JobError::JobAlreadyFinished);
         }
 
         self.succeeded = Some(succeeded);
@@ -151,9 +147,9 @@ mod tests {
     use rstest::rstest;
     use serde_json::{json, Value};
 
-    use super::{Duration, FinishJobError, Job, NaiveDateTime, Utc, Uuid};
+    use super::{Duration, Job, JobError, NaiveDateTime, Utc, Uuid};
 
-    // TODO: Figure out how to test the time-based elements.
+    // TODO: Figure out how to test the time-based elements. See https://tokio.rs/tokio/topics/testing
 
     #[test]
     fn starting_jobs() {
@@ -179,7 +175,7 @@ mod tests {
 
         // Cannot finish a job again once it's been finished.
         let result2 = job.finish(false, Some("It won't wrong".to_owned()));
-        assert_eq!(result2.unwrap_err(), FinishJobError::JobAlreadyFinished);
+        assert_eq!(result2.unwrap_err(), JobError::JobAlreadyFinished);
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);
     }
@@ -187,6 +183,8 @@ mod tests {
     #[rstest]
     #[case(None, None, None)]
     #[case(
+        // TODO: We do a lot of this in tests - find a nice way to extract this into a helper
+        // function.
         Some(NaiveDateTime::parse_from_str("2024-04-20 20:36:00", "%Y-%m-%d %H:%M:%S").unwrap()),
         Some(true),
         Some(330)

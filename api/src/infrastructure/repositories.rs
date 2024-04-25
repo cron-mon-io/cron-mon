@@ -1,4 +1,8 @@
+pub mod monitor;
 pub mod monitor_repo;
+
+#[cfg(test)]
+pub mod test_repo;
 
 use async_trait::async_trait;
 use diesel::result::Error;
