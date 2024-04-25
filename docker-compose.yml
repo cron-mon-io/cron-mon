@@ -17,7 +17,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: cargo run
+    command: cargo run --bin api
     networks:
       - default
       - rusty-network
