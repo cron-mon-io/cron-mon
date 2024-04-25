@@ -25,8 +25,8 @@ jobs:
       - name: Run cargo check
         run: cd api && cargo check
 
-  test:
-    name: Test
+  unit-tests:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -41,4 +41,38 @@ jobs:
           workspaces: "api"
 
       - name: Run cargo test
-        run: cd api && cargo test
+        run: cd api && cargo test --bins
+
+  integration-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://cron-mon-api:itsasecret@127.0.0.1/cron-mon
+    services:
+      postgres:
+        image: public.ecr.aws/docker/library/postgres:16.1
+        env:
+          POSTGRES_USER: cron-mon-api
+          POSTGRES_PASSWORD: itsasecret
+          POSTGRES_DB: cron-mon
+        ports:
+          - 54320:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install rust
+        run: rustup install 1.77.0
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "api"
+
+      - name: Run cargo test
+        run: cd api && cargo test --test integration_test
