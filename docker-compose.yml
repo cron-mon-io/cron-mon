@@ -17,7 +17,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: cargo run
+    command: cargo run --bin api
     networks:
       - default
       - rusty-network
@@ -34,6 +34,25 @@ services:
     ports:
       - 3000:3000
     command: npm run dev
+    networks:
+      - default
+      - rusty-network
+
+  monitor:
+    build:
+      dockerfile: ./api/Dockerfile
+      context: .
+    container_name: cron-mon-monitor
+    stdin_open: true
+    tty: true
+    environment:
+      DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
+    volumes:
+      - ./api:/usr/cron-mon/api
+    depends_on:
+      db:
+        condition: service_healthy
+    command: cargo run --bin monitor
     networks:
       - default
       - rusty-network

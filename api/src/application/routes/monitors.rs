@@ -1,3 +1,4 @@
+use rocket;
 use rocket::serde::json::Json;
 use rocket_db_pools::Connection;
 use serde::Deserialize;
@@ -19,7 +20,7 @@ pub struct MonitorData {
     grace_duration: i32,
 }
 
-#[get("/monitors")]
+#[rocket::get("/monitors")]
 pub async fn list_monitors(mut connection: Connection<Db>) -> Value {
     let mut repo = MonitorRepository::new(&mut **connection);
     let monitors = repo.all().await.expect("Error retrieving Monitors");
@@ -38,7 +39,7 @@ pub async fn list_monitors(mut connection: Connection<Db>) -> Value {
     }]
 }
 
-#[post("/monitors", data = "<new_monitor>")]
+#[rocket::post("/monitors", data = "<new_monitor>")]
 pub async fn create_monitor(
     mut connection: Connection<Db>,
     new_monitor: Json<MonitorData>,
@@ -57,7 +58,7 @@ pub async fn create_monitor(
     json![{"data": mon}]
 }
 
-#[get("/monitors/<monitor_id>")]
+#[rocket::get("/monitors/<monitor_id>")]
 pub async fn get_monitor(mut connection: Connection<Db>, monitor_id: Uuid) -> Option<Value> {
     let mut repo = MonitorRepository::new(&mut **connection);
     let monitor = repo
@@ -72,7 +73,7 @@ pub async fn get_monitor(mut connection: Connection<Db>, monitor_id: Uuid) -> Op
     }
 }
 
-#[delete("/monitors/<monitor_id>")]
+#[rocket::delete("/monitors/<monitor_id>")]
 pub async fn delete_monitor(
     mut connection: Connection<Db>,
     monitor_id: Uuid,
@@ -88,7 +89,7 @@ pub async fn delete_monitor(
     }
 }
 
-#[patch("/monitors/<monitor_id>", data = "<updated_monitor>")]
+#[rocket::patch("/monitors/<monitor_id>", data = "<updated_monitor>")]
 pub async fn update_monitor(
     mut connection: Connection<Db>,
     monitor_id: Uuid,

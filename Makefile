@@ -13,7 +13,10 @@ build-app:
 	docker compose run --rm --no-deps app bash -c  'npm run build'
 
 run:
-	docker compose up --force-recreate api app
+	docker compose up api app
+
+run-monitor:
+	docker compose up monitor
 
 # The `run-debug-deps-for-*` commands are to allow debug sessions to be run for
 # the API or front-end app through the development container's debugger, while

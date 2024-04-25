@@ -1,3 +1,4 @@
+use rocket;
 use rocket::serde::json::Json;
 use rocket_db_pools::Connection;
 use serde::Deserialize;
@@ -16,7 +17,7 @@ pub struct FinishJobInfo {
     output: Option<String>,
 }
 
-#[get("/monitors/<monitor_id>/jobs/<job_id>")]
+#[rocket::get("/monitors/<monitor_id>/jobs/<job_id>")]
 pub async fn get_job(mut connection: Connection<Db>, monitor_id: Uuid, job_id: Uuid) -> Value {
     let mut repo = MonitorRepository::new(&mut **connection);
     let mut service = FetchJobService::new(&mut repo);
@@ -26,7 +27,7 @@ pub async fn get_job(mut connection: Connection<Db>, monitor_id: Uuid, job_id: U
     json![{"data": job}]
 }
 
-#[post("/monitors/<monitor_id>/jobs/start")]
+#[rocket::post("/monitors/<monitor_id>/jobs/start")]
 pub async fn start_job(mut connection: Connection<Db>, monitor_id: Uuid) -> Value {
     let mut repo = MonitorRepository::new(&mut **connection);
     let mut service = StartJobService::new(&mut repo);
@@ -35,7 +36,7 @@ pub async fn start_job(mut connection: Connection<Db>, monitor_id: Uuid) -> Valu
     json![{"data": {"job_id": job.job_id}}]
 }
 
-#[post(
+#[rocket::post(
     "/monitors/<monitor_id>/jobs/<job_id>/finish",
     data = "<finish_job_info>"
 )]

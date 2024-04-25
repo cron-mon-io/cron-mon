@@ -19,3 +19,11 @@ uuid = { version = "1.8.0", features = ["v4", "serde", "fast-rng", "macro-diagno
 
 [dev-dependencies]
 rstest = "0.19.0"
+
+[[bin]]
+name = "api"
+path = "src/bin/api.rs"
+
+[[bin]]
+name = "monitor"
+path = "src/bin/monitor.rs"
