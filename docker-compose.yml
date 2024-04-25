@@ -41,6 +41,19 @@ services:
       - default
       - rusty-network
 
+  integration-tests-rs:
+    extends: base-rust
+    container_name: rust-integration-tests
+    depends_on:
+      db:
+        condition: service_healthy
+      seeder:
+        condition: service_completed_successfully
+    command: cargo test --test integration_test
+    networks:
+      - default
+      - rusty-network
+
   db:
     container_name: cron-mon-db
     image: public.ecr.aws/docker/library/postgres:16.1
@@ -78,6 +91,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    command: psql -f /usr/share/seeds.sql
 
   base-rust:
     image: cron-mon/base-rust-image

@@ -30,7 +30,12 @@ run-debug-deps-for-app:
 test: test-api
 
 test-api:
-	docker compose run --rm --no-deps api bash -c 'cargo test'
+	docker compose run --rm --no-deps api bash -c 'cargo test --bins'
+
+# Note that running this locally will re-seed your local DB so you'll lose
+# everything in there currently.
+test-api-integration:
+	docker compose up integration-tests-rs
 
 migration:
 	docker compose run --rm api diesel migration generate $(name)
@@ -42,7 +47,7 @@ migrate-redo:
 	docker compose run --rm api diesel migration redo
 
 seed:
-	docker compose run --rm seeder psql -f /usr/share/seeds.sql
+	docker compose run --rm seeder
 
 
 # Can't delete the volume when PostgreSQL is running.
