@@ -74,5 +74,5 @@ jobs:
 
       - name: Run cargo test
         run: cd api && cargo test --test integration_test
-        env:
-          DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
+        # env:
+        #   DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
