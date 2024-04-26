@@ -41,7 +41,7 @@ jobs:
           workspaces: "api"
 
       - name: Run cargo test
-        run: cd api && cargo test --bins
+        run: cd api && cargo test --lib
 
   integration-tests:
     name: Integration tests

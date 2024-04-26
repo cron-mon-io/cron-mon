@@ -30,7 +30,7 @@ run-debug-deps-for-app:
 test: test-api
 
 test-api:
-	docker compose run --rm --no-deps api bash -c 'cargo test --bins'
+	docker compose run --rm --no-deps api bash -c 'cargo test --lib'
 
 # Note that running this locally will re-seed your local DB so you'll lose
 # everything in there currently.
