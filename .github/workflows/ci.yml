@@ -72,6 +72,14 @@ jobs:
         with:
           workspaces: "api"
 
+      - name: Seed test database
+        run: psql -f api/src/infrastructure/seeding/seeds.sql
+        env:
+          PGHOST: localhost
+          PGUSER: cron-mon-api
+          PGPASSWORD: itsasecret
+          PGDATABASE: cron-mon
+
       - name: Run cargo test
         run: cd api && cargo test --test integration_test
         env:
