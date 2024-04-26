@@ -46,6 +46,7 @@ jobs:
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
+    container: public.ecr.aws/docker/library/rust:1.77.0-slim
     services:
       postgres:
         image: public.ecr.aws/docker/library/postgres:16.1
@@ -64,15 +65,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install rust
-        run: rustup install 1.77.0
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: "api"
-
       - name: Run cargo test
         run: cd api && cargo test --test integration_test
-        # env:
-        #   DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
+        env:
+          DATABASE_URL: postgres://cron-mon-api:itsasecret@postgres/cron-mon
