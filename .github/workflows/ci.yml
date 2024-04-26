@@ -46,8 +46,6 @@ jobs:
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgres://cron-mon-api:itsasecret@127.0.0.1/cron-mon
     services:
       postgres:
         image: public.ecr.aws/docker/library/postgres:16.1
@@ -76,3 +74,5 @@ jobs:
 
       - name: Run cargo test
         run: cd api && cargo test --test integration_test
+        env:
+          DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
