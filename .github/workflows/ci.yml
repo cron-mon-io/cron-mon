@@ -54,8 +54,6 @@ jobs:
           POSTGRES_USER: cron-mon-api
           POSTGRES_PASSWORD: itsasecret
           POSTGRES_DB: cron-mon
-        ports:
-          - 54320:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
