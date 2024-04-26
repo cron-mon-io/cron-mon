@@ -14,7 +14,6 @@ impl<'a, Repo: GetWithLateJobs, Notifier: NotifyLateJob>
     }
 
     pub async fn process_late_jobs(&mut self) {
-        // TODO: Test me
         println!("Beginning check for late Jobs...");
         let monitors_with_late_jobs = self
             .repo
