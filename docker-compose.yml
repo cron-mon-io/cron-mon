@@ -49,7 +49,7 @@ services:
         condition: service_healthy
       seeder:
         condition: service_completed_successfully
-    command: cargo test --test integration_test
+    command: cargo test --test "*" -- --test-threads=1
     networks:
       - default
       - rusty-network
