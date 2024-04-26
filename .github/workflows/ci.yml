@@ -72,6 +72,14 @@ jobs:
         with:
           workspaces: "api"
 
+      - name: Build application
+        run: cd api && cargo build
+
+      - name: Run migrations
+        run: cd api && diesel migration run
+        env:
+          DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
+
       - name: Seed test database
         run: psql -f api/src/infrastructure/seeding/seeds.sql
         env:
