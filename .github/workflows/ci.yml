@@ -81,6 +81,6 @@ jobs:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
 
       - name: Run cargo test
-        run: cd api && ccargo test --test "*" -- --test-threads=1
+        run: cd api && cargo test --test "*" -- --test-threads=1
         env:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
