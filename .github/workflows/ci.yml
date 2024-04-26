@@ -72,8 +72,8 @@ jobs:
         with:
           workspaces: "api"
 
-      - name: Build application
-        run: cd api && cargo build
+      - name: Install diesel-cli
+        run: cd api && cargo install diesel_cli --no-default-features --features postgres
 
       - name: Run migrations
         run: cd api && diesel migration run
