@@ -7,19 +7,7 @@ use cron_mon_api::infrastructure::database::establish_connection;
 use diesel_async::RunQueryDsl;
 
 pub async fn setup_db() -> AsyncPgConnection {
-    let seed_script = read_to_string("src/infrastructure/seeding/seeds.sql")
-        .unwrap()
-        .lines()
-        .filter_map(|line| {
-            if line.contains("--") || line.is_empty() {
-                None
-            } else {
-                Some(line)
-            }
-        })
-        .collect::<Vec<&str>>()
-        .join("");
-    let seed_queries: Vec<&str> = seed_script.split(";").collect();
+    let seed_queries = get_seed_queries();
 
     let mut conn = establish_connection().await;
     for query in seed_queries {
@@ -30,4 +18,25 @@ pub async fn setup_db() -> AsyncPgConnection {
     }
 
     conn
+}
+
+fn get_seed_queries() -> Vec<String> {
+    let seed_script = read_to_string("src/infrastructure/seeding/seeds.sql")
+        .unwrap()
+        .lines()
+        .filter_map(|line| {
+            // Filter out blank lines and comments.
+            if line.contains("--") || line.is_empty() {
+                None
+            } else {
+                Some(line)
+            }
+        })
+        .collect::<Vec<&str>>()
+        .join("");
+
+    seed_script
+        .split(";")
+        .map(|script| script.to_owned())
+        .collect::<Vec<String>>()
 }
