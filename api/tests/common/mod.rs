@@ -2,9 +2,11 @@ use std::fs::read_to_string;
 
 use diesel::dsl::sql_query;
 use diesel_async::AsyncPgConnection;
+use diesel_async::RunQueryDsl;
+use rocket::local::blocking::Client;
 
 use cron_mon_api::infrastructure::database::establish_connection;
-use diesel_async::RunQueryDsl;
+use cron_mon_api::rocket;
 
 pub async fn setup_db() -> AsyncPgConnection {
     let seed_queries = get_seed_queries();
@@ -18,6 +20,10 @@ pub async fn setup_db() -> AsyncPgConnection {
     }
 
     conn
+}
+
+pub fn get_test_client() -> Client {
+    Client::tracked(rocket()).expect("Invalid rocket instance")
 }
 
 fn get_seed_queries() -> Vec<String> {
