@@ -3,7 +3,6 @@ address = "0.0.0.0"
 ident = "Cron Mon API"
 
 [debug]
-address = "0.0.0.0"
 ident = "Cron Mon API - debug"
 
 [github]
@@ -14,6 +13,3 @@ url = "postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon"
 
 [vscode.databases.monitors]
 url = "postgres://cron-mon-api:itsasecret@host.docker.internal:54320/cron-mon"
-
-[github.database.monitors]
-url = "postgres://cron-mon-api:itsasecret@localhost/cron-mon"
