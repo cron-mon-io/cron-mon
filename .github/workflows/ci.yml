@@ -46,7 +46,6 @@ jobs:
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
-    container: public.ecr.aws/docker/library/rust:1.77.0-slim
     services:
       postgres:
         image: public.ecr.aws/docker/library/postgres:16.1
@@ -65,13 +64,13 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      # - name: Install rust
-      #   run: rustup install 1.77.0
+      - name: Install rust
+        run: rustup install 1.77.0
 
-      # - name: Cache dependencies
-      #   uses: Swatinem/rust-cache@v2
-      #   with:
-      #     workspaces: "api"
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "api"
 
       - name: Install diesel-cli
         run: cd api && cargo install diesel_cli --no-default-features --features postgres
@@ -79,11 +78,11 @@ jobs:
       - name: Run migrations
         run: cd api && diesel migration run
         env:
-          DATABASE_URL: postgres://cron-mon-api:itsasecret@postgres/cron-mon
+          DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
 
       - name: Run cargo test
         run: cd api && cargo test --test "*" -- --test-threads=1
         env:
-          DATABASE_URL: postgres://cron-mon-api:itsasecret@postgres/cron-mon
+          DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
           DOCS_DIR: ${{ github.workspace }}/api/docs
           ROCKET_PROFILE: github
