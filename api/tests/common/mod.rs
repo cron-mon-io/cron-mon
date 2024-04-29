@@ -1,3 +1,4 @@
+use std::env;
 use std::fs::read_to_string;
 use std::str::FromStr;
 
@@ -53,7 +54,7 @@ pub fn is_datetime(datetime: &str) -> bool {
 }
 
 fn get_seed_queries() -> Vec<String> {
-    let seed_script = read_to_string("src/infrastructure/seeding/seeds.sql")
+    let seed_script = read_to_string(env::var("SEED_SCRIPT_PATH").unwrap())
         .unwrap()
         .lines()
         .filter_map(|line| {

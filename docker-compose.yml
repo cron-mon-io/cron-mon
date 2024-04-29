@@ -49,7 +49,7 @@ services:
         condition: service_healthy
       seeder:
         condition: service_completed_successfully
-    command: cargo test --test "*" -- --test-threads=1
+    command: cargo test --test "*" -- --test-threads=1 --show-output
     networks:
       - default
       - rusty-network
@@ -103,6 +103,7 @@ services:
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
       DOCS_DIR: /usr/cron-mon/api/docs
+      SEED_SCRIPT_PATH: /usr/cron-mon/api/src/infrastructure/seeding/seeds.sql
     volumes:
       - ./api:/usr/cron-mon/api
 
