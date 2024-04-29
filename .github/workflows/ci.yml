@@ -85,3 +85,4 @@ jobs:
         env:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@localhost/cron-mon
           DOCS_DIR: ${{ github.workspace }}/api/docs
+          ROCKET_PROFILE: github
