@@ -13,9 +13,11 @@ use cron_mon_api::rocket;
 
 pub async fn setup_db() -> AsyncPgConnection {
     let seed_queries = get_seed_queries();
+    println!("Running {} seed queries...", seed_queries.len());
 
     let mut conn = establish_connection().await;
     for query in seed_queries {
+        println!("RUNNING: {}", query);
         sql_query(query)
             .execute(&mut conn)
             .await
