@@ -73,6 +73,9 @@ jobs:
       #   with:
       #     workspaces: "api"
 
+      - name: Install libpq
+        run: apt-get update && apt-get install libpq-dev -y
+
       - name: Install diesel-cli
         run: cd api && cargo install diesel_cli --no-default-features --features postgres
 
