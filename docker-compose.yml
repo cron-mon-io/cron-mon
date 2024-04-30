@@ -47,8 +47,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      seeder:
-        condition: service_completed_successfully
     command: cargo test --no-fail-fast --test "*" -- --test-threads=1
     networks:
       - default

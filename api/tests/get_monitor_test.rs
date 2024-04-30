@@ -7,7 +7,7 @@ use common::{gen_uuid, get_test_client, is_datetime, is_uuid};
 
 #[test]
 fn test_get_monitor() {
-    let client = get_test_client();
+    let client = get_test_client(true);
 
     let response = client
         .get("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36")

@@ -6,7 +6,7 @@ use common::get_test_client;
 
 #[test]
 fn test_get_health() {
-    let client = get_test_client();
+    let client = get_test_client(false);
 
     let response = client.get("/api/v1/health").dispatch();
 

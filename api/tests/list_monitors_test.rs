@@ -7,7 +7,7 @@ use common::get_test_client;
 
 #[test]
 fn test_get_monitors() {
-    let client = get_test_client();
+    let client = get_test_client(true);
 
     let response = client.get("/api/v1/monitors").dispatch();
 

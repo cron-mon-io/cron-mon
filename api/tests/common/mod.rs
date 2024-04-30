@@ -7,6 +7,7 @@ use diesel::dsl::sql_query;
 use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
 use rocket::local::blocking::Client;
+use tokio;
 use uuid::Uuid;
 
 use cron_mon_api::infrastructure::database::establish_connection;
@@ -28,7 +29,17 @@ pub async fn setup_db() -> AsyncPgConnection {
     conn
 }
 
-pub fn get_test_client() -> Client {
+pub fn get_test_client(seed_db: bool) -> Client {
+    if seed_db {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(async {
+                setup_db().await;
+                ()
+            })
+    }
     Client::tracked(rocket()).expect("Invalid rocket instance")
 }
 
