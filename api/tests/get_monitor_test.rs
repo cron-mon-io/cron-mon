@@ -6,7 +6,7 @@ use serde_json::Value;
 use common::{gen_uuid, get_test_client, is_datetime, is_uuid};
 
 #[test]
-fn test_get_monitors() {
+fn test_get_monitor() {
     let client = get_test_client();
 
     let response = client
