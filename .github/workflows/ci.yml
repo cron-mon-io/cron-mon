@@ -65,9 +65,6 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      # - name: Install rust
-      #   run: rustup install 1.77.0
-
       - name: Install libpq
         run: apt-get update && apt-get install libpq-dev -y
 
@@ -85,7 +82,7 @@ jobs:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
 
       - name: Run cargo test
-        run: cd api && RUST_BACKTRACE=1 cargo test --no-fail-fast --test "*" -- --test-threads=1
+        run: cd api && cargo test --no-fail-fast --test "*" -- --test-threads=1
         env:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
           DOCS_DIR: ${{ github.workspace }}/api/docs
