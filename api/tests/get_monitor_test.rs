@@ -6,7 +6,7 @@ use serde_json::Value;
 use common::{gen_uuid, get_test_client, is_datetime, is_uuid};
 
 #[test]
-fn test_get_monitor() {
+fn test_get_monitor_when_monitor_exists() {
     let client = get_test_client(true);
 
     let response = client
@@ -38,4 +38,15 @@ fn test_get_monitor() {
     assert_eq!(job["succeeded"].as_null(), Some(()));
     assert_eq!(job["in_progress"], true);
     assert_eq!(job["late"], false);
+}
+
+#[test]
+fn test_get_monitor_when_monitor_does_not_exist() {
+    let client = get_test_client(true);
+
+    let response = client
+        .get("/api/v1/monitors/cc6cf74e-b25d-4c8c-94a6-914e3f139c14")
+        .dispatch();
+
+    assert_eq!(response.status(), Status::NotFound);
 }
