@@ -2,6 +2,8 @@ pub mod application;
 pub mod domain;
 pub mod infrastructure;
 
+use std::env;
+
 use rocket::fs::FileServer;
 use rocket::{routes, Build, Rocket};
 use rocket_db_pools::Database;
@@ -27,5 +29,8 @@ pub fn rocket() -> Rocket<Build> {
                 jobs::finish_job,
             ],
         )
-        .mount("/api/v1/docs", FileServer::from("/usr/cron-mon/api/docs"))
+        .mount(
+            "/api/v1/docs",
+            FileServer::from(env::var("DOCS_DIR").expect("Missing DOC_DIR environment variable")),
+        )
 }

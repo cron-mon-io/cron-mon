@@ -251,10 +251,10 @@ mod tests {
             None,
         );
 
-        let serialized = json![{"job": job}];
+        let serialized = json!({"job": job});
         assert_eq!(
             serialized,
-            json![
+            json!(
                 {
                     "job": {
                         "job_id": "4987dbd2-cbc6-4ea7-b9b4-0af4abb4c0d3",
@@ -267,7 +267,7 @@ mod tests {
                         "late": false,
                     }
                 }
-            ]
+            )
         );
     }
 }

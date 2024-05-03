@@ -38,6 +38,8 @@ impl<'a> MonitorRepository<'a> {
 #[async_trait]
 impl<'a> GetWithLateJobs for MonitorRepository<'a> {
     async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
+        // TODO: Optimise this by getting montors with late jobs, rather than getting late jobs and
+        // then getting the monitors they belong too.
         let in_progress_condition = job::end_time.is_null().and(now.gt(job::max_end_time));
         let finished_condition = job::end_time
             .is_not_null()
@@ -82,7 +84,6 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
 #[async_trait]
 impl<'a> Get<Monitor> for MonitorRepository<'a> {
     async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, Error> {
-        // TODO: Test me
         let monitor_data = monitor::table
             .select(MonitorData::as_select())
             .find(monitor_id)
@@ -106,7 +107,6 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
 #[async_trait]
 impl<'a> All<Monitor> for MonitorRepository<'a> {
     async fn all(&mut self) -> Result<Vec<Monitor>, Error> {
-        // TODO: Test me
         let all_monitor_data = monitor::dsl::monitor
             .select(MonitorData::as_select())
             .load(self.db)
@@ -129,7 +129,7 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
 #[async_trait]
 impl<'a> Save<Monitor> for MonitorRepository<'a> {
     async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
-        // TODO: Test me
+        // TODO: Use transactions.
         let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
         let cached_data = self.data.get(&monitor.monitor_id);
         if let Some(cached) = cached_data {
@@ -140,6 +140,7 @@ impl<'a> Save<Monitor> for MonitorRepository<'a> {
 
             let job_ids = &cached.1.iter().map(|j| j.job_id).collect::<Vec<Uuid>>();
             for j in &job_datas {
+                // TODO: Handle jobs being deleted.
                 if job_ids.contains(&j.job_id) {
                     diesel::update(j).set(j).execute(self.db).await?;
                 } else {
@@ -171,7 +172,6 @@ impl<'a> Save<Monitor> for MonitorRepository<'a> {
 #[async_trait]
 impl<'a> Delete<Monitor> for MonitorRepository<'a> {
     async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
-        // TODO: Test me
         let (monitor_data, _) = <(MonitorData, Vec<JobData>)>::from(monitor);
 
         diesel::delete(&monitor_data).execute(self.db).await?;

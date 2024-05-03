@@ -2,16 +2,8 @@ version: '3.7'
 services:
 
   api:
-    build:
-      dockerfile: ./api/Dockerfile
-      context: .
+    extends: base-rust
     container_name: cron-mon-api
-    stdin_open: true
-    tty: true
-    environment:
-      DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
-    volumes:
-      - ./api:/usr/cron-mon/api
     ports:
       - 8000:8000
     depends_on:
@@ -39,20 +31,23 @@ services:
       - rusty-network
 
   monitor:
-    build:
-      dockerfile: ./api/Dockerfile
-      context: .
+    extends: base-rust
     container_name: cron-mon-monitor
-    stdin_open: true
-    tty: true
-    environment:
-      DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
-    volumes:
-      - ./api:/usr/cron-mon/api
     depends_on:
       db:
         condition: service_healthy
     command: cargo run --bin monitor
+    networks:
+      - default
+      - rusty-network
+
+  integration-tests-rs:
+    extends: base-rust
+    container_name: rust-integration-tests
+    depends_on:
+      db:
+        condition: service_healthy
+    command: cargo test --no-fail-fast --test "*" -- --test-threads=1
     networks:
       - default
       - rusty-network
@@ -94,6 +89,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    command: psql -f /usr/share/seeds.sql
+
+  base-rust:
+    image: cron-mon/base-rust-image
+    build:
+      dockerfile: ./api/Dockerfile
+      context: .
+    stdin_open: true
+    tty: true
+    environment:
+      DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
+      DOCS_DIR: /usr/cron-mon/api/docs
+      SEED_SCRIPT_PATH: /usr/cron-mon/api/src/infrastructure/seeding/seeds.sql
+    volumes:
+      - ./api:/usr/cron-mon/api
 
 networks:
   rusty-network:

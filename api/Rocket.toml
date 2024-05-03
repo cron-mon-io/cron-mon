@@ -2,12 +2,14 @@
 address = "0.0.0.0"
 ident = "Cron Mon API"
 
+[debug]
+ident = "Cron Mon API - debug"
+
+[github]
+ident = "Cron Mon API - GitHub Actions"
+
 [default.databases.monitors]
 url = "postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon"
 
-[debug]
-address = "0.0.0.0"
-ident = "Cron Mon API - debug"
-
-[debug.databases.monitors]
+[vscode.databases.monitors]
 url = "postgres://cron-mon-api:itsasecret@host.docker.internal:54320/cron-mon"

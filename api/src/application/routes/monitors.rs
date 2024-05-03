@@ -25,18 +25,18 @@ pub async fn list_monitors(mut connection: Connection<Db>) -> Value {
     let mut repo = MonitorRepository::new(&mut **connection);
     let monitors = repo.all().await.expect("Error retrieving Monitors");
 
-    json![{
+    json!({
         "data": monitors
             .iter()
-            .map(|m| json![{
+            .map(|m| json!({
                 "monitor_id": m.monitor_id,
                 "name": m.name,
                 "expected_duration": m.expected_duration,
                 "grace_duration": m.grace_duration
-            }])
+            }))
             .collect::<Value>(),
         "paging": Paging { total: monitors.len() }
-    }]
+    })
 }
 
 #[rocket::post("/monitors", data = "<new_monitor>")]
@@ -55,7 +55,7 @@ pub async fn create_monitor(
         )
         .await;
 
-    json![{"data": mon}]
+    json!({"data": mon})
 }
 
 #[rocket::get("/monitors/<monitor_id>")]
@@ -67,7 +67,7 @@ pub async fn get_monitor(mut connection: Connection<Db>, monitor_id: Uuid) -> Op
         .expect("Error retrieving Monitor");
 
     if let Some(mon) = monitor {
-        Some(json![{"data": mon}])
+        Some(json!({"data": mon}))
     } else {
         None
     }
@@ -107,5 +107,5 @@ pub async fn update_monitor(
         )
         .await?;
 
-    Some(json![{"data": mon}])
+    Some(json!({"data": mon}))
 }

@@ -24,7 +24,7 @@ pub async fn get_job(mut connection: Connection<Db>, monitor_id: Uuid, job_id: U
 
     let job = service.fetch_by_id(monitor_id, job_id).await;
 
-    json![{"data": job}]
+    json!({"data": job})
 }
 
 #[rocket::post("/monitors/<monitor_id>/jobs/start")]
@@ -33,7 +33,7 @@ pub async fn start_job(mut connection: Connection<Db>, monitor_id: Uuid) -> Valu
     let mut service = StartJobService::new(&mut repo);
 
     let job = service.start_job_for_monitor(monitor_id).await;
-    json![{"data": {"job_id": job.job_id}}]
+    json!({"data": {"job_id": job.job_id}})
 }
 
 #[rocket::post(
@@ -58,5 +58,5 @@ pub async fn finish_job(
         )
         .await;
 
-    json![{"data": job}]
+    json!({"data": job})
 }

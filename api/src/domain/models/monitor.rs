@@ -121,7 +121,7 @@ mod tests {
 
     #[rstest]
     #[case(
-        vec!(
+        vec![
             (
                 // TODO: We do a lot of this in tests - find a nice way to extract this into a
                 // helper function.
@@ -132,11 +132,11 @@ mod tests {
                 Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
                 Utc::now().naive_utc() + Duration::seconds(5)
             )
-        ),
-        vec!()
+        ],
+        vec![]
     )]
     #[case(
-        vec!(
+        vec![
             (
                 Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
                 Utc::now().naive_utc()
@@ -145,11 +145,11 @@ mod tests {
                 Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
                 Utc::now().naive_utc() + Duration::seconds(5)
             )
-        ),
-        vec!(Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap())
+        ],
+        vec![Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap()]
     )]
     #[case(
-        vec!(
+        vec![
             (
                 Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
                 Utc::now().naive_utc()
@@ -158,11 +158,11 @@ mod tests {
                 Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
                 Utc::now().naive_utc()
             )
-        ),
-        vec!(
+        ],
+        vec![
             Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
             Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap()
-        )
+        ]
     )]
     fn checking_for_late_jobs(
         #[case] input: Vec<(Uuid, NaiveDateTime)>,
