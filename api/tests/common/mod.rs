@@ -7,7 +7,6 @@ use diesel::dsl::sql_query;
 use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
 use rocket::local::blocking::Client;
-use serde_json::Value;
 use tokio;
 use uuid::Uuid;
 
@@ -42,12 +41,6 @@ pub fn get_test_client(seed_db: bool) -> Client {
             })
     }
     Client::tracked(rocket()).expect("Invalid rocket instance")
-}
-
-pub fn get_num_monitors(client: &Client) -> i64 {
-    let response = client.get("/api/v1/monitors").dispatch();
-    let body = response.into_json::<Value>().unwrap();
-    body["paging"]["total"].as_i64().unwrap()
 }
 
 // Duplicate of src/infrastructure/respositories/test_repo - need to figure out a better way...
