@@ -18,7 +18,6 @@ async fn test_all() {
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
 
-    // Test `All` impl.
     let montiors = repo.all().await.unwrap();
 
     let mut names: Vec<String> = montiors
@@ -43,7 +42,6 @@ async fn test_get() {
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
 
-    // Test `Get` impl.
     let should_be_none = repo
         .get(Uuid::from_str("4940ede2-72fc-4e0e-838e-f15f35e3594f").unwrap())
         .await
@@ -65,7 +63,6 @@ async fn test_get_with_late_jobs() {
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
 
-    // Test `GetWithLateJobs` impl.
     let monitors_with_late_jobs = repo.get_with_late_jobs().await.unwrap();
     let mut names: Vec<String> = monitors_with_late_jobs
         .iter()
@@ -83,11 +80,10 @@ async fn test_get_with_late_jobs() {
 }
 
 #[test]
-async fn test_save_and_delete() {
+async fn test_save() {
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
 
-    // Test `Save` impl.
     let mut new_monitor = Monitor::new("new-monitor".to_owned(), 100, 5);
     new_monitor.start_job();
     repo.save(&new_monitor).await.unwrap();
@@ -104,9 +100,20 @@ async fn test_save_and_delete() {
     assert_eq!(new_monitor.jobs.len(), 1);
     assert_eq!(read_new_monitor.jobs.len(), 1);
     assert_eq!(new_monitor.jobs[0].job_id, read_new_monitor.jobs[0].job_id);
+}
 
-    // Test `Delete` impl.
-    repo.delete(&new_monitor).await.unwrap();
-    assert!(repo.get(new_monitor.monitor_id).await.unwrap().is_none());
-    assert_eq!(repo.all().await.unwrap().len(), 5);
+#[test]
+async fn test_delete() {
+    let mut conn = setup_db().await;
+    let mut repo = MonitorRepository::new(&mut conn);
+
+    let monitor = repo
+        .get(Uuid::from_str("c1bf0515-df39-448b-aa95-686360a33b36").unwrap())
+        .await
+        .unwrap()
+        .unwrap();
+
+    repo.delete(&monitor).await.unwrap();
+    assert!(repo.get(monitor.monitor_id).await.unwrap().is_none());
+    assert_eq!(repo.all().await.unwrap().len(), 4);
 }
