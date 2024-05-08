@@ -1,22 +1,30 @@
 <template>
   <v-theme-provider class="app-container" :theme="appliedTheme.name" with-background>
     <v-app>
-      <v-navigation-drawer>
-        <v-list-item :height="80">
-          <v-img :width="300" :height="220" cover aspect-ratio="16/9" :src="CronMonLogo"></v-img>
+      <v-navigation-drawer :rail="rail">
+        <v-list-item class="logo" :height="80">
+          <v-img
+            :width="rail ? 40 : 300"
+            :height="rail ? 40 : 220"
+            cover
+            aspect-ratio="16/9"
+            :src="rail ? CronMonIcon : CronMonLogo"
+          ></v-img>
         </v-list-item>
         <v-divider></v-divider>
-        <v-list-item link title="Home" to="/"></v-list-item>
-        <v-list-item link title="App" to="/app"></v-list-item>
-        <v-list-item link title="About" to="/about"></v-list-item>
+
+        <v-list density="compact" nav>
+          <v-list-item link prepend-icon="mdi-home" title="Home" to="/"></v-list-item>
+          <v-list-item link prepend-icon="mdi-monitor-eye" title="App" to="/app"></v-list-item>
+          <v-list-item link prepend-icon="mdi-information" title="About" to="/about"></v-list-item>
+        </v-list>
       </v-navigation-drawer>
 
       <v-main>
         <v-toolbar density="compact">
+          <v-btn density="comfortable" @click="rail = !rail" icon="mdi-dots-vertical"></v-btn>
           <v-spacer></v-spacer>
-          <v-btn @click="toggleTheme">
-            <v-icon :icon="appliedTheme.icon"></v-icon>
-          </v-btn>
+          <v-btn density="comfortable" @click="toggleTheme" :icon="appliedTheme.icon"></v-btn>
         </v-toolbar>
         <RouterView />
       </v-main>
@@ -26,9 +34,11 @@
 
 <script setup lang="ts">
 import CronMonLogo from '@/assets/logo.svg'
+import CronMonIcon from '@/assets/icon.svg'
 import { ref, computed } from 'vue'
 import { THEMES, getThemeName, setThemeName, ThemeName } from './utils/theme'
 
+const rail = ref(false)
 const theme = ref(THEMES)
 const themeName = ref(getThemeName())
 const appliedTheme = computed(() => theme.value[themeName.value])
@@ -38,3 +48,11 @@ function toggleTheme() {
   setThemeName(themeName.value)
 }
 </script>
+
+<style scoped>
+.logo {
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+</style>
