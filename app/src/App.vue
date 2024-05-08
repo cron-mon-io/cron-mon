@@ -31,10 +31,7 @@ import { THEMES, getThemeName, setThemeName, ThemeName } from './utils/theme'
 
 const theme = ref(THEMES)
 const themeName = ref(getThemeName())
-const appliedTheme = computed(() => {
-  console.log('themeName.value', themeName.value)
-  return theme.value[themeName.value]
-})
+const appliedTheme = computed(() => theme.value[themeName.value])
 
 function toggleTheme() {
   themeName.value = themeName.value === ThemeName.Dark ? ThemeName.Light : ThemeName.Dark
