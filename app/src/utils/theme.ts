@@ -5,7 +5,7 @@ export enum ThemeName {
 
 export enum ThemeIcon {
   ToDark = 'mdi-weather-night',
-  ToLight = 'mdi-weather-sunny'
+  ToLight = 'mdi-white-balance-sunny'
 }
 
 export interface Theme {
