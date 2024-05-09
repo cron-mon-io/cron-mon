@@ -1,11 +1,11 @@
 <template>
-  <v-card variant="elevated" class="content">
+  <v-card variant="elevated" class="mx-6 mt-13">
     <template v-slot:title>
       <div class="title">
         <v-icon>
           <v-img :width="40" :height="40" aspect-ratio="16/9" :src="CronMonIcon"></v-img>
         </v-icon>
-        <span class="font-weight-black">Welcome to CronMon</span>
+        <span class="font-weight-black ml-4">Welcome to CronMon</span>
       </div>
     </template>
     <v-card-text class="text-body-1">
@@ -62,16 +62,7 @@ import CronMonIcon from '@/assets/icon.svg'
 </script>
 
 <style scoped>
-.content {
-  /* Do away with this via Vuetify's mx-13 and mt-6 */
-  margin: 50px 25px auto;
-}
-
 .title {
   display: flex;
-}
-.title span {
-  /* Do away with this via Vuetify's ml-n */
-  margin-left: 1rem;
 }
 </style>

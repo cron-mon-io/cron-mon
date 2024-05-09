@@ -2,7 +2,7 @@
   <v-theme-provider class="app-container" :theme="appliedTheme.name" with-background>
     <v-app>
       <v-navigation-drawer :rail="rail">
-        <v-list-item class="logo" :height="80">
+        <v-list-item class="logo pa-0" :height="80">
           <v-img
             :width="rail ? 40 : 300"
             :height="rail ? 40 : 220"
@@ -51,7 +51,6 @@ function toggleTheme() {
 
 <style scoped>
 .logo {
-  padding: 0;
   display: flex;
   justify-content: center;
 }
