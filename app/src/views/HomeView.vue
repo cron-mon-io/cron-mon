@@ -19,40 +19,42 @@
 
       Setting up monitors and using them is quick and easy:
 
-      <!-- Try this as a timeline as well - see what looks better! -->
-      <v-stepper class="my-5 mx-10" :items="['Step 1', 'Step 2', 'Step 3']">
-        <!-- eslint-disable-next-line vue/valid-v-slot -->
-        <template v-slot:item.1>
-          <v-card title="Setup">
-            Go to the <v-icon to="/monitors">mdi-monitor-eye</v-icon> in the sidebar to view your
-            monitored cron jobs. From here, you can add new monitors for you cron jobs - which is a
-            simple as giving the monitor a name, an expected duration and a grace period.
+      <v-timeline side="end" class="mt-2">
+        <v-timeline-item icon="mdi-cog-outline" dot-color="primary" fill-dot>
+          <v-card class="elevation-2">
+            <v-card-title class="text-h5">Setup</v-card-title>
+            <v-card-text>
+              Go to the <v-icon to="/monitors">mdi-monitor-eye</v-icon> in the sidebar to view your
+              monitored cron jobs. From here, you can add new monitors for you cron jobs - which is
+              a simple as giving the monitor a name, an expected duration and a grace period.
+            </v-card-text>
           </v-card>
-        </template>
+        </v-timeline-item>
 
-        <!-- eslint-disable-next-line vue/valid-v-slot -->
-        <template v-slot:item.2>
-          <v-card title="Integration">
-            CronMon provides a simple REST API to integrate with your existing applications, which
-            is as simple as two API calls: one to signify that a new job has started and another to
-            say that it's finished.
-            <v-alert type="info" class="mt-3">
-              In the future, CronMon will also provide libraries in various programming languages to
-              make integration even simpler.
-            </v-alert>
+        <v-timeline-item icon="mdi-console" dot-color="primary" fill-dot>
+          <v-card class="elevation-2">
+            <v-card-title class="text-h5">Integration</v-card-title>
+            <v-card-text>
+              CronMon provides a simple REST API to integrate with your existing applications, which
+              is as simple as two API calls: one to signify that a new job has started and another
+              to say that it's finished.
+              <v-alert type="info" class="mt-3">
+                In the future, CronMon will also provide libraries in various programming languages
+                to make integration even simpler.
+              </v-alert>
+            </v-card-text>
           </v-card>
-        </template>
+        </v-timeline-item>
 
-        <!-- eslint-disable-next-line vue/valid-v-slot -->
-        <template v-slot:item.3>
-          <v-card title="Go go go!">
-            Start running your jobs! CronMon will then take care of the rest.
+        <v-timeline-item icon="mdi-run" dot-color="primary" fill-dot>
+          <v-card class="elevation-2">
+            <v-card-title class="text-h5">Go go go!</v-card-title>
+            <v-card-text>
+              Start running your jobs! CronMon will then take care of the rest.
+            </v-card-text>
           </v-card>
-        </template>
-      </v-stepper>
-
-      To get started, click on the <v-icon>mdi-monitor-eye</v-icon> icon in the sidebar to view your
-      monitored cron jobs.
+        </v-timeline-item>
+      </v-timeline>
     </v-card-text>
   </v-card>
 </template>
