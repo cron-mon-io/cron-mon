@@ -31,7 +31,17 @@
           <v-spacer></v-spacer>
           <v-btn density="comfortable" @click="toggleTheme" :icon="appliedTheme.icon"></v-btn>
         </v-toolbar>
-        <RouterView />
+        <RouterView class="mb-3" />
+        <v-footer app absolute class="text-center d-flex flex-column">
+          <a href="https://github.com/howamith/cron-mon" target="_blank" rel="noopener noreferrer">
+            <v-btn flat density="comfortable" icon>
+              <template v-slot:default>
+                <GitHubIcon :dark="appliedTheme.name === ThemeName.Dark" />
+              </template>
+            </v-btn>
+          </a>
+          <div>&copy; {{ new Date().getFullYear() }} — <strong>CronMon</strong></div>
+        </v-footer>
       </v-main>
     </v-app>
   </v-theme-provider>
@@ -40,6 +50,7 @@
 <script setup lang="ts">
 import CronMonLogo from '@/assets/logo.svg'
 import CronMonIcon from '@/assets/icon.svg'
+import GitHubIcon from '@/components/icons/GitHub.vue'
 import { ref, computed } from 'vue'
 import { THEMES, getThemeName, setThemeName, ThemeName } from './utils/theme'
 
