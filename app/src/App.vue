@@ -15,8 +15,13 @@
 
         <v-list density="compact" nav>
           <v-list-item link prepend-icon="mdi-home" title="Home" to="/"></v-list-item>
-          <v-list-item link prepend-icon="mdi-monitor-eye" title="App" to="/app"></v-list-item>
-          <v-list-item link prepend-icon="mdi-information" title="About" to="/about"></v-list-item>
+          <v-list-item
+            link
+            prepend-icon="mdi-monitor-eye"
+            title="Monitors"
+            to="/monitors"
+          ></v-list-item>
+          <v-list-item link prepend-icon="mdi-bookshelf" title="Docs" to="/docs"></v-list-item>
         </v-list>
       </v-navigation-drawer>
 

@@ -1,5 +1,5 @@
 <template>
   <div>
-    <h1>This the app view</h1>
+    <h1>This the monitors view</h1>
   </div>
 </template>

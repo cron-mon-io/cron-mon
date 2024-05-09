@@ -24,7 +24,7 @@
         <!-- eslint-disable-next-line vue/valid-v-slot -->
         <template v-slot:item.1>
           <v-card title="Setup">
-            Go to the <v-icon to="/app">mdi-monitor-eye</v-icon> in the sidebar to view your
+            Go to the <v-icon to="/monitors">mdi-monitor-eye</v-icon> in the sidebar to view your
             monitored cron jobs. From here, you can add new monitors for you cron jobs - which is a
             simple as giving the monitor a name, an expected duration and a grace period.
           </v-card>
