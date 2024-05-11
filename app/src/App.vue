@@ -1,5 +1,5 @@
 <template>
-  <v-theme-provider class="app-container" :theme="appliedTheme.name" with-background>
+  <v-theme-provider class="app-container" :theme="themeName" with-background>
     <v-app>
       <v-navigation-drawer :rail="rail">
         <v-list-item class="logo pa-0" :height="80">
@@ -29,14 +29,14 @@
         <v-toolbar density="compact">
           <v-btn density="comfortable" @click="rail = !rail" icon="mdi-dots-vertical"></v-btn>
           <v-spacer></v-spacer>
-          <v-btn density="comfortable" @click="toggleTheme" :icon="appliedTheme.icon"></v-btn>
+          <ThemePicker @theme-changed="updateTheme" />
         </v-toolbar>
         <RouterView class="mb-3" />
         <v-footer app absolute class="text-center d-flex flex-column">
           <a href="https://github.com/howamith/cron-mon" target="_blank" rel="noopener noreferrer">
             <v-btn flat density="comfortable" icon>
               <template v-slot:default>
-                <GitHubIcon :dark="appliedTheme.name === ThemeName.Dark" />
+                <GitHubIcon :dark="themeIsDark" />
               </template>
             </v-btn>
           </a>
@@ -51,17 +51,16 @@
 import CronMonLogo from '@/assets/logo.svg'
 import CronMonIcon from '@/assets/icon.svg'
 import GitHubIcon from '@/components/icons/GitHub.vue'
-import { ref, computed } from 'vue'
-import { THEMES, getThemeName, setThemeName, ThemeName } from './utils/theme'
+import ThemePicker from '@/components/ThemePicker.vue'
+import { ref } from 'vue'
 
 const rail = ref(false)
-const theme = ref(THEMES)
-const themeName = ref(getThemeName())
-const appliedTheme = computed(() => theme.value[themeName.value])
+const themeName = ref('')
+const themeIsDark = ref(true)
 
-function toggleTheme() {
-  themeName.value = themeName.value === ThemeName.Dark ? ThemeName.Light : ThemeName.Dark
-  setThemeName(themeName.value)
+function updateTheme(name: string, isDark: boolean): void {
+  themeName.value = name
+  themeIsDark.value = isDark
 }
 </script>
 
