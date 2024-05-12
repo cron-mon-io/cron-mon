@@ -2,12 +2,19 @@
   <v-card class="elevation-2 mx-6 mt-13">
     <MonitorSummary :monitor="monitor" />
     <v-card-text>
-      <span class="text-h6">
+      <v-chip
+        append-icon="mdi-content-copy"
+        color="teal-accent-4"
+        @click="copyMonitorId"
+        class="text-body-1 font-weight-bold ma-2"
+        variant="tonal"
+        label
+      >
         Monitor ID: <code>{{ monitor.monitor_id }}</code>
         <v-tooltip activator="parent" location="top">
-          You'll need this when to use the monitor in your cron job, see the docs for more
+          You'll need this to use the monitor in your cron job, see the docs for more.
         </v-tooltip>
-      </span>
+      </v-chip>
       <JobInfo v-for="job in monitor.jobs" :key="job.job_id" :job="job" />
     </v-card-text>
   </v-card>
@@ -25,4 +32,8 @@ const route = useRoute()
 
 const monitorRepo = new MonitorRepository()
 const monitor = ref(await monitorRepo.getMonitor(route.params.id as string))
+
+function copyMonitorId() {
+  navigator.clipboard.writeText(monitor.value.monitor_id)
+}
 </script>
