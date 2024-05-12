@@ -21,13 +21,18 @@ const router = createRouter({
     },
     {
       path: '/monitors',
-      name: 'monitors',
-      component: MonitorsView
-    },
-    {
-      path: '/monitors/:id',
-      name: 'monitor',
-      component: MonitorView
+      children: [
+        {
+          path: '',
+          name: 'monitors',
+          component: MonitorsView
+        },
+        {
+          path: ':id',
+          name: 'monitor',
+          component: MonitorView
+        }
+      ]
     }
   ]
 })
