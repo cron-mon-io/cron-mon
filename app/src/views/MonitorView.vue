@@ -15,7 +15,16 @@
           You'll need this to use the monitor in your cron job, see the docs for more.
         </v-tooltip>
       </v-chip>
-      <JobInfo v-for="job in monitor.jobs" :key="job.job_id" :job="job" />
+      <!--
+        When the key changes Vue will re-render the component so using `late` and `succeeded`
+        in the key means that as jobs become late or are finished we'll trigger a re-render.
+        This is a bit of a hack but it works for now. TODO: Find a better way to do this.
+      -->
+      <JobInfo
+        v-for="job in monitor.jobs"
+        :key="job.job_id + job.late + job.succeeded"
+        :job="job"
+      />
     </v-card-text>
   </v-card>
 </template>
@@ -36,4 +45,13 @@ const monitor = ref(await monitorRepo.getMonitor(route.params.id as string))
 function copyMonitorId() {
   navigator.clipboard.writeText(monitor.value.monitor_id)
 }
+
+function resyncMonitor() {
+  setTimeout(async () => {
+    monitor.value = await monitorRepo.getMonitor(route.params.id as string)
+    resyncMonitor()
+  }, 5000)
+}
+
+resyncMonitor()
 </script>
