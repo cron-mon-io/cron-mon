@@ -14,6 +14,7 @@ use cron_mon_api::infrastructure::database::establish_connection;
 use cron_mon_api::rocket;
 
 pub async fn setup_db() -> AsyncPgConnection {
+    // TODO: Use dedicated test data rather than parsing the seeding SQL script.
     let seed_queries = get_seed_queries();
 
     let mut conn = establish_connection().await;
