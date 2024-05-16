@@ -27,6 +27,8 @@ import SetupMonitorDialog from '@/components/SetupMonitorDialog.vue'
 import { MonitorRepository } from '@/repos/monitor-repo'
 import type { BasicMonitorInformation } from '@/models/monitor'
 
+const FIVE_MINUTES_MS = 5 * 60 * 1000
+
 const cookies = inject<VueCookies>('$cookies')
 const monitorRepo = new MonitorRepository()
 const monitors = ref(await monitorRepo.getMonitorInfos())
@@ -49,4 +51,13 @@ function openDialog() {
 function closeDialog() {
   dialogActive.value = false
 }
+
+function resyncMonitors() {
+  setTimeout(async () => {
+    monitors.value = await monitorRepo.getMonitorInfos()
+    resyncMonitors()
+  }, FIVE_MINUTES_MS)
+}
+
+resyncMonitors()
 </script>
