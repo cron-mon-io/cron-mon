@@ -1,6 +1,6 @@
 <template>
   <v-card class="elevation-2 ma-3 w-50">
-    <MonitorSummary :monitor="monitor" />
+    <MonitorSummary :monitor="monitor" :is-new="isNew" />
     <v-card-actions>
       <v-chip class="ma-2 font-weight-bold" :color="lastFinish.colour" variant="outlined">
         <v-icon :icon="lastFinish.icon" start></v-icon>
@@ -35,6 +35,7 @@ import MonitorSummary from '@/components/MonitorSummary.vue'
 
 const props = defineProps<{
   monitor: MonitorInformation
+  isNew: boolean
 }>()
 
 const lastFinishedJob = props.monitor.last_finished_job

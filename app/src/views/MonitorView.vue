@@ -1,6 +1,6 @@
 <template>
   <v-card class="elevation-2 mx-6 mt-13">
-    <MonitorSummary :monitor="monitor" />
+    <MonitorSummary :monitor="monitor" :is-new="false" />
     <v-card-text>
       <v-chip
         append-icon="mdi-content-copy"
