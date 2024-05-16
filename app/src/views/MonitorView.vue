@@ -37,6 +37,8 @@ import { MonitorRepository } from '@/repos/monitor-repo'
 import JobInfo from '@/components/JobInfo.vue'
 import MonitorSummary from '@/components/MonitorSummary.vue'
 
+const ONE_MINUTE_MS = 60 * 1000
+
 const route = useRoute()
 
 const monitorRepo = new MonitorRepository()
@@ -50,7 +52,7 @@ function resyncMonitor() {
   setTimeout(async () => {
     monitor.value = await monitorRepo.getMonitor(route.params.id as string)
     resyncMonitor()
-  }, 5000)
+  }, ONE_MINUTE_MS)
 }
 
 resyncMonitor()
