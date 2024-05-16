@@ -19,6 +19,10 @@
         Edit Monitor
         <v-tooltip activator="parent" location="top">Click to modify this Monitor</v-tooltip>
       </v-btn>
+      <v-btn append-icon="mdi-delete" color="primary" class="ma-3" @click="openDeleteDialog">
+        Delete Monitor
+        <v-tooltip activator="parent" location="top">Click to delete this Monitor</v-tooltip>
+      </v-btn>
       <!--
         When the key changes Vue will re-render the component so using `late` and `succeeded`
         in the key means that as jobs become late or are finished we'll trigger a re-render.
@@ -37,6 +41,13 @@
     @dialog-aborted="closeEditDialog"
     :monitor="monitor"
   />
+  <ConfirmationDialog
+    :dialogActive="deleteDialogActive"
+    title="Delete this Monitor?"
+    icon="mdi-delete"
+    question="This cannot be undone and will result in the jobs within this Monitor also being deleted. Are you sure?"
+    @dialog-complete="deleteDialogComplete"
+  />
 </template>
 
 <script setup lang="ts">
@@ -45,6 +56,7 @@ import type { VueCookies } from 'vue-cookies'
 import { useRoute } from 'vue-router'
 
 import JobInfo from '@/components/JobInfo.vue'
+import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 import MonitorSummary from '@/components/MonitorSummary.vue'
 import SetupMonitorDialog from '@/components/SetupMonitorDialog.vue'
 import type { BasicMonitorInformation, MonitorInformation } from '@/models/monitor'
@@ -59,6 +71,7 @@ const cookies = inject<VueCookies>('$cookies')
 const monitorRepo = new MonitorRepository()
 const monitor = ref(await monitorRepo.getMonitor(route.params.id as string))
 const editDialogActive = ref(false)
+const deleteDialogActive = ref(false)
 
 function copyMonitorId() {
   navigator.clipboard.writeText(monitor.value.monitor_id)
@@ -80,6 +93,28 @@ function openEditDialog() {
 
 function closeEditDialog() {
   editDialogActive.value = false
+}
+
+async function deleteDialogComplete(confirmed: boolean) {
+  if (confirmed) {
+    await monitorRepo.deleteMonitor(monitor.value)
+    router.push('/monitors')
+  }
+  closeDeleteDialog()
+
+  // We want to close the dialog first before we navigate back to the monitors page,
+  // just because it looks slightly better.
+  if (confirmed) {
+    router.push('/monitors')
+  }
+}
+
+function openDeleteDialog() {
+  deleteDialogActive.value = true
+}
+
+function closeDeleteDialog() {
+  deleteDialogActive.value = false
 }
 
 function resyncMonitor() {
