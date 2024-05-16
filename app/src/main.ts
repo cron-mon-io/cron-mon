@@ -1,6 +1,7 @@
 import '@mdi/font/css/materialdesignicons.css'
 
 import { createApp } from 'vue'
+import VueCookies from 'vue-cookies'
 
 // Vuetify
 import 'vuetify/styles'
@@ -24,4 +25,4 @@ const vuetify = createVuetify({
   }
 })
 
-createApp(App).use(router).use(vuetify).mount('#app')
+createApp(App).use(router).use(vuetify).use(VueCookies).mount('#app')
