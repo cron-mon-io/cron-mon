@@ -62,6 +62,22 @@ impl Monitor {
             .collect()
     }
 
+    /// Retrieve the most recently finished job.
+    pub fn last_finished_job(&self) -> Option<&Job> {
+        self.jobs.iter().find(|&job| job.succeeded.is_some())
+    }
+
+    /// Retrieve the most recently started job.
+    pub fn last_started_job(&self) -> Option<&Job> {
+        // Jobs will be naturally ordered by start_time, so we can just take a reference to the
+        // first job - if we have any.
+        if self.jobs.len() > 0 {
+            Some(&self.jobs[0])
+        } else {
+            None
+        }
+    }
+
     /// Start a new job
     pub fn start_job(&mut self) -> Job {
         // We give the job the _current_ maximum duration here so that if the monitor is modified,
@@ -185,6 +201,122 @@ mod tests {
 
         let late_jobs_ids: Vec<Uuid> = mon.late_jobs().iter().map(|job| job.job_id).collect();
         assert_eq!(late_jobs_ids, expected_ids);
+    }
+
+    #[test]
+    fn getting_the_last_finished_job() {
+        let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+        mon.jobs = vec![
+            Job {
+                job_id: Uuid::from_str("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1").unwrap(),
+                start_time: Utc::now().naive_utc(),
+                max_end_time: Utc::now().naive_utc() + Duration::seconds(300),
+                end_time: None,
+                succeeded: None,
+                output: None,
+            },
+            Job {
+                job_id: Uuid::from_str("139fbf11-eff1-44cf-9f58-b5febb4729d6").unwrap(),
+                start_time: Utc::now().naive_utc() - Duration::seconds(200),
+                max_end_time: Utc::now().naive_utc() + Duration::seconds(100),
+                end_time: Some(Utc::now().naive_utc()),
+                succeeded: Some(true),
+                output: None,
+            },
+            Job {
+                job_id: Uuid::from_str("a4a8d5ac-86c1-448d-aa82-3388d59ac43e").unwrap(),
+                start_time: Utc::now().naive_utc() - Duration::seconds(300),
+                max_end_time: Utc::now().naive_utc(),
+                end_time: Some(Utc::now().naive_utc() - Duration::seconds(50)),
+                succeeded: Some(false),
+                output: None,
+            },
+        ];
+
+        let last_finished_job = mon.last_finished_job().unwrap();
+        assert_eq!(
+            last_finished_job.job_id,
+            Uuid::from_str("139fbf11-eff1-44cf-9f58-b5febb4729d6").unwrap()
+        );
+    }
+
+    #[test]
+    fn getting_the_last_finished_job_when_no_jobs_have_finished() {
+        let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+        mon.jobs = vec![
+            Job {
+                job_id: Uuid::from_str("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1").unwrap(),
+                start_time: Utc::now().naive_utc(),
+                max_end_time: Utc::now().naive_utc() + Duration::seconds(300),
+                end_time: None,
+                succeeded: None,
+                output: None,
+            },
+            Job {
+                job_id: Uuid::from_str("139fbf11-eff1-44cf-9f58-b5febb4729d6").unwrap(),
+                start_time: Utc::now().naive_utc() - Duration::seconds(200),
+                max_end_time: Utc::now().naive_utc() + Duration::seconds(100),
+                end_time: None,
+                succeeded: None,
+                output: None,
+            },
+            Job {
+                job_id: Uuid::from_str("a4a8d5ac-86c1-448d-aa82-3388d59ac43e").unwrap(),
+                start_time: Utc::now().naive_utc() - Duration::seconds(300),
+                max_end_time: Utc::now().naive_utc(),
+                end_time: None,
+                succeeded: None,
+                output: None,
+            },
+        ];
+
+        let last_finished_job = mon.last_finished_job();
+        assert!(last_finished_job.is_none());
+    }
+
+    #[test]
+    fn getting_the_last_started_job() {
+        let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+        mon.jobs = vec![
+            Job {
+                job_id: Uuid::from_str("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1").unwrap(),
+                start_time: Utc::now().naive_utc(),
+                max_end_time: Utc::now().naive_utc() + Duration::seconds(300),
+                end_time: None,
+                succeeded: None,
+                output: None,
+            },
+            Job {
+                job_id: Uuid::from_str("139fbf11-eff1-44cf-9f58-b5febb4729d6").unwrap(),
+                start_time: Utc::now().naive_utc() - Duration::seconds(200),
+                max_end_time: Utc::now().naive_utc() + Duration::seconds(100),
+                end_time: None,
+                succeeded: None,
+                output: None,
+            },
+            Job {
+                job_id: Uuid::from_str("a4a8d5ac-86c1-448d-aa82-3388d59ac43e").unwrap(),
+                start_time: Utc::now().naive_utc() - Duration::seconds(300),
+                max_end_time: Utc::now().naive_utc(),
+                end_time: None,
+                succeeded: None,
+                output: None,
+            },
+        ];
+
+        let last_started_job = mon.last_started_job().unwrap();
+        assert_eq!(
+            last_started_job.job_id,
+            Uuid::from_str("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1").unwrap()
+        );
+    }
+
+    #[test]
+    fn getting_the_last_started_job_when_no_jobs_have_started() {
+        let mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+
+        let last_started_job = mon.last_started_job();
+        assert!(last_started_job.is_none());
     }
 
     #[test]
