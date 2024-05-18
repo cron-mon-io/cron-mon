@@ -461,6 +461,8 @@ components:
         - name
         - expected_duration
         - grace_duration
+        - last_started_job
+        - last_finished_job
       properties:
         monitor_id:
           type: string
@@ -484,6 +486,20 @@ components:
             The number of seconds _grace_ given to the job's duration. If the duration of
             a job exceeds `expected_duration` + `grace_duration` it is considered to have
             failed.
+        last_started_job:
+          type: object
+          oneOf:
+            - $ref: "#/components/schemas/Job"
+            - type: object
+              nullable: true
+          description: The last job that was started
+        last_finished_job:
+          type: object
+          oneOf:
+            - $ref: "#/components/schemas/Job"
+            - type: object
+              nullable: true
+          description: The last job that finished
     Job:
       description: A monitored job
       type: object

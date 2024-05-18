@@ -32,7 +32,9 @@ pub async fn list_monitors(mut connection: Connection<Db>) -> Value {
                 "monitor_id": m.monitor_id,
                 "name": m.name,
                 "expected_duration": m.expected_duration,
-                "grace_duration": m.grace_duration
+                "grace_duration": m.grace_duration,
+                "last_finished_job": m.last_finished_job(),
+                "last_started_job": m.last_started_job()
             }))
             .collect::<Value>(),
         "paging": Paging { total: monitors.len() }
