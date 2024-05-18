@@ -34,7 +34,7 @@ fn test_get_job_when_job_exists() {
     assert_eq!(job["output"].as_null(), Some(()));
     assert_eq!(job["succeeded"].as_null(), Some(()));
     assert_eq!(job["in_progress"], true);
-    assert_eq!(job["late"], false);
+    assert_eq!(job["late"], true);
 }
 
 #[test]
@@ -97,7 +97,7 @@ fn test_finish_job() {
     assert_eq!(job["output"], "Test output");
     assert_eq!(job["succeeded"], true);
     assert_eq!(job["in_progress"], false);
-    assert_eq!(job["late"], false);
+    assert_eq!(job["late"], true);
 
     // Ensure this has persisted.
     let job_finished = get_job_finished(&client, "8106bab7-d643-4ede-bd92-60c79f787344");

@@ -15,7 +15,7 @@ use common::setup_db;
 
 #[test]
 async fn test_all() {
-    // See data seeds for the expected data (/api/src/infrastructure/seeding/seeds.sql)
+    // See data seeds for the expected data (/api/tests/common/mod.rs)
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
 
@@ -29,9 +29,7 @@ async fn test_all() {
     assert_eq!(
         names,
         vec![
-            "bill-and-invoice".to_owned(),
             "db-backup.py".to_owned(),
-            "gen-manifests | send-manifest".to_owned(),
             "generate-orders.sh".to_owned(),
             "init-philanges".to_owned()
         ]
@@ -72,11 +70,7 @@ async fn test_get_with_late_jobs() {
     names.sort();
     assert_eq!(
         names,
-        vec![
-            "db-backup.py".to_owned(),
-            "gen-manifests | send-manifest".to_owned(),
-            "generate-orders.sh".to_owned(),
-        ]
+        vec!["db-backup.py".to_owned(), "generate-orders.sh".to_owned()]
     );
 }
 
@@ -88,7 +82,7 @@ async fn test_save() {
     let mut new_monitor = Monitor::new("new-monitor".to_owned(), 100, 5);
     new_monitor.start_job();
     repo.save(&new_monitor).await.unwrap();
-    assert_eq!(repo.all().await.unwrap().len(), 6);
+    assert_eq!(repo.all().await.unwrap().len(), 4);
 
     let read_new_monitor = repo.get(new_monitor.monitor_id).await.unwrap().unwrap();
     assert_eq!(new_monitor.monitor_id, read_new_monitor.monitor_id);
@@ -116,5 +110,5 @@ async fn test_delete() {
 
     repo.delete(&monitor).await.unwrap();
     assert!(repo.get(monitor.monitor_id).await.unwrap().is_none());
-    assert_eq!(repo.all().await.unwrap().len(), 4);
+    assert_eq!(repo.all().await.unwrap().len(), 2);
 }
