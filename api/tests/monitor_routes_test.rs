@@ -1,5 +1,6 @@
 pub mod common;
 
+use pretty_assertions::{assert_eq, assert_ne};
 use rocket::http::{ContentType, Status};
 use rocket::local::blocking::Client;
 use rstest::*;

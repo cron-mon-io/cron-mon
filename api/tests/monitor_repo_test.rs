@@ -2,6 +2,7 @@ pub mod common;
 
 use std::str::FromStr;
 
+use pretty_assertions::assert_eq;
 use tokio::test;
 use uuid::Uuid;
 
