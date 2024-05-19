@@ -36,7 +36,7 @@ const dialogActive = ref(false)
 
 async function dialogComplete(monitorInfo: BasicMonitorInformation) {
   const monitor = await monitorRepo.addMonitor(monitorInfo)
-  cookies?.set(monitor.monitor_id, 'new', '5m')
+  cookies?.set(monitor.monitor_id, 'new', '5min')
 
   // We get the list of monitors again here, rather than just inserting the new monitor,
   // so that the list is sorted by the API.

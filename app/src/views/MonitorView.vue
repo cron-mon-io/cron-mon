@@ -83,7 +83,7 @@ async function editDialogComplete(monitorInfo: BasicMonitorInformation) {
     ...monitorInfo
   } as MonitorInformation
   monitor.value = await monitorRepo.updateMonitor(newMonitor)
-  cookies?.set(monitor.value.monitor_id, 'new', '5m')
+  cookies?.set(monitor.value.monitor_id, 'new', '5min')
   closeEditDialog()
 }
 
