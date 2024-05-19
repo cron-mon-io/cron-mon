@@ -19,6 +19,12 @@ pub async fn setup_db() -> AsyncPgConnection {
     // messy to say the least.
     let monitor_seeds: Vec<MonitorData> = vec![
         MonitorData {
+            monitor_id: gen_uuid("a04376e2-0fb5-4949-9744-7c5d0a50b411"),
+            name: "init-philanges".to_string(),
+            expected_duration: 900,
+            grace_duration: 300,
+        },
+        MonitorData {
             monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
             name: "db-backup.py".to_string(),
             expected_duration: 1800,
@@ -29,12 +35,6 @@ pub async fn setup_db() -> AsyncPgConnection {
             name: "generate-orders.sh".to_string(),
             expected_duration: 5400,
             grace_duration: 720,
-        },
-        MonitorData {
-            monitor_id: gen_uuid("a04376e2-0fb5-4949-9744-7c5d0a50b411"),
-            name: "init-philanges".to_string(),
-            expected_duration: 900,
-            grace_duration: 300,
         },
     ];
     let job_seeds: Vec<JobData> = vec![

@@ -21,22 +21,20 @@ async fn test_all() {
 
     let montiors = repo.all().await.unwrap();
 
-    let mut names: Vec<String> = montiors
+    let names: Vec<String> = montiors
         .iter()
         .map(|monitor| monitor.name.clone())
         .collect();
-    // TODO: We shouldn't need this.
-    names.sort();
     assert_eq!(
         names,
         vec![
+            "init-philanges".to_owned(),
             "db-backup.py".to_owned(),
-            "generate-orders.sh".to_owned(),
-            "init-philanges".to_owned()
+            "generate-orders.sh".to_owned()
         ]
     );
 
-    let job_ids = montiors[0]
+    let job_ids = montiors[1]
         .jobs
         .iter()
         .map(|job| job.job_id)
