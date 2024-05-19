@@ -87,4 +87,3 @@ jobs:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
           DOCS_DIR: ${{ github.workspace }}/api/docs
           ROCKET_PROFILE: github
-          SEED_SCRIPT_PATH: ${{ github.workspace }}/api/src/infrastructure/seeding/seeds.sql

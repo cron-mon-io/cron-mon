@@ -1,5 +1,6 @@
 pub mod common;
 
+use pretty_assertions::{assert_eq, assert_ne};
 use rocket::http::{ContentType, Status};
 use rocket::local::blocking::Client;
 use rstest::*;
@@ -29,7 +30,7 @@ fn test_get_monitor_when_monitor_exists() {
     assert_eq!(monitor["grace_duration"], 600);
 
     let jobs = monitor["jobs"].as_array().unwrap();
-    assert_eq!(jobs.len(), 6);
+    assert_eq!(jobs.len(), 3);
 
     let job = &jobs[0];
     assert!(is_uuid(job["job_id"].as_str().unwrap()));
@@ -39,7 +40,7 @@ fn test_get_monitor_when_monitor_exists() {
     assert_eq!(job["output"].as_null(), Some(()));
     assert_eq!(job["succeeded"].as_null(), Some(()));
     assert_eq!(job["in_progress"], true);
-    assert_eq!(job["late"], false);
+    assert_eq!(job["late"], true);
 }
 
 #[test]
@@ -62,43 +63,68 @@ fn test_list_monitors() {
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(response.content_type(), Some(ContentType::JSON));
 
+    let data = response.into_json::<Value>().unwrap();
+    println!("{}", serde_json::to_string_pretty(&data).unwrap());
+
+    // TODO: Need to freeze time or find a way to skip assertions on timestamps.
     assert_eq!(
-        response.into_json::<Value>().unwrap(),
+        data,
         json!({
           "data": [
             {
               "expected_duration": 1800,
               "grace_duration": 600,
               "monitor_id": "c1bf0515-df39-448b-aa95-686360a33b36",
-              "name": "db-backup.py"
+              "name": "db-backup.py",
+              "last_finished_job": {
+                "job_id": "8106bab7-d643-4ede-bd92-60c79f787344",
+                "start_time": "2024-05-01T00:10:00",
+                "end_time": "2024-05-01T00:49:00",
+                "duration": 2340,
+                "in_progress": false,
+                "late": false,
+                "succeeded": true,
+                "output": "Database successfully backed up",
+              },
+              "last_started_job": {
+                "job_id": "9d4e2d69-af63-4c1e-8639-60cb2683aee5",
+                "start_time": "2024-05-01T00:20:00",
+                "end_time": Value::Null,
+                "duration": Value::Null,
+                "in_progress": true,
+                "late": true,
+                "succeeded": Value::Null,
+                "output": Value::Null
+              }
             },
             {
               "expected_duration": 5400,
               "grace_duration": 720,
               "monitor_id": "f0b291fe-bd41-4787-bc2d-1329903f7a6a",
-              "name": "generate-orders.sh"
+              "name": "generate-orders.sh",
+              "last_started_job": {
+                "job_id": "2a09c819-ed8c-4e3a-b085-889f3f475c02",
+                "start_time": "2024-05-01T00:00:00",
+                "end_time": Value::Null,
+                "duration": Value::Null,
+                "in_progress": true,
+                "late": true,
+                "succeeded": Value::Null,
+                "output": Value::Null,
+              },
+              "last_finished_job": Value::Null,
             },
             {
               "expected_duration": 900,
               "grace_duration": 300,
               "monitor_id": "a04376e2-0fb5-4949-9744-7c5d0a50b411",
-              "name": "init-philanges"
+              "name": "init-philanges",
+              "last_started_job": Value::Null,
+              "last_finished_job": Value::Null,
             },
-            {
-              "expected_duration": 300,
-              "grace_duration": 120,
-              "monitor_id": "309a68f1-d6a2-4312-8012-49c1b9b9af25",
-              "name": "gen-manifests | send-manifest"
-            },
-            {
-              "expected_duration": 10800,
-              "grace_duration": 1800,
-              "monitor_id": "0798c530-34a4-4452-b2dc-f8140fd498d5",
-              "name": "bill-and-invoice"
-            }
           ],
           "paging": {
-            "total": 5
+            "total": 3
           }
         })
     );

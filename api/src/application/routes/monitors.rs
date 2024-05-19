@@ -7,11 +7,13 @@ use uuid::Uuid;
 
 use crate::application::services::create_monitor::CreateMonitorService;
 use crate::application::services::delete_monitor::DeleteMonitorService;
+use crate::application::services::fetch_monitors::FetchMonitorsService;
 use crate::application::services::update_monitor::UpdateMonitorService;
+use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::infrastructure::database::Db;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
-use crate::infrastructure::repositories::{All, Get};
+use crate::infrastructure::repositories::Get;
 
 #[derive(Deserialize)]
 pub struct MonitorData {
@@ -23,7 +25,8 @@ pub struct MonitorData {
 #[rocket::get("/monitors")]
 pub async fn list_monitors(mut connection: Connection<Db>) -> Value {
     let mut repo = MonitorRepository::new(&mut **connection);
-    let monitors = repo.all().await.expect("Error retrieving Monitors");
+    let mut service = FetchMonitorsService::new(&mut repo, &order_monitors_by_last_started_job);
+    let monitors = service.fetch_all().await;
 
     json!({
         "data": monitors
@@ -32,7 +35,9 @@ pub async fn list_monitors(mut connection: Connection<Db>) -> Value {
                 "monitor_id": m.monitor_id,
                 "name": m.name,
                 "expected_duration": m.expected_duration,
-                "grace_duration": m.grace_duration
+                "grace_duration": m.grace_duration,
+                "last_finished_job": m.last_finished_job(),
+                "last_started_job": m.last_started_job()
             }))
             .collect::<Value>(),
         "paging": Paging { total: monitors.len() }

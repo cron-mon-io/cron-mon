@@ -2,6 +2,7 @@ pub mod common;
 
 use std::str::FromStr;
 
+use pretty_assertions::assert_eq;
 use tokio::test;
 use uuid::Uuid;
 
@@ -10,29 +11,40 @@ use cron_mon_api::infrastructure::repositories::monitor::GetWithLateJobs;
 use cron_mon_api::infrastructure::repositories::monitor_repo::MonitorRepository;
 use cron_mon_api::infrastructure::repositories::{All, Delete, Get, Save};
 
-use common::setup_db;
+use common::{gen_uuid, setup_db};
 
 #[test]
 async fn test_all() {
-    // See data seeds for the expected data (/api/src/infrastructure/seeding/seeds.sql)
+    // See data seeds for the expected data (/api/tests/common/mod.rs)
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
 
     let montiors = repo.all().await.unwrap();
 
-    let mut names: Vec<String> = montiors
+    let names: Vec<String> = montiors
         .iter()
         .map(|monitor| monitor.name.clone())
         .collect();
-    names.sort();
     assert_eq!(
         names,
         vec![
-            "bill-and-invoice".to_owned(),
+            "init-philanges".to_owned(),
             "db-backup.py".to_owned(),
-            "gen-manifests | send-manifest".to_owned(),
-            "generate-orders.sh".to_owned(),
-            "init-philanges".to_owned()
+            "generate-orders.sh".to_owned()
+        ]
+    );
+
+    let job_ids = montiors[1]
+        .jobs
+        .iter()
+        .map(|job| job.job_id)
+        .collect::<Vec<Uuid>>();
+    assert_eq!(
+        job_ids,
+        vec![
+            gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5"),
+            gen_uuid("8106bab7-d643-4ede-bd92-60c79f787344"),
+            gen_uuid("c1893113-66d7-4707-9a51-c8be46287b2c"),
         ]
     );
 }
@@ -71,11 +83,7 @@ async fn test_get_with_late_jobs() {
     names.sort();
     assert_eq!(
         names,
-        vec![
-            "db-backup.py".to_owned(),
-            "gen-manifests | send-manifest".to_owned(),
-            "generate-orders.sh".to_owned(),
-        ]
+        vec!["db-backup.py".to_owned(), "generate-orders.sh".to_owned()]
     );
 }
 
@@ -87,7 +95,7 @@ async fn test_save() {
     let mut new_monitor = Monitor::new("new-monitor".to_owned(), 100, 5);
     new_monitor.start_job();
     repo.save(&new_monitor).await.unwrap();
-    assert_eq!(repo.all().await.unwrap().len(), 6);
+    assert_eq!(repo.all().await.unwrap().len(), 4);
 
     let read_new_monitor = repo.get(new_monitor.monitor_id).await.unwrap().unwrap();
     assert_eq!(new_monitor.monitor_id, read_new_monitor.monitor_id);
@@ -115,5 +123,5 @@ async fn test_delete() {
 
     repo.delete(&monitor).await.unwrap();
     assert!(repo.get(monitor.monitor_id).await.unwrap().is_none());
-    assert_eq!(repo.all().await.unwrap().len(), 4);
+    assert_eq!(repo.all().await.unwrap().len(), 2);
 }

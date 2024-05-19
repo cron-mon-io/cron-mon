@@ -9,12 +9,14 @@ use rocket::{routes, Build, Rocket};
 use rocket_db_pools::Database;
 
 use crate::application::routes::{health, jobs, monitors};
+use crate::infrastructure::cors::CORS;
 use crate::infrastructure::database::Db;
 
 #[rocket::launch]
 pub fn rocket() -> Rocket<Build> {
     rocket::build()
         .attach(Db::init())
+        .attach(CORS)
         .mount(
             "/api/v1/",
             routes![

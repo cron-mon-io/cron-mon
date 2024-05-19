@@ -101,7 +101,6 @@ services:
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
       DOCS_DIR: /usr/cron-mon/api/docs
-      SEED_SCRIPT_PATH: /usr/cron-mon/api/src/infrastructure/seeding/seeds.sql
     volumes:
       - ./api:/usr/cron-mon/api
 

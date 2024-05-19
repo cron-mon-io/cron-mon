@@ -1,11 +1,9 @@
 openapi: 3.0.3
 info:
   description: |
-    The Cron-Mon API.
-
-    TODO:
-    * Authentication
-    * Pagination
+    The API for [Cron-Mon](https://github.com/howamith/cron-mon), which allows
+    you to create, modify, and delete Monitors, as well as start and finish Jobs
+    within those Monitors.
   version: 0.1.0
   title: Cron-Mon API
 tags:
@@ -24,10 +22,6 @@ paths:
       summary: List monitors
       description: |
         Returns all monitors.
-
-        TODO:
-        * Pagination
-        * Query parameters for filtering/ searching.
       responses:
         "200":
           description: |
@@ -38,13 +32,14 @@ paths:
                 type: object
                 required:
                   - data
+                  - paging
                 properties:
-                  paging:
-                    $ref: "#/components/schemas/Paging"
                   data:
                     type: array
                     items:
                       $ref: "#/components/schemas/MonitorSummary"
+                  paging:
+                    $ref: "#/components/schemas/Paging"
               example:
                 paging:
                   total: 2
@@ -466,6 +461,8 @@ components:
         - name
         - expected_duration
         - grace_duration
+        - last_started_job
+        - last_finished_job
       properties:
         monitor_id:
           type: string
@@ -489,6 +486,20 @@ components:
             The number of seconds _grace_ given to the job's duration. If the duration of
             a job exceeds `expected_duration` + `grace_duration` it is considered to have
             failed.
+        last_started_job:
+          type: object
+          oneOf:
+            - $ref: "#/components/schemas/Job"
+            - type: object
+              nullable: true
+          description: The last job that was started
+        last_finished_job:
+          type: object
+          oneOf:
+            - $ref: "#/components/schemas/Job"
+            - type: object
+              nullable: true
+          description: The last job that finished
     Job:
       description: A monitored job
       type: object
