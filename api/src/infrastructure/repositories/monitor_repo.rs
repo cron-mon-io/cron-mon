@@ -69,6 +69,7 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
 
         let jobs = JobData::belonging_to(&monitor_datas)
             .select(JobData::as_select())
+            .order(job::start_time.desc())
             .load(self.db)
             .await?;
 
@@ -94,6 +95,7 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
         if let Some(monitor) = monitor_data {
             let jobs = JobData::belonging_to(&monitor)
                 .select(JobData::as_select())
+                .order(job::start_time.desc())
                 .load(self.db)
                 .await?;
             // TODO handle monitors without jobs.
@@ -114,6 +116,7 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
 
         let jobs = JobData::belonging_to(&all_monitor_data)
             .select(JobData::as_select())
+            .order(job::start_time.desc())
             .load(self.db)
             .await?;
 

@@ -77,9 +77,9 @@ fn test_list_monitors() {
               "monitor_id": "c1bf0515-df39-448b-aa95-686360a33b36",
               "name": "db-backup.py",
               "last_finished_job": {
-                "job_id": "c1893113-66d7-4707-9a51-c8be46287b2c",
-                "start_time": "2024-05-01T00:00:00",
-                "end_time": "2024-05-01T00:39:00",
+                "job_id": "8106bab7-d643-4ede-bd92-60c79f787344",
+                "start_time": "2024-05-01T00:10:00",
+                "end_time": "2024-05-01T00:49:00",
                 "duration": 2340,
                 "in_progress": false,
                 "late": false,
@@ -87,8 +87,8 @@ fn test_list_monitors() {
                 "output": "Database successfully backed up",
               },
               "last_started_job": {
-                "job_id": "8106bab7-d643-4ede-bd92-60c79f787344",
-                "start_time": "2024-05-01T00:00:00",
+                "job_id": "9d4e2d69-af63-4c1e-8639-60cb2683aee5",
+                "start_time": "2024-05-01T00:20:00",
                 "end_time": Value::Null,
                 "duration": Value::Null,
                 "in_progress": true,

@@ -11,7 +11,7 @@ use cron_mon_api::infrastructure::repositories::monitor::GetWithLateJobs;
 use cron_mon_api::infrastructure::repositories::monitor_repo::MonitorRepository;
 use cron_mon_api::infrastructure::repositories::{All, Delete, Get, Save};
 
-use common::setup_db;
+use common::{gen_uuid, setup_db};
 
 #[test]
 async fn test_all() {
@@ -25,6 +25,7 @@ async fn test_all() {
         .iter()
         .map(|monitor| monitor.name.clone())
         .collect();
+    // TODO: We shouldn't need this.
     names.sort();
     assert_eq!(
         names,
@@ -32,6 +33,20 @@ async fn test_all() {
             "db-backup.py".to_owned(),
             "generate-orders.sh".to_owned(),
             "init-philanges".to_owned()
+        ]
+    );
+
+    let job_ids = montiors[0]
+        .jobs
+        .iter()
+        .map(|job| job.job_id)
+        .collect::<Vec<Uuid>>();
+    assert_eq!(
+        job_ids,
+        vec![
+            gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5"),
+            gen_uuid("8106bab7-d643-4ede-bd92-60c79f787344"),
+            gen_uuid("c1893113-66d7-4707-9a51-c8be46287b2c"),
         ]
     );
 }

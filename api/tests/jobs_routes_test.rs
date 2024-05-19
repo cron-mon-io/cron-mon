@@ -15,7 +15,7 @@ fn test_get_job_when_job_exists() {
     let response = client
         .get(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36\
-            /jobs/8106bab7-d643-4ede-bd92-60c79f787344",
+            /jobs/9d4e2d69-af63-4c1e-8639-60cb2683aee5",
         )
         .dispatch();
 
@@ -26,7 +26,7 @@ fn test_get_job_when_job_exists() {
     let job = &response_body["data"];
     assert_eq!(
         job["job_id"],
-        gen_uuid("8106bab7-d643-4ede-bd92-60c79f787344").to_string()
+        gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5").to_string()
     );
     assert!(is_datetime(job["start_time"].as_str().unwrap()));
     assert_eq!(job["end_time"].as_null(), Some(()));
@@ -71,13 +71,13 @@ fn test_start_job() {
 fn test_finish_job() {
     let client = get_test_client(true);
 
-    let job_finished = get_job_finished(&client, "8106bab7-d643-4ede-bd92-60c79f787344");
+    let job_finished = get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5");
     assert_eq!(job_finished, false);
 
     let response = client
         .post(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36\
-            /jobs/8106bab7-d643-4ede-bd92-60c79f787344/finish",
+            /jobs/9d4e2d69-af63-4c1e-8639-60cb2683aee5/finish",
         )
         .json(&json!({"succeeded": true, "output": "Test output"}))
         .dispatch();
@@ -89,7 +89,7 @@ fn test_finish_job() {
     let job = &response_body["data"];
     assert_eq!(
         job["job_id"],
-        gen_uuid("8106bab7-d643-4ede-bd92-60c79f787344").to_string()
+        gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5").to_string()
     );
     assert!(is_datetime(job["start_time"].as_str().unwrap()));
     assert!(is_datetime(job["end_time"].as_str().unwrap()));
@@ -100,7 +100,7 @@ fn test_finish_job() {
     assert_eq!(job["late"], true);
 
     // Ensure this has persisted.
-    let job_finished = get_job_finished(&client, "8106bab7-d643-4ede-bd92-60c79f787344");
+    let job_finished = get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5");
     assert_eq!(job_finished, true);
 }
 
