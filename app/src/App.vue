@@ -1,85 +1,73 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <v-theme-provider class="app-container" :theme="themeName" with-background>
+    <v-app>
+      <v-navigation-drawer :rail="rail">
+        <v-list-item class="logo pa-0" :height="80">
+          <v-img
+            :width="rail ? 40 : 300"
+            :height="rail ? 40 : 220"
+            cover
+            aspect-ratio="16/9"
+            :src="rail ? CronMonIcon : CronMonLogo"
+          ></v-img>
+        </v-list-item>
+        <v-divider></v-divider>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+        <v-list density="compact" class="" nav>
+          <v-list-item link prepend-icon="mdi-home" to="/">
+            <v-list-item-title class="text-body-1">Home</v-list-item-title>
+          </v-list-item>
+          <v-list-item link prepend-icon="mdi-monitor-eye" to="/monitors">
+            <v-list-item-title class="text-body-1">Monitors</v-list-item-title>
+          </v-list-item>
+          <v-list-item link prepend-icon="mdi-bookshelf" to="/docs">
+            <v-list-item-title class="text-body-1">Docs</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-navigation-drawer>
 
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+      <v-main>
+        <v-toolbar density="compact">
+          <v-btn density="comfortable" @click="rail = !rail" icon="mdi-dots-vertical"></v-btn>
+          <v-spacer></v-spacer>
+          <ThemePicker @theme-changed="updateTheme" />
+        </v-toolbar>
+        <RouterView class="mb-3" />
+        <v-footer app absolute class="text-center d-flex flex-column">
+          <a href="https://github.com/howamith/cron-mon" target="_blank" rel="noopener noreferrer">
+            <v-btn flat density="comfortable" icon>
+              <template v-slot:default>
+                <GitHubIcon :dark="themeIsDark" />
+              </template>
+            </v-btn>
+          </a>
+          <div>&copy; {{ new Date().getFullYear() }} — <strong>CronMon</strong></div>
+        </v-footer>
+      </v-main>
+    </v-app>
+  </v-theme-provider>
 </template>
 
+<script setup lang="ts">
+import CronMonLogo from '@/assets/logo.svg'
+import CronMonIcon from '@/assets/icon.svg'
+import GitHubIcon from '@/components/icons/GitHub.vue'
+import ThemePicker from '@/components/ThemePicker.vue'
+import { ref } from 'vue'
+
+const rail = ref(false)
+const themeName = ref('')
+const themeIsDark = ref(true)
+
+function updateTheme(name: string, isDark: boolean): void {
+  themeName.value = name
+  themeIsDark.value = isDark
+}
+</script>
+
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
 .logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+  display: flex;
+  justify-content: center;
 }
 </style>
