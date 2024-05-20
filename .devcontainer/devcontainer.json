@@ -3,6 +3,7 @@
   "build": {
     "dockerfile": "../Dockerfile",
     "context": "..",
+    "target": "dev"
   },
   "runArgs": [
     "--name",

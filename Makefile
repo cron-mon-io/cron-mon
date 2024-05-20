@@ -6,8 +6,14 @@ build-containers:
 run:
 	docker compose up api
 
+run-release:
+	docker compose up api-release
+
 run-monitor:
 	docker compose up monitor
+
+run-monitor-release:
+	docker compose up monitor-release
 
 test:
 	docker compose run --rm --no-deps api bash -c 'cargo test --lib --no-fail-fast'
