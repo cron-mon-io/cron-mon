@@ -17,7 +17,7 @@ test:
 
 # Note that running this locally will re-seed your local DB so you'll lose
 # everything in there currently.
-test-api-integration:
+integration-tests:
 	docker compose up integration-tests-rs
 
 migration:
