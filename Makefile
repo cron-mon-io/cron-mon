@@ -1,35 +1,18 @@
-install: build-containers npm-install migrate seed
+install: build-containers migrate seed
 
 build-containers:
 	docker compose build
 
-npm-install:
-	docker compose run --rm app bash -c 'npm install'
-
 build-api:
 	docker compose run --rm --no-deps api bash -c 'cargo build --release'
 
-build-app:
-	docker compose run --rm --no-deps app bash -c  'npm run build'
-
 run:
-	docker compose up api app
+	docker compose up api
 
 run-monitor:
 	docker compose up monitor
 
-# The `run-debug-deps-for-*` commands are to allow debug sessions to be run for
-# the API or front-end app through the development container's debugger, while
-# still running the other parts required for the whole system.
-run-debug-deps-for-api:
-	docker compose up app db
-
-run-debug-deps-for-app:
-	docker compose up api db
-
-test: test-api
-
-test-api:
+test:
 	docker compose run --rm --no-deps api bash -c 'cargo test --lib --no-fail-fast'
 
 # Note that running this locally will re-seed your local DB so you'll lose

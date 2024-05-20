@@ -16,29 +16,12 @@
         "[rust]": {
           "editor.defaultFormatter": "rust-lang.rust-analyzer",
           "editor.formatOnSave": true
-        },
-        "[typescript]": {
-          "editor.codeActionsOnSave": {
-            "source.fixAll": "explicit"
-          },
-          "editor.formatOnSave": true,
-          "editor.defaultFormatter": "esbenp.prettier-vscode"
-        },
-        "[vue]": {
-          "editor.codeActionsOnSave": {
-            "source.fixAll": "explicit"
-          },
-          "editor.formatOnSave": true,
-          "editor.defaultFormatter": "esbenp.prettier-vscode"
         }
       },
       "extensions": [
-        "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
         "ms-azuretools.vscode-docker",
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
-        "Vue.volar",
         "ms-vscode.makefile-tools",
         "tamasfe.even-better-toml",
         "vadimcn.vscode-lldb"
