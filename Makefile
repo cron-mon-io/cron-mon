@@ -3,9 +3,6 @@ install: build-containers migrate seed
 build-containers:
 	docker compose build
 
-build-api:
-	docker compose run --rm --no-deps api bash -c 'cargo build --release'
-
 run:
 	docker compose up api
 
