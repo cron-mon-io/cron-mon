@@ -1,22 +1,24 @@
+![CronMon Logo](.github/logo.svg)
+
+# A simple tool for monitoring cronjobs
+
+[![CI](https://github.com/howamith/cron-mon/actions/workflows/ci.yml/badge.svg)](https://github.com/howamith/cron-mon/actions/workflows/ci.yml)
 ![Docker](https://img.shields.io/badge/Docker-2CA5E0?logo=docker&logoColor=white)
 ![Rust](https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=white)
 
-[![CI](https://github.com/howamith/cron-mon/actions/workflows/ci.yml/badge.svg)](https://github.com/howamith/cron-mon/actions/workflows/ci.yml)
+CronMon is a tool for monitoring cronjobs (or _tasks_ of a similar nature), written in Rust. It was
+created for two reasons:
 
-# CronMon
+1. Curiosity as to whether or not Rust was a good choice of language for building web services and
+   APIs, and how well Domain Driven Design could be applied in that context.
+2. A need to monitor numerous cronjobs, but nothing to justify spending money on one of the
+   pre-existing soloutions.
 
-CronMon is a tool for monitoring cronjobs (or _tasks_ of a similar nature), built with Rust and
-Vue3.
-
-This project came about purely from my curiosity as to whether or not Rust was a good choice
-of language for building web services and APIs, and how well Domain Driven Design could be applied
-in that context (spoiler alert; a resounding **yes** on both counts IMO), and my desire to do
-_something_ with Rust and Vue.js.
-
-Note that there isn't anything novel about CronMon; there are plenty of existing solutions in this
-space already, such as [Cronitor.io](https://cronitor.io/cron-job-monitoring),
-[Healthchecks.io](https://healthchecks.io), [Cronhub.io](https://cronhub.io), and
-[Sentry’s Cron Monitoring](https://sentry.io/for/cron-monitoring/), to name but a few,
+Further to the second point, note that there isn't anything novel about CronMon; there are plenty of
+existing solutions in this space already, such as
+[Cronitor.io](https://cronitor.io/cron-job-monitoring), [Healthchecks.io](https://healthchecks.io),
+[Cronhub.io](https://cronhub.io), and
+[Sentry’s Cron Monitoring](https://sentry.io/for/cron-monitoring/), to name but a few.
 
 ## Getting started
 
