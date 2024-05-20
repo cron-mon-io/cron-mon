@@ -3,9 +3,9 @@
 
 [![CI](https://github.com/howamith/cron-mon/actions/workflows/ci.yml/badge.svg)](https://github.com/howamith/cron-mon/actions/workflows/ci.yml)
 
-# Cron-Mon
+# CronMon
 
-Cron-Mon is a tool for monitoring cronjobs (or _tasks_ of a similar nature), built with Rust and
+CronMon is a tool for monitoring cronjobs (or _tasks_ of a similar nature), built with Rust and
 Vue3.
 
 This project came about purely from my curiosity as to whether or not Rust was a good choice
@@ -13,14 +13,14 @@ of language for building web services and APIs, and how well Domain Driven Desig
 in that context (spoiler alert; a resounding **yes** on both counts IMO), and my desire to do
 _something_ with Rust and Vue.js.
 
-Note that there isn't anything novel about Cron-Mon; there are plenty of existing solutions in this
+Note that there isn't anything novel about CronMon; there are plenty of existing solutions in this
 space already, such as [Cronitor.io](https://cronitor.io/cron-job-monitoring),
 [Healthchecks.io](https://healthchecks.io), [Cronhub.io](https://cronhub.io), and
 [Sentry’s Cron Monitoring](https://sentry.io/for/cron-monitoring/), to name but a few,
 
 ## Getting started
 
-All you need to setup a development environment for Cron-Mon is Docker and your IDE of choice. A
+All you need to setup a development environment for CronMon is Docker and your IDE of choice. A
 `Makefile` is provided to make _driving_ the project quick and simple. The easiest way to get setup
 is to simply clone the project and then run `make install` from the root of the project to build the
 containers. From here you can run the projects (unit) tests by running `make test`, and you can run
@@ -37,8 +37,8 @@ reliable debug configuration (this is tried and tested on Visual Studio Code).
 - `install`: Builds all application containers, installs the required Node modules in the Vue
   application and sets up a local PostgreSQL database with test data.
 - `build-containers`: Builds all application containers.
-- `run`: Run the Cron-Mon API
-- `run-monitor`: Run the Cron-Mon monitoring service.
+- `run`: Run the CronMon API
+- `run-monitor`: Run the CronMon monitoring service.
 - `test`: Run all units tests.
 - `integration-tests`: Run the **integration** tests (note that this will remove whatever's in your
   local database, and as such these tests will never run unless they're invoked via this command).
