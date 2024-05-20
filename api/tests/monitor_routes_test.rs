@@ -66,7 +66,6 @@ fn test_list_monitors() {
     let data = response.into_json::<Value>().unwrap();
     println!("{}", serde_json::to_string_pretty(&data).unwrap());
 
-    // TODO: Need to freeze time or find a way to skip assertions on timestamps.
     assert_eq!(
         data,
         json!({
