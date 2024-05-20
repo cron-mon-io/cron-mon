@@ -12,7 +12,7 @@ services:
     command: cargo run --bin api
     networks:
       - default
-      - rusty-network
+      - cron-mon-network
 
   monitor:
     extends: base-rust
@@ -23,7 +23,7 @@ services:
     command: cargo run --bin monitor
     networks:
       - default
-      - rusty-network
+      - cron-mon-network
 
   integration-tests-rs:
     extends: base-rust
@@ -34,7 +34,7 @@ services:
     command: cargo test --no-fail-fast --test "*" -- --test-threads=1
     networks:
       - default
-      - rusty-network
+      - cron-mon-network
 
   db:
     container_name: cron-mon-db
@@ -89,9 +89,9 @@ services:
       - ./api:/usr/cron-mon/api
 
 networks:
-  rusty-network:
+  cron-mon-network:
     driver: bridge
-    name: rusty-network
+    name: cron-mon-network
 
 volumes:
   postgres-data:
