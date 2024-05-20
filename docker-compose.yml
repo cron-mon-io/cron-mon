@@ -78,7 +78,7 @@ services:
   base-rust:
     image: cron-mon/base-rust-image
     build:
-      dockerfile: ./api/Dockerfile
+      dockerfile: ./Dockerfile
       context: .
     stdin_open: true
     tty: true

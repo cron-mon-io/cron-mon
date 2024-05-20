@@ -1,8 +1,8 @@
 {
-  "name": "Rust x Node.js",
+  "name": "CronMon Dev Container",
   "build": {
-    "dockerfile": "./Dockerfile",
-    "context": ".."
+    "dockerfile": "../Dockerfile",
+    "context": "..",
   },
   "runArgs": [
     "--name",
