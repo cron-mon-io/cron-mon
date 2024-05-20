@@ -14,5 +14,5 @@ fn test_get_docs_openapi_yaml() {
     assert!(response
         .into_string()
         .unwrap()
-        .contains("title: Cron-Mon API"));
+        .contains("title: CronMon API"));
 }

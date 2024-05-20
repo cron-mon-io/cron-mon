@@ -12,23 +12,7 @@ services:
     command: cargo run --bin api
     networks:
       - default
-      - rusty-network
-
-  app:
-    build:
-      dockerfile: ./app/Dockerfile
-      context: .
-    container_name: cron-mon-app
-    stdin_open: true
-    tty: true
-    volumes:
-      - ./app:/usr/cron-mon/app
-    ports:
-      - 3000:3000
-    command: npm run dev
-    networks:
-      - default
-      - rusty-network
+      - cron-mon-network
 
   monitor:
     extends: base-rust
@@ -39,7 +23,7 @@ services:
     command: cargo run --bin monitor
     networks:
       - default
-      - rusty-network
+      - cron-mon-network
 
   integration-tests-rs:
     extends: base-rust
@@ -50,7 +34,7 @@ services:
     command: cargo test --no-fail-fast --test "*" -- --test-threads=1
     networks:
       - default
-      - rusty-network
+      - cron-mon-network
 
   db:
     container_name: cron-mon-db
@@ -94,7 +78,7 @@ services:
   base-rust:
     image: cron-mon/base-rust-image
     build:
-      dockerfile: ./api/Dockerfile
+      dockerfile: ./Dockerfile
       context: .
     stdin_open: true
     tty: true
@@ -105,9 +89,9 @@ services:
       - ./api:/usr/cron-mon/api
 
 networks:
-  rusty-network:
+  cron-mon-network:
     driver: bridge
-    name: rusty-network
+    name: cron-mon-network
 
 volumes:
   postgres-data:
