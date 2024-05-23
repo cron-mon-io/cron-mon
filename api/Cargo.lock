@@ -234,6 +234,7 @@ dependencies = [
  "rstest",
  "serde",
  "serde_json",
+ "test-utils",
  "tokio",
  "uuid",
 ]
@@ -1575,6 +1576,14 @@ dependencies = [
  "fastrand",
  "rustix",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "test-utils"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "uuid",
 ]
 
 [[package]]

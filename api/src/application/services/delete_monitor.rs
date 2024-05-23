@@ -35,7 +35,8 @@ mod tests {
     use rstest::*;
     use tokio::test;
 
-    use crate::infrastructure::repositories::test_repo::gen_uuid;
+    use test_utils::gen_uuid;
+
     use crate::infrastructure::repositories::{test_repo::TestRepository, All};
 
     use super::{DeleteMonitorService, Monitor};

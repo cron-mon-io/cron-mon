@@ -39,10 +39,11 @@ mod tests {
     use tokio::test;
     use uuid::Uuid;
 
+    use test_utils::{gen_relative_datetime, gen_uuid};
+
     use crate::domain::errors::JobError;
     use crate::domain::models::{job::Job, monitor::Monitor};
     use crate::infrastructure::repositories::test_repo::TestRepository;
-    use crate::infrastructure::repositories::test_repo::{gen_relative_datetime, gen_uuid};
 
     use super::{NotifyLateJob, ProcessLateJobsService};
 
