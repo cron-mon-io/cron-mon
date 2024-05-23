@@ -6,9 +6,9 @@ use rocket::local::blocking::Client;
 use rstest::*;
 use serde_json::{json, Value};
 
-use test_utils::gen_uuid;
+use test_utils::{gen_uuid, is_uuid};
 
-use common::{get_test_client, is_datetime, is_uuid};
+use common::get_test_client;
 
 #[test]
 fn test_get_monitor_when_monitor_exists() {
@@ -35,8 +35,11 @@ fn test_get_monitor_when_monitor_exists() {
     assert_eq!(jobs.len(), 3);
 
     let job = &jobs[0];
-    assert!(is_uuid(job["job_id"].as_str().unwrap()));
-    assert!(is_datetime(job["start_time"].as_str().unwrap()));
+    assert_eq!(
+        job["job_id"].as_str().unwrap(),
+        "9d4e2d69-af63-4c1e-8639-60cb2683aee5"
+    );
+    assert_eq!(job["start_time"].as_str().unwrap(), "2024-05-01T00:20:00");
     assert_eq!(job["end_time"].as_null(), Some(()));
     assert_eq!(job["duration"].as_null(), Some(()));
     assert_eq!(job["output"].as_null(), Some(()));
@@ -177,7 +180,10 @@ fn test_modify_monitor_when_monitor_exists() {
     let response_body = response.into_json::<Value>().unwrap();
     let monitor = &response_body["data"];
 
-    assert!(is_uuid(monitor["monitor_id"].as_str().unwrap()));
+    assert_eq!(
+        monitor["monitor_id"].as_str().unwrap(),
+        "c1bf0515-df39-448b-aa95-686360a33b36"
+    );
     assert_eq!(monitor["monitor_id"], original_monitor["monitor_id"]);
 
     assert_ne!(monitor["name"], original_monitor["name"]);

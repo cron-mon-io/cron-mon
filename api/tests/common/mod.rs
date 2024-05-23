@@ -1,11 +1,7 @@
-use std::str::FromStr;
-
-use chrono::NaiveDateTime;
 use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
 use rocket::local::blocking::Client;
 use tokio;
-use uuid::Uuid;
 
 use test_utils::{gen_datetime, gen_uuid};
 
@@ -120,21 +116,4 @@ pub fn get_test_client(seed_db: bool) -> Client {
             })
     }
     Client::tracked(rocket()).expect("Invalid rocket instance")
-}
-
-pub fn is_uuid(uuid: &str) -> bool {
-    if let Ok(_) = Uuid::from_str(uuid) {
-        true
-    } else {
-        false
-    }
-}
-
-// TODO: Remove this as we now have set timestamps on all integration test seeds.
-pub fn is_datetime(datetime: &str) -> bool {
-    if let Ok(_) = NaiveDateTime::parse_from_str(datetime, "%Y-%m-%dT%H:%M:%S%.f") {
-        true
-    } else {
-        false
-    }
 }
