@@ -6,7 +6,9 @@ use rocket::local::blocking::Client;
 use rstest::*;
 use serde_json::{json, Value};
 
-use common::{gen_uuid, get_test_client, is_datetime, is_uuid};
+use test_utils::gen_uuid;
+
+use common::{get_test_client, is_datetime, is_uuid};
 
 #[test]
 fn test_get_monitor_when_monitor_exists() {
