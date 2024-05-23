@@ -19,7 +19,6 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<'a, T> {
         new_expected: i32,
         new_grace: i32,
     ) -> Option<Monitor> {
-        // TODO: Test me
         let mut monitor = self
             .repo
             .get(monitor_id)

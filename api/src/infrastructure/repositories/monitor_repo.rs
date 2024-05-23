@@ -98,7 +98,6 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
                 .order(job::start_time.desc())
                 .load(self.db)
                 .await?;
-            // TODO handle monitors without jobs.
             Ok(Some(self.db_to_monitor(monitor, jobs)))
         } else {
             Ok(None)
