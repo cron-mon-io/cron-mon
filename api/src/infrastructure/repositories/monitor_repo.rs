@@ -38,32 +38,17 @@ impl<'a> MonitorRepository<'a> {
 #[async_trait]
 impl<'a> GetWithLateJobs for MonitorRepository<'a> {
     async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
-        // TODO: Optimise this by getting montors with late jobs, rather than getting late jobs and
-        // then getting the monitors they belong too.
         let in_progress_condition = job::end_time.is_null().and(now.gt(job::max_end_time));
         let finished_condition = job::end_time
             .is_not_null()
             .and(job::end_time.assume_not_null().gt(job::max_end_time));
-        // Get all late jobs.
-        let late_jobs: Vec<JobData> = job::dsl::job
-            .inner_join(monitor::table)
-            .filter(in_progress_condition.or(finished_condition))
-            .select(JobData::as_select())
-            .load(self.db)
-            .await?;
 
-        // Get the monitors that the late jobs belong too.
-        // TODO: Refactor the below as it's very close to what we're doing in `all`.
-        let monitor_datas = monitor::table
+        // Get all late jobs.
+        let monitor_datas: Vec<MonitorData> = monitor::table
+            .inner_join(job::table)
+            .filter(in_progress_condition.or(finished_condition))
             .select(MonitorData::as_select())
-            .filter(
-                monitor::monitor_id.eq_any(
-                    late_jobs
-                        .iter()
-                        .map(|j| j.monitor_id)
-                        .collect::<Vec<Uuid>>(),
-                ),
-            )
+            .distinct_on(monitor::monitor_id)
             .load(self.db)
             .await?;
 
