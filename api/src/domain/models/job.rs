@@ -147,7 +147,9 @@ mod tests {
     use rstest::rstest;
     use serde_json::{json, Value};
 
-    use super::{Duration, Job, JobError, NaiveDateTime, Utc, Uuid};
+    use test_utils::{gen_datetime, gen_relative_datetime};
+
+    use super::{Job, JobError, NaiveDateTime, Uuid};
 
     // TODO: Figure out how to test the time-based elements. See https://tokio.rs/tokio/topics/testing
 
@@ -182,13 +184,7 @@ mod tests {
 
     #[rstest]
     #[case(None, None, None)]
-    #[case(
-        // TODO: We do a lot of this in tests - find a nice way to extract this into a helper
-        // function.
-        Some(NaiveDateTime::parse_from_str("2024-04-20 20:36:00", "%Y-%m-%d %H:%M:%S").unwrap()),
-        Some(true),
-        Some(330)
-    )]
+    #[case(Some(gen_datetime("2024-04-20T20:36:00")), Some(true), Some(330))]
     fn getting_job_duration(
         #[case] end_time: Option<NaiveDateTime>,
         #[case] succeeded: Option<bool>,
@@ -196,8 +192,8 @@ mod tests {
     ) {
         let job = Job::new(
             Uuid::new_v4(),
-            NaiveDateTime::parse_from_str("2024-04-20 20:30:30", "%Y-%m-%d %H:%M:%S").unwrap(),
-            NaiveDateTime::parse_from_str("2024-04-20 20:40:00", "%Y-%m-%d %H:%M:%S").unwrap(),
+            gen_datetime("2024-04-20T20:30:30"),
+            gen_datetime("2024-04-20T20:40:00"),
             end_time,
             succeeded,
             None,
@@ -208,17 +204,17 @@ mod tests {
 
     #[rstest]
     // Jobs still in progress - late checks made against current time.
-    #[case(Utc::now().naive_utc() + Duration::seconds(10), (None, None), false)]
-    #[case(Utc::now().naive_utc() - Duration::seconds(10), (None, None), true)]
+    #[case(gen_relative_datetime(10), (None, None), false)]
+    #[case(gen_relative_datetime(-10), (None, None), true)]
     // Finished Jobs - late checks made against end time.
     #[case(
-        Utc::now().naive_utc(),
-        (Some(Utc::now().naive_utc() - Duration::seconds(10)), Some(true)),
+        gen_relative_datetime(0),
+        (Some(gen_relative_datetime(-10)), Some(true)),
         false
     )]
     #[case(
-        Utc::now().naive_utc(),
-        (Some(Utc::now().naive_utc() + Duration::seconds(10)), Some(true)),
+        gen_relative_datetime(0),
+        (Some(gen_relative_datetime(10)), Some(true)),
         true
     )]
     fn checking_if_job_is_late(
@@ -228,7 +224,7 @@ mod tests {
     ) {
         let job = Job::new(
             Uuid::new_v4(),
-            NaiveDateTime::parse_from_str("2024-04-20 20:30:30", "%Y-%m-%d %H:%M:%S").unwrap(),
+            gen_datetime("2024-04-20T20:30:30"),
             max_end_time,
             result.0,
             result.1,
@@ -242,11 +238,9 @@ mod tests {
     fn serialisation() {
         let job = Job::new(
             Uuid::from_str("4987dbd2-cbc6-4ea7-b9b4-0af4abb4c0d3").unwrap(),
-            NaiveDateTime::parse_from_str("2024-04-20 20:30:30", "%Y-%m-%d %H:%M:%S").unwrap(),
-            NaiveDateTime::parse_from_str("2024-04-20 20:45:30", "%Y-%m-%d %H:%M:%S").unwrap(),
-            Some(
-                NaiveDateTime::parse_from_str("2024-04-20 20:40:30", "%Y-%m-%d %H:%M:%S").unwrap(),
-            ),
+            gen_datetime("2024-04-20T20:30:30"),
+            gen_datetime("2024-04-20T20:45:30"),
+            Some(gen_datetime("2024-04-20T20:40:30")),
             Some(true),
             None,
         );

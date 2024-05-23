@@ -1,7 +1,5 @@
 pub mod common;
 
-use std::str::FromStr;
-
 use pretty_assertions::assert_eq;
 use tokio::test;
 use uuid::Uuid;
@@ -57,11 +55,11 @@ async fn test_get() {
     let mut repo = MonitorRepository::new(&mut conn);
 
     let should_be_none = repo
-        .get(Uuid::from_str("4940ede2-72fc-4e0e-838e-f15f35e3594f").unwrap())
+        .get(gen_uuid("4940ede2-72fc-4e0e-838e-f15f35e3594f"))
         .await
         .unwrap();
     let should_be_some = repo
-        .get(Uuid::from_str("c1bf0515-df39-448b-aa95-686360a33b36").unwrap())
+        .get(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"))
         .await
         .unwrap();
 
@@ -118,7 +116,7 @@ async fn test_delete() {
     let mut repo = MonitorRepository::new(&mut conn);
 
     let monitor = repo
-        .get(Uuid::from_str("c1bf0515-df39-448b-aa95-686360a33b36").unwrap())
+        .get(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"))
         .await
         .unwrap()
         .unwrap();
