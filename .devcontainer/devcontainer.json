@@ -2,7 +2,7 @@
   "name": "CronMon Dev Container",
   "build": {
     "dockerfile": "../Dockerfile",
-    "context": "..",
+    "context": ".."
   },
   "runArgs": [
     "--name",
