@@ -1,17 +1,14 @@
-use std::str::FromStr;
-
-use chrono::NaiveDateTime;
 use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
 use rocket::local::blocking::Client;
 use tokio;
-use uuid::Uuid;
+
+use test_utils::{gen_datetime, gen_uuid};
 
 use cron_mon_api::infrastructure::database::establish_connection;
-use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
-
 use cron_mon_api::infrastructure::db_schema::job;
 use cron_mon_api::infrastructure::db_schema::monitor;
+use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
 use cron_mon_api::rocket;
 
 pub async fn setup_db() -> AsyncPgConnection {
@@ -119,30 +116,4 @@ pub fn get_test_client(seed_db: bool) -> Client {
             })
     }
     Client::tracked(rocket()).expect("Invalid rocket instance")
-}
-
-// Duplicate of src/infrastructure/respositories/test_repo - need to figure out a better way...
-pub fn gen_uuid(uuid: &str) -> Uuid {
-    Uuid::from_str(uuid).unwrap()
-}
-
-pub fn is_uuid(uuid: &str) -> bool {
-    if let Ok(_) = Uuid::from_str(uuid) {
-        true
-    } else {
-        false
-    }
-}
-
-// TODO: Remove this as we now have set timestamps on all integration test seeds.
-pub fn is_datetime(datetime: &str) -> bool {
-    if let Ok(_) = NaiveDateTime::parse_from_str(datetime, "%Y-%m-%dT%H:%M:%S%.f") {
-        true
-    } else {
-        false
-    }
-}
-
-fn gen_datetime(datetime: &str) -> NaiveDateTime {
-    NaiveDateTime::parse_from_str(datetime, "%Y-%m-%dT%H:%M:%S%.f").unwrap()
 }

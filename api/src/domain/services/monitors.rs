@@ -35,7 +35,7 @@ mod tests {
     use rstest::*;
 
     use crate::domain::models::job::Job;
-    use crate::infrastructure::repositories::test_repo::{gen_abs_datetime, gen_uuid};
+    use test_utils::{gen_datetime, gen_uuid};
 
     use super::{order_monitors_by_last_started_job, Monitor};
 
@@ -57,17 +57,17 @@ mod tests {
                 jobs: vec![
                     Job::new(
                         gen_uuid("8106bab7-d643-4ede-bd92-60c79f787344"),
-                        gen_abs_datetime("2024-05-01 00:30:00"),
-                        gen_abs_datetime("2024-05-01 01:10:00"),
-                        Some(gen_abs_datetime("2024-05-01 00:49:00")),
+                        gen_datetime("2024-05-01T00:30:00"),
+                        gen_datetime("2024-05-01T01:10:00"),
+                        Some(gen_datetime("2024-05-01T00:49:00")),
                         Some(true),
                         Some("Orders generated successfully".to_owned()),
                     ),
                     Job::new(
                         gen_uuid("c1893113-66d7-4707-9a51-c8be46287b2c"),
-                        gen_abs_datetime("2024-05-01 00:00:00"),
-                        gen_abs_datetime("2024-05-01 00:40:00"),
-                        Some(gen_abs_datetime("2024-05-01 00:39:00")),
+                        gen_datetime("2024-05-01T00:00:00"),
+                        gen_datetime("2024-05-01T00:40:00"),
+                        Some(gen_datetime("2024-05-01T00:39:00")),
                         Some(false),
                         Some("Failed to generate orders".to_owned()),
                     ),
@@ -80,8 +80,8 @@ mod tests {
                 grace_duration: 1800,
                 jobs: vec![Job::new(
                     gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5"),
-                    gen_abs_datetime("2024-05-01 00:20:00"),
-                    gen_abs_datetime("2024-05-01 01:00:00"),
+                    gen_datetime("2024-05-01T00:20:00"),
+                    gen_datetime("2024-05-01T01:00:00"),
                     None,
                     None,
                     None,

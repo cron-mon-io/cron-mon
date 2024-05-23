@@ -6,12 +6,14 @@ use pretty_assertions::assert_eq;
 use tokio::test;
 use uuid::Uuid;
 
+use test_utils::gen_uuid;
+
 use cron_mon_api::domain::models::monitor::Monitor;
 use cron_mon_api::infrastructure::repositories::monitor::GetWithLateJobs;
 use cron_mon_api::infrastructure::repositories::monitor_repo::MonitorRepository;
 use cron_mon_api::infrastructure::repositories::{All, Delete, Get, Save};
 
-use common::{gen_uuid, setup_db};
+use common::setup_db;
 
 #[test]
 async fn test_all() {

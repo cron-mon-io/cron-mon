@@ -1,10 +1,9 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 
 use async_trait::async_trait;
-use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::result::Error;
 use rstest::*;
+use test_utils::{gen_datetime, gen_relative_datetime, gen_uuid};
 use tokio::test;
 use uuid::Uuid;
 
@@ -12,19 +11,6 @@ use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 use crate::infrastructure::repositories::{All, Delete, Get, Save};
-
-// Utility functions for testing.
-pub fn gen_uuid(uuid: &str) -> Uuid {
-    Uuid::from_str(uuid).unwrap()
-}
-
-pub fn gen_abs_datetime(ts: &str) -> NaiveDateTime {
-    NaiveDateTime::parse_from_str(ts, "%Y-%m-%d %H:%M:%S").unwrap()
-}
-
-pub fn gen_relative_datetime(seconds: i64) -> NaiveDateTime {
-    Utc::now().naive_utc() + Duration::seconds(seconds)
-}
 
 pub struct TestRepository {
     data: HashMap<Uuid, Monitor>,
@@ -127,9 +113,9 @@ fn repo() -> TestRepository {
             grace_duration: 1_800,
             jobs: vec![Job::new(
                 gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
-                gen_abs_datetime("2024-04-22 02:30:00"),
-                gen_abs_datetime("2024-04-22 09:00:00"),
-                Some(gen_abs_datetime("2024-04-22 09:45:00")), // late!
+                gen_datetime("2024-04-22T02:30:00"),
+                gen_datetime("2024-04-22T09:00:00"),
+                Some(gen_datetime("2024-04-22T09:45:00")), // late!
                 Some(true),
                 None,
             )],

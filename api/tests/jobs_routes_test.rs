@@ -6,7 +6,9 @@ use rocket::local::blocking::Client;
 use rstest::*;
 use serde_json::{json, Value};
 
-use common::{gen_uuid, get_test_client, is_datetime, is_uuid};
+use test_utils::{is_datetime, is_uuid};
+
+use common::get_test_client;
 
 #[test]
 fn test_get_job_when_job_exists() {
@@ -24,11 +26,8 @@ fn test_get_job_when_job_exists() {
 
     let response_body = response.into_json::<Value>().unwrap();
     let job = &response_body["data"];
-    assert_eq!(
-        job["job_id"],
-        gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5").to_string()
-    );
-    assert!(is_datetime(job["start_time"].as_str().unwrap()));
+    assert_eq!(job["job_id"], "9d4e2d69-af63-4c1e-8639-60cb2683aee5");
+    assert_eq!(job["start_time"].as_str().unwrap(), "2024-05-01T00:20:00");
     assert_eq!(job["end_time"].as_null(), Some(()));
     assert_eq!(job["duration"].as_null(), Some(()));
     assert_eq!(job["output"].as_null(), Some(()));
@@ -87,11 +86,8 @@ fn test_finish_job() {
 
     let response_body = response.into_json::<Value>().unwrap();
     let job = &response_body["data"];
-    assert_eq!(
-        job["job_id"],
-        gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5").to_string()
-    );
-    assert!(is_datetime(job["start_time"].as_str().unwrap()));
+    assert_eq!(job["job_id"], "9d4e2d69-af63-4c1e-8639-60cb2683aee5");
+    assert_eq!(job["start_time"].as_str().unwrap(), "2024-05-01T00:20:00");
     assert!(is_datetime(job["end_time"].as_str().unwrap()));
     assert!(job["duration"].as_i64().is_some());
     assert_eq!(job["output"], "Test output");

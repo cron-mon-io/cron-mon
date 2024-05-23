@@ -43,8 +43,9 @@ mod tests {
     use rstest::*;
     use tokio::test;
 
+    use test_utils::{gen_relative_datetime, gen_uuid};
+
     use crate::infrastructure::repositories::test_repo::TestRepository;
-    use crate::infrastructure::repositories::test_repo::{gen_relative_datetime, gen_uuid};
 
     use super::{FinishJobService, Get, Job, Monitor};
 

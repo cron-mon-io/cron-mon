@@ -30,8 +30,9 @@ mod tests {
     use rstest::*;
     use tokio::test;
 
+    use test_utils::{gen_datetime, gen_uuid};
+
     use crate::infrastructure::repositories::test_repo::TestRepository;
-    use crate::infrastructure::repositories::test_repo::{gen_abs_datetime, gen_uuid};
 
     use super::{FetchJobService, Job, Monitor};
 
@@ -44,9 +45,9 @@ mod tests {
             grace_duration: 100,
             jobs: vec![Job::new(
                 gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                gen_abs_datetime("2024-04-22 22:43:00"),
-                gen_abs_datetime("2024-04-22 22:53:00"),
-                Some(gen_abs_datetime("2024-04-22 22:49:00")),
+                gen_datetime("2024-04-22T22:43:00"),
+                gen_datetime("2024-04-22T22:53:00"),
+                Some(gen_datetime("2024-04-22T22:49:00")),
                 Some(true),
                 None,
             )],
@@ -69,9 +70,9 @@ mod tests {
             job,
             Job::new(
                 gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                gen_abs_datetime("2024-04-22 22:43:00"),
-                gen_abs_datetime("2024-04-22 22:53:00"),
-                Some(gen_abs_datetime("2024-04-22 22:49:00")),
+                gen_datetime("2024-04-22T22:43:00"),
+                gen_datetime("2024-04-22T22:53:00"),
+                Some(gen_datetime("2024-04-22T22:49:00")),
                 Some(true),
                 None,
             )
