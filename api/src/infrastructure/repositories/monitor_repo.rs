@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use diesel::dsl::now;
 use diesel::prelude::*;
 use diesel::result::Error;
+use diesel_async::AsyncConnection;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use uuid::Uuid;
 
@@ -38,27 +39,37 @@ impl<'a> MonitorRepository<'a> {
 #[async_trait]
 impl<'a> GetWithLateJobs for MonitorRepository<'a> {
     async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
-        let in_progress_condition = job::end_time.is_null().and(now.gt(job::max_end_time));
-        let finished_condition = job::end_time
-            .is_not_null()
-            .and(job::end_time.assume_not_null().gt(job::max_end_time));
+        let (monitor_datas, job_datas) = self
+            .db
+            .transaction::<(Vec<MonitorData>, Vec<JobData>), Error, _>(|conn| {
+                Box::pin(async move {
+                    let in_progress_condition =
+                        job::end_time.is_null().and(now.gt(job::max_end_time));
+                    let finished_condition = job::end_time
+                        .is_not_null()
+                        .and(job::end_time.assume_not_null().gt(job::max_end_time));
 
-        // Get all late jobs.
-        let monitor_datas: Vec<MonitorData> = monitor::table
-            .inner_join(job::table)
-            .filter(in_progress_condition.or(finished_condition))
-            .select(MonitorData::as_select())
-            .distinct_on(monitor::monitor_id)
-            .load(self.db)
+                    // Get all late jobs.
+                    let monitor_datas: Vec<MonitorData> = monitor::table
+                        .inner_join(job::table)
+                        .filter(in_progress_condition.or(finished_condition))
+                        .select(MonitorData::as_select())
+                        .distinct_on(monitor::monitor_id)
+                        .load(conn)
+                        .await?;
+
+                    let job_datas = JobData::belonging_to(&monitor_datas)
+                        .select(JobData::as_select())
+                        .order(job::start_time.desc())
+                        .load(conn)
+                        .await?;
+
+                    Ok((monitor_datas, job_datas))
+                })
+            })
             .await?;
 
-        let jobs = JobData::belonging_to(&monitor_datas)
-            .select(JobData::as_select())
-            .order(job::start_time.desc())
-            .load(self.db)
-            .await?;
-
-        Ok(jobs
+        Ok(job_datas
             .grouped_by(&monitor_datas)
             .into_iter()
             .zip(monitor_datas)
@@ -70,44 +81,66 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
 #[async_trait]
 impl<'a> Get<Monitor> for MonitorRepository<'a> {
     async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, Error> {
-        let monitor_data = monitor::table
-            .select(MonitorData::as_select())
-            .find(monitor_id)
-            .first(self.db)
-            .await
-            .optional()?;
+        let result = self
+            .db
+            .transaction::<Option<(MonitorData, Vec<JobData>)>, Error, _>(|conn| {
+                Box::pin(async move {
+                    let monitor_data = monitor::table
+                        .select(MonitorData::as_select())
+                        .find(monitor_id)
+                        .first(conn)
+                        .await
+                        .optional()?;
 
-        if let Some(monitor) = monitor_data {
-            let jobs = JobData::belonging_to(&monitor)
-                .select(JobData::as_select())
-                .order(job::start_time.desc())
-                .load(self.db)
-                .await?;
-            Ok(Some(self.db_to_monitor(monitor, jobs)))
+                    Ok(if let Some(monitor) = monitor_data {
+                        let jobs = JobData::belonging_to(&monitor)
+                            .select(JobData::as_select())
+                            .order(job::start_time.desc())
+                            .load(conn)
+                            .await?;
+                        Some((monitor, jobs))
+                    } else {
+                        None
+                    })
+                })
+            })
+            .await?;
+
+        Ok(if let Some((monitor_data, job_datas)) = result {
+            Some(self.db_to_monitor(monitor_data, job_datas))
         } else {
-            Ok(None)
-        }
+            None
+        })
     }
 }
 
 #[async_trait]
 impl<'a> All<Monitor> for MonitorRepository<'a> {
     async fn all(&mut self) -> Result<Vec<Monitor>, Error> {
-        let all_monitor_data = monitor::dsl::monitor
-            .select(MonitorData::as_select())
-            .load(self.db)
+        let (monitor_datas, job_datas) = self
+            .db
+            .transaction::<(Vec<MonitorData>, Vec<JobData>), Error, _>(|conn| {
+                Box::pin(async move {
+                    let all_monitor_data = monitor::dsl::monitor
+                        .select(MonitorData::as_select())
+                        .load(conn)
+                        .await?;
+
+                    let jobs = JobData::belonging_to(&all_monitor_data)
+                        .select(JobData::as_select())
+                        .order(job::start_time.desc())
+                        .load(conn)
+                        .await?;
+
+                    Ok((all_monitor_data, jobs))
+                })
+            })
             .await?;
 
-        let jobs = JobData::belonging_to(&all_monitor_data)
-            .select(JobData::as_select())
-            .order(job::start_time.desc())
-            .load(self.db)
-            .await?;
-
-        Ok(jobs
-            .grouped_by(&all_monitor_data)
+        Ok(job_datas
+            .grouped_by(&monitor_datas)
             .into_iter()
-            .zip(all_monitor_data)
+            .zip(monitor_datas)
             .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
             .collect::<Vec<Monitor>>())
     }
@@ -116,38 +149,49 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
 #[async_trait]
 impl<'a> Save<Monitor> for MonitorRepository<'a> {
     async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
-        // TODO: Use transactions.
-        let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
         let cached_data = self.data.get(&monitor.monitor_id);
-        if let Some(cached) = cached_data {
-            diesel::update(&monitor_data)
-                .set(&monitor_data)
-                .execute(self.db)
-                .await?;
 
-            let job_ids = &cached.1.iter().map(|j| j.job_id).collect::<Vec<Uuid>>();
-            for j in &job_datas {
-                // TODO: Handle jobs being deleted.
-                if job_ids.contains(&j.job_id) {
-                    diesel::update(j).set(j).execute(self.db).await?;
-                } else {
-                    diesel::insert_into(job::table)
-                        .values(j)
-                        .execute(self.db)
-                        .await?;
-                }
-            }
-        } else {
-            diesel::insert_into(monitor::table)
-                .values(&monitor_data)
-                .execute(self.db)
-                .await?;
+        // Clone the monitor and job data to avoid borrowing issues.
+        // let (monitor_data_clone, job_datas_clone) = (monitor_data.clone(), job_datas.clone());
+        let (monitor_data, job_datas) = self
+            .db
+            .transaction::<(MonitorData, Vec<JobData>), Error, _>(|conn| {
+                Box::pin(async move {
+                    let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
+                    if let Some(cached) = cached_data {
+                        diesel::update(&monitor_data)
+                            .set(&monitor_data)
+                            .execute(conn)
+                            .await?;
 
-            diesel::insert_into(job::table)
-                .values(&job_datas)
-                .execute(self.db)
-                .await?;
-        }
+                        let job_ids = &cached.1.iter().map(|j| j.job_id).collect::<Vec<Uuid>>();
+                        for j in &job_datas {
+                            // TODO: Handle jobs being deleted.
+                            if job_ids.contains(&j.job_id) {
+                                diesel::update(j).set(j).execute(conn).await?;
+                            } else {
+                                diesel::insert_into(job::table)
+                                    .values(j)
+                                    .execute(conn)
+                                    .await?;
+                            }
+                        }
+                    } else {
+                        diesel::insert_into(monitor::table)
+                            .values(&monitor_data)
+                            .execute(conn)
+                            .await?;
+
+                        diesel::insert_into(job::table)
+                            .values(&job_datas)
+                            .execute(conn)
+                            .await?;
+                    }
+
+                    Ok((monitor_data, job_datas))
+                })
+            })
+            .await?;
 
         self.data
             .insert(monitor.monitor_id, (monitor_data, job_datas));
