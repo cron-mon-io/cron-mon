@@ -166,7 +166,8 @@ impl<'a> Save<Monitor> for MonitorRepository<'a> {
 
                         let job_ids = &cached.1.iter().map(|j| j.job_id).collect::<Vec<Uuid>>();
                         for j in &job_datas {
-                            // TODO: Handle jobs being deleted.
+                            // TODO: Handle jobs being deleted. Don't need to worry about this for
+                            // now since there isn't anything that deletes jobs within monitors.
                             if job_ids.contains(&j.job_id) {
                                 diesel::update(j).set(j).execute(conn).await?;
                             } else {
