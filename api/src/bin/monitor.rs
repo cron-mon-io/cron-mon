@@ -1,5 +1,8 @@
 use std::future::Future;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
+use signal_hook;
 use tokio;
 
 use cron_mon_api::application::services::process_late_jobs::ProcessLateJobsService;
@@ -12,9 +15,12 @@ where
     F: Fn() -> Fut + Send + 'static,
     Fut: Future + Send,
 {
+    let term = Arc::new(AtomicBool::new(false));
+    signal_hook::flag::register(signal_hook::consts::SIGTERM, Arc::clone(&term))
+        .expect("Failed to register SIGTERM handler");
+
     let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(seconds));
-    // TODO: Figure out how to handle shutdown gracefully.
-    loop {
+    while !term.load(Ordering::Relaxed) {
         interval.tick().await;
 
         func().await;
