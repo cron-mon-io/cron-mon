@@ -144,25 +144,25 @@ impl Serialize for Job {
 mod tests {
     use std::str::FromStr;
 
-    use rstest::rstest;
+    use chrono::Duration;
+    use rstest::*;
     use serde_json::{json, Value};
 
     use test_utils::{gen_datetime, gen_relative_datetime};
 
     use super::{Job, JobError, NaiveDateTime, Uuid};
 
-    // TODO: Figure out how to test the time-based elements. See https://tokio.rs/tokio/topics/testing
-
     #[test]
     fn starting_jobs() {
         let job = Job::start(300);
 
+        assert_eq!(job.max_end_time - job.start_time, Duration::seconds(300));
         assert_eq!(job.end_time, None);
         assert_eq!(job.succeeded, None);
         assert_eq!(job.output, None);
 
         // New jobs should always be in progress.
-        assert!(job.in_progress())
+        assert!(job.in_progress());
     }
 
     #[test]
@@ -172,6 +172,7 @@ mod tests {
         let result1 = job.finish(true, None);
         assert!(result1.is_ok());
         assert_eq!(job.in_progress(), false);
+        assert!(job.end_time.is_some());
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);
 
