@@ -41,7 +41,7 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> FinishJobService<'a, T> {
 #[cfg(test)]
 mod tests {
     use rstest::*;
-    use tokio::test;
+    use tokio;
 
     use test_utils::{gen_relative_datetime, gen_uuid};
 
@@ -68,7 +68,7 @@ mod tests {
     }
 
     #[rstest]
-    #[test(start_paused = true)]
+    #[tokio::test(start_paused = true)]
     async fn test_finish_job_service(mut repo: TestRepository) {
         let monitor_before = repo
             .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
