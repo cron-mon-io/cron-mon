@@ -36,7 +36,7 @@ impl<'a, Repo: GetWithLateJobs, Notifier: NotifyLateJob>
 #[cfg(test)]
 mod tests {
     use rstest::*;
-    use tokio::test;
+    use tokio;
     use uuid::Uuid;
 
     use test_utils::{gen_relative_datetime, gen_uuid};
@@ -136,7 +136,7 @@ mod tests {
     }
 
     #[rstest]
-    #[test(start_paused = true)]
+    #[tokio::test(start_paused = true)]
     async fn test_start_job_service(mut repo: TestRepository) {
         let mut notifier = FakeJobNotifier::new();
         let mut service = ProcessLateJobsService::new(&mut repo, &mut notifier);

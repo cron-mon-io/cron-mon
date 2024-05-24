@@ -7,7 +7,6 @@ pub struct CORS;
 
 #[async_trait]
 impl Fairing for CORS {
-    // TODO: Test me
     fn info(&self) -> Info {
         Info {
             name: "CORS headers in responses",

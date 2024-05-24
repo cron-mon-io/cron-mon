@@ -117,12 +117,13 @@ impl Monitor {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
 
-    use chrono::{offset::Utc, NaiveDateTime};
+    use chrono::NaiveDateTime;
     use rstest::rstest;
 
-    use super::{Duration, Job, JobError, Monitor, Uuid};
+    use test_utils::{gen_relative_datetime, gen_uuid};
+
+    use super::{Job, JobError, Monitor, Uuid};
 
     #[test]
     fn creating_new_monitors() {
@@ -139,14 +140,10 @@ mod tests {
     #[case(
         vec![
             (
-                // TODO: We do a lot of this in tests - find a nice way to extract this into a
-                // helper function.
-                Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
-                Utc::now().naive_utc() + Duration::seconds(5)
+                gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"), gen_relative_datetime(5)
             ),
             (
-                Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
-                Utc::now().naive_utc() + Duration::seconds(5)
+                gen_uuid("15904641-2d0e-4d27-8fd0-b130f0ab5aa9"), gen_relative_datetime(5)
             )
         ],
         vec![]
@@ -154,30 +151,26 @@ mod tests {
     #[case(
         vec![
             (
-                Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
-                Utc::now().naive_utc()
+                gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"), gen_relative_datetime(0)
             ),
             (
-                Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
-                Utc::now().naive_utc() + Duration::seconds(5)
+                gen_uuid("15904641-2d0e-4d27-8fd0-b130f0ab5aa9"), gen_relative_datetime(5)
             )
         ],
-        vec![Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap()]
+        vec![gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420")]
     )]
     #[case(
         vec![
             (
-                Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
-                Utc::now().naive_utc()
+                gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"), gen_relative_datetime(0)
             ),
             (
-                Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap(),
-                Utc::now().naive_utc()
+                gen_uuid("15904641-2d0e-4d27-8fd0-b130f0ab5aa9"), gen_relative_datetime(0)
             )
         ],
         vec![
-            Uuid::from_str("79192674-0e87-4f79-b988-0efd5ae76420").unwrap(),
-            Uuid::from_str("15904641-2d0e-4d27-8fd0-b130f0ab5aa9").unwrap()
+            gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"),
+            gen_uuid("15904641-2d0e-4d27-8fd0-b130f0ab5aa9")
         ]
     )]
     fn checking_for_late_jobs(
@@ -189,9 +182,7 @@ mod tests {
             .iter()
             .map(|i| Job {
                 job_id: i.0,
-                // TODO: We do a lot of this in tests - find a nice way to extract this into a
-                // helper function.
-                start_time: Utc::now().naive_utc() - Duration::seconds(200),
+                start_time: gen_relative_datetime(-200),
                 max_end_time: i.1,
                 end_time: None,
                 succeeded: None,
@@ -208,26 +199,26 @@ mod tests {
         let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
         mon.jobs = vec![
             Job {
-                job_id: Uuid::from_str("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1").unwrap(),
-                start_time: Utc::now().naive_utc(),
-                max_end_time: Utc::now().naive_utc() + Duration::seconds(300),
+                job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
+                start_time: gen_relative_datetime(0),
+                max_end_time: gen_relative_datetime(300),
                 end_time: None,
                 succeeded: None,
                 output: None,
             },
             Job {
-                job_id: Uuid::from_str("139fbf11-eff1-44cf-9f58-b5febb4729d6").unwrap(),
-                start_time: Utc::now().naive_utc() - Duration::seconds(200),
-                max_end_time: Utc::now().naive_utc() + Duration::seconds(100),
-                end_time: Some(Utc::now().naive_utc()),
+                job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(100),
+                end_time: Some(gen_relative_datetime(0)),
                 succeeded: Some(true),
                 output: None,
             },
             Job {
-                job_id: Uuid::from_str("a4a8d5ac-86c1-448d-aa82-3388d59ac43e").unwrap(),
-                start_time: Utc::now().naive_utc() - Duration::seconds(300),
-                max_end_time: Utc::now().naive_utc(),
-                end_time: Some(Utc::now().naive_utc() - Duration::seconds(50)),
+                job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
+                start_time: gen_relative_datetime(-300),
+                max_end_time: gen_relative_datetime(0),
+                end_time: Some(gen_relative_datetime(-50)),
                 succeeded: Some(false),
                 output: None,
             },
@@ -236,7 +227,7 @@ mod tests {
         let last_finished_job = mon.last_finished_job().unwrap();
         assert_eq!(
             last_finished_job.job_id,
-            Uuid::from_str("139fbf11-eff1-44cf-9f58-b5febb4729d6").unwrap()
+            gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6")
         );
     }
 
@@ -245,25 +236,25 @@ mod tests {
         let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
         mon.jobs = vec![
             Job {
-                job_id: Uuid::from_str("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1").unwrap(),
-                start_time: Utc::now().naive_utc(),
-                max_end_time: Utc::now().naive_utc() + Duration::seconds(300),
+                job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
+                start_time: gen_relative_datetime(0),
+                max_end_time: gen_relative_datetime(300),
                 end_time: None,
                 succeeded: None,
                 output: None,
             },
             Job {
-                job_id: Uuid::from_str("139fbf11-eff1-44cf-9f58-b5febb4729d6").unwrap(),
-                start_time: Utc::now().naive_utc() - Duration::seconds(200),
-                max_end_time: Utc::now().naive_utc() + Duration::seconds(100),
+                job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(100),
                 end_time: None,
                 succeeded: None,
                 output: None,
             },
             Job {
-                job_id: Uuid::from_str("a4a8d5ac-86c1-448d-aa82-3388d59ac43e").unwrap(),
-                start_time: Utc::now().naive_utc() - Duration::seconds(300),
-                max_end_time: Utc::now().naive_utc(),
+                job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
+                start_time: gen_relative_datetime(-300),
+                max_end_time: gen_relative_datetime(0),
                 end_time: None,
                 succeeded: None,
                 output: None,
@@ -279,25 +270,25 @@ mod tests {
         let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
         mon.jobs = vec![
             Job {
-                job_id: Uuid::from_str("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1").unwrap(),
-                start_time: Utc::now().naive_utc(),
-                max_end_time: Utc::now().naive_utc() + Duration::seconds(300),
+                job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
+                start_time: gen_relative_datetime(0),
+                max_end_time: gen_relative_datetime(300),
                 end_time: None,
                 succeeded: None,
                 output: None,
             },
             Job {
-                job_id: Uuid::from_str("139fbf11-eff1-44cf-9f58-b5febb4729d6").unwrap(),
-                start_time: Utc::now().naive_utc() - Duration::seconds(200),
-                max_end_time: Utc::now().naive_utc() + Duration::seconds(100),
+                job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(100),
                 end_time: None,
                 succeeded: None,
                 output: None,
             },
             Job {
-                job_id: Uuid::from_str("a4a8d5ac-86c1-448d-aa82-3388d59ac43e").unwrap(),
-                start_time: Utc::now().naive_utc() - Duration::seconds(300),
-                max_end_time: Utc::now().naive_utc(),
+                job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
+                start_time: gen_relative_datetime(-300),
+                max_end_time: gen_relative_datetime(0),
                 end_time: None,
                 succeeded: None,
                 output: None,
@@ -307,7 +298,7 @@ mod tests {
         let last_started_job = mon.last_started_job().unwrap();
         assert_eq!(
             last_started_job.job_id,
-            Uuid::from_str("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1").unwrap()
+            gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1")
         );
     }
 
