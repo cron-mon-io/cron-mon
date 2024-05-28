@@ -314,7 +314,7 @@ paths:
     post:
       tags:
         - Jobs
-      summary: "Finish a Job within aMonitor"
+      summary: "Finish a Job within a Monitor"
       parameters:
         - in: path
           name: monitor_id
