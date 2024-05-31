@@ -8,7 +8,7 @@ use rocket::fs::FileServer;
 use rocket::{routes, Build, Rocket};
 use rocket_db_pools::Database;
 
-use crate::application::fairings::cors::CORS;
+use crate::application::fairings::{cors::CORS, default_json::DefaultJSON};
 use crate::application::routes::{health, jobs, monitors};
 use crate::infrastructure::database::Db;
 
@@ -17,6 +17,7 @@ pub fn rocket() -> Rocket<Build> {
     rocket::build()
         .attach(Db::init())
         .attach(CORS)
+        .attach(DefaultJSON)
         .mount(
             "/api/v1/",
             routes![
