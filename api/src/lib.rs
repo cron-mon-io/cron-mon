@@ -8,8 +8,8 @@ use rocket::fs::FileServer;
 use rocket::{routes, Build, Rocket};
 use rocket_db_pools::Database;
 
+use crate::application::fairings::cors::CORS;
 use crate::application::routes::{health, jobs, monitors};
-use crate::infrastructure::cors::CORS;
 use crate::infrastructure::database::Db;
 
 #[rocket::launch]
