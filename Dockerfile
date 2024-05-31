@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/rust:1.77.0-slim
+FROM public.ecr.aws/docker/library/rust:1.78.0-slim
 
 RUN apt-get update && apt-get install libpq-dev -y
 RUN rustup component add rustfmt
