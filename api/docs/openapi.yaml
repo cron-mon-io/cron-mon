@@ -48,10 +48,38 @@ paths:
                     name: "foo-backup.sh"
                     expected_duration: 1320
                     grace_duration: 300
+                    last_started_job:
+                      job_id: "c72be737-1089-4e10-9da3-0076f4d4123d"
+                      start_time: "2024-03-31T20:54:00"
+                      end_time: null
+                      succeeded: null
+                      output: null
+                      duration: null
+                      late: false
+                      in_progress: true
+                    last_finished_job: null
                   - monitor_id: "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
                     name: "analyse-bar.py"
                     expected_duration: 21600
                     grace_duration: 1800
+                    last_started_job: 
+                      job_id: "68c71e5a-932f-4443-9b32-dd2e66381499"
+                      start_time: "2024-03-31T12:35:00"
+                      end_time: "2024-03-31T12:59:00"
+                      succeeded: true
+                      output: null
+                      duration: 1440
+                      late: false
+                      in_progress: false
+                    last_finished_job:
+                      job_id: "68c71e5a-932f-4443-9b32-dd2e66381499"
+                      start_time: "2024-03-31T12:35:00"
+                      end_time: "2024-03-31T12:59:00"
+                      succeeded: true
+                      output: null
+                      duration: 1440
+                      late: false
+                      in_progress: false
         "400":
           $ref: "#/components/responses/BadInputError"
         "500":
