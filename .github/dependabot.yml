@@ -10,7 +10,11 @@ updates:
     labels:
       - "dependencies"
     groups:
-      direct-dependencies:
-        dependency-type: "direct"
-      indirect-dependencies:
-        dependency-type: "indirect"
+      core-dependencies:
+        patterns:
+          - "rocket-*"
+          - "diesel-*"
+      non-core-dependencies:
+        exclude-patterns:
+          - "rocket-*"
+          - "diesel-*"
