@@ -1,0 +1,16 @@
+version: 2
+
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/api"
+    schedule:
+      interval: "monthly"
+      time: "04:00"
+    versioning-strategy: increase
+    labels:
+      - "dependencies"
+    groups:
+      direct-dependencies:
+        dependency-type: "direct"
+      indirect-dependencies:
+        dependency-type: "indirect"
