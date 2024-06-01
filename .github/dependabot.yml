@@ -6,7 +6,6 @@ updates:
     schedule:
       interval: "monthly"
       time: "04:00"
-    versioning-strategy: increase
     labels:
       - "dependencies"
     groups:
