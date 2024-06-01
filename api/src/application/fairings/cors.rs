@@ -55,7 +55,7 @@ mod tests {
     #[case("/")]
     #[case("/api/v1/health")]
     #[case("/foo/bar")]
-    fn checking_for_late_jobs(test_client: Client, #[case] path: &str) {
+    fn test_cors(test_client: Client, #[case] path: &str) {
         let response = test_client.options(path).dispatch();
 
         assert_eq!(response.status(), Status::Ok);
