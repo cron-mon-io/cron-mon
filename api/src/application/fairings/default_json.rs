@@ -15,6 +15,13 @@ impl Fairing for DefaultJSON {
     }
 
     async fn on_request(&self, request: &mut Request<'_>, _: &mut Data<'_>) {
+        // We could check the Accept header here and only set it to JSON if it's not already set.
+        // The reason we don't do that is because we want to make sure that the API always returns
+        // JSON, even if the client requests a different format. Note that whilst it feels a bit
+        // rude to ignore the client's request, there's nothing technically wrong with us returning
+        // JSON when the client asks for a different format. We could respond with a 406 in such
+        // cases but Rocket currently doesn't support terminating or responding to requests in
+        // Fairings. See https://github.com/rwf2/Rocket/issues/749
         request.replace_header(Accept::JSON);
     }
 }
