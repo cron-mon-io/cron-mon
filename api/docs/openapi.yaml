@@ -81,7 +81,7 @@ paths:
                       late: false
                       in_progress: false
         "400":
-          $ref: "#/components/responses/BadInputError"
+          $ref: "#/components/responses/BadRequestError"
         "500":
           $ref: "#/components/responses/ServiceError"
     post:
@@ -114,7 +114,7 @@ paths:
                   grace_duration: 7200
                   jobs: []
         "400":
-          $ref: "#/components/responses/BadInputError"
+          $ref: "#/components/responses/BadRequestError"
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -168,6 +168,8 @@ paths:
                       in_progress: false
         "404":
           $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
         "500":
           $ref: "#/components/responses/ServiceError"
     patch:
@@ -230,6 +232,8 @@ paths:
                       in_progress: false
         "404":
           $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
         "500":
           $ref: "#/components/responses/ServiceError"
     delete:
@@ -249,6 +253,8 @@ paths:
           description: "The Monitor was deleted."
         "404":
           $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -288,6 +294,8 @@ paths:
                   job_id: "c72be737-1089-4e10-9da3-0076f4d4123d"
         "404":
           $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -335,6 +343,8 @@ paths:
                   in_progress: true
         "404":
           $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -400,11 +410,19 @@ paths:
                   duration: 1440
                   late: false
                   in_progress: false
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
 components:
   responses:
-    BadInputError:
-      description: "Bad input parameter"
+    BadRequestError:
+      description: "The request could not be understood by the server due to malformed syntax."
       content:
         application/json:
           schema:
@@ -415,9 +433,12 @@ components:
               message:
                 type: string
           example:
-            message: "Bad input"
+            error:
+              code: 400
+              reason: "Bad request"
+              description: "The request could not be understood by the server due to malformed syntax."
     NotFoundError:
-      description: "Item not found."
+      description: "The requested resource could not be found."
       content:
         application/json:
           schema:
@@ -428,22 +449,37 @@ components:
               message:
                 type: string
           example:
-            message: "Not Found"
+            error:
+              code: 404
+              reason: "Not Found"
+              description: "The requested resource could not be found."
+    UnprocessableEntityError:
+      description: "The request was well-formed but was unable to be followed due to semantic errors."
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+          example:
+            error:
+              code: 422
+              reason: "nprocessable Entity"
+              description: "The request was well-formed but was unable to be followed due to semantic errors."
     ServiceError:
-      description: |
-        Something went wrong within the API. Details of which will be in
-        `message`.
+      description: "The server encountered an internal error while processing this request."
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - message
-            properties:
-              message:
-                type: string
+            ref: "#/components/schemas/Error"
           example:
-            message: "Something went wrong"
+            error: 
+              code: 500
+              reason: "Internal Server Error"
+              description: "The server encountered an internal error while processing this request."
   schemas:
     Monitor:
       description: A cronjob monitor
@@ -606,3 +642,31 @@ components:
           format: int32
           minimum: 0
           description: The total number of entities in the response.
+    Error:
+      description: "An error response"
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorInfo"
+    ErrorInfo:
+      description: "Information about an error"
+      type: object
+      required:
+        - code
+        - reason
+        - description
+      properties:
+        code:
+          type: integer
+          format: int32
+          minimum: 400
+          maximum: 599
+          description: The HTTP status code
+        reason:
+          type: string
+          description: The reason for the error
+        description:
+          type: string
+          description: A description of the error
