@@ -1,4 +1,4 @@
-![CronMon Logo](.github/logo.svg)
+![CronMon Logo](.github/assets/logo.svg)
 
 # A simple tool for monitoring cronjobs
 
@@ -51,14 +51,14 @@ the API application via `make run`, after which the API will be available to you
 `http://127.0.0.1:8000`, which you'll be able to confirm by hitting
 [the healthcheck endpoint](http://127.0.0.1:8000/api/v1/health).
 
-![Running the API](.github/getting-started.gif)
+![Running the API](.github/assets/getting-started.gif)
 
 You'll probably want to also run `make run-monitor` in a separate terminal/ tab to run the
 background service that monitors for late jobs (this is purely to avoid cluttering the same
 terminal/ tab with logs from the API **and** the background serice). When this is running you should
 see something similar to this in the terminal its running in.
 
-![Running the monitor](.github/run-monitor.gif)
+![Running the monitor](.github/assets/run-monitor.gif)
 
 A [Development container](https://containers.dev/) configuration file is also provided to ensure
 your IDE can use your local containers' environments and to provide a pre-setup, consistent and
