@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use diesel::result::Error;
 use rstest::*;
 use test_utils::{gen_datetime, gen_relative_datetime, gen_uuid};
 use tokio::test;
@@ -9,6 +8,7 @@ use uuid::Uuid;
 
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
+use crate::errors::AppError;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 use crate::infrastructure::repositories::{All, Delete, Get, Save};
 
@@ -29,7 +29,7 @@ impl TestRepository {
 
 #[async_trait]
 impl GetWithLateJobs for TestRepository {
-    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
+    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, AppError> {
         Ok(self
             .data
             .iter()
@@ -46,7 +46,7 @@ impl GetWithLateJobs for TestRepository {
 
 #[async_trait]
 impl Get<Monitor> for TestRepository {
-    async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, Error> {
+    async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, AppError> {
         let monitor = if let Some(monitor) = self.data.get(&monitor_id) {
             Some(monitor.clone())
         } else {
@@ -58,14 +58,14 @@ impl Get<Monitor> for TestRepository {
 
 #[async_trait]
 impl All<Monitor> for TestRepository {
-    async fn all(&mut self) -> Result<Vec<Monitor>, Error> {
+    async fn all(&mut self) -> Result<Vec<Monitor>, AppError> {
         Ok(self.data.iter().map(|d| d.1.clone()).collect())
     }
 }
 
 #[async_trait]
 impl Save<Monitor> for TestRepository {
-    async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
+    async fn save(&mut self, monitor: &Monitor) -> Result<(), AppError> {
         self.data.insert(monitor.monitor_id, monitor.clone());
         Ok(())
     }
@@ -73,7 +73,7 @@ impl Save<Monitor> for TestRepository {
 
 #[async_trait]
 impl Delete<Monitor> for TestRepository {
-    async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
+    async fn delete(&mut self, monitor: &Monitor) -> Result<(), AppError> {
         self.data.remove(&monitor.monitor_id);
         Ok(())
     }
