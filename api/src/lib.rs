@@ -1,5 +1,6 @@
 pub mod application;
 pub mod domain;
+pub mod errors;
 pub mod infrastructure;
 
 use std::env;
