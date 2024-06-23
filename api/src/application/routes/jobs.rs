@@ -8,6 +8,7 @@ use uuid::Uuid;
 use crate::application::services::fetch_job::FetchJobService;
 use crate::application::services::finish_job::FinishJobService;
 use crate::application::services::start_job::StartJobService;
+use crate::errors::AppError;
 use crate::infrastructure::database::Db;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
@@ -18,22 +19,29 @@ pub struct FinishJobInfo {
 }
 
 #[rocket::get("/monitors/<monitor_id>/jobs/<job_id>")]
-pub async fn get_job(mut connection: Connection<Db>, monitor_id: Uuid, job_id: Uuid) -> Value {
+pub async fn get_job(
+    mut connection: Connection<Db>,
+    monitor_id: Uuid,
+    job_id: Uuid,
+) -> Result<Value, AppError> {
     let mut repo = MonitorRepository::new(&mut **connection);
     let mut service = FetchJobService::new(&mut repo);
 
-    let job = service.fetch_by_id(monitor_id, job_id).await;
+    let job = service.fetch_by_id(monitor_id, job_id).await?;
 
-    json!({"data": job})
+    Ok(json!({"data": job}))
 }
 
 #[rocket::post("/monitors/<monitor_id>/jobs/start")]
-pub async fn start_job(mut connection: Connection<Db>, monitor_id: Uuid) -> Value {
+pub async fn start_job(
+    mut connection: Connection<Db>,
+    monitor_id: Uuid,
+) -> Result<Value, AppError> {
     let mut repo = MonitorRepository::new(&mut **connection);
     let mut service = StartJobService::new(&mut repo);
 
-    let job = service.start_job_for_monitor(monitor_id).await;
-    json!({"data": {"job_id": job.job_id}})
+    let job = service.start_job_for_monitor(monitor_id).await?;
+    Ok(json!({"data": {"job_id": job.job_id}}))
 }
 
 #[rocket::post(
@@ -45,7 +53,7 @@ pub async fn finish_job(
     monitor_id: Uuid,
     job_id: Uuid,
     finish_job_info: Json<FinishJobInfo>,
-) -> Value {
+) -> Result<Value, AppError> {
     let mut repo = MonitorRepository::new(&mut **connection);
     let mut service = FinishJobService::new(&mut repo);
 
@@ -56,7 +64,7 @@ pub async fn finish_job(
             finish_job_info.succeeded,
             &finish_job_info.output,
         )
-        .await;
+        .await?;
 
-    json!({"data": job})
+    Ok(json!({"data": job}))
 }
