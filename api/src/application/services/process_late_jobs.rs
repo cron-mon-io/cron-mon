@@ -41,8 +41,8 @@ mod tests {
 
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use crate::domain::errors::JobError;
     use crate::domain::models::{job::Job, monitor::Monitor};
+    use crate::errors::AppError;
     use crate::infrastructure::repositories::test_repo::TestRepository;
 
     use super::{NotifyLateJob, ProcessLateJobsService};
@@ -62,7 +62,7 @@ mod tests {
             &mut self,
             monitor_name: &String,
             late_job: &Job,
-        ) -> Result<(), JobError> {
+        ) -> Result<(), AppError> {
             self.lates
                 .push((monitor_name.clone(), late_job.job_id.clone()));
             Ok(())

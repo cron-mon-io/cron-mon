@@ -2,8 +2,8 @@ use chrono::Duration;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::domain::errors::JobError;
 use crate::domain::models::job::Job;
+use crate::errors::AppError;
 
 /// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
 /// part of the Cron Mon domain.
@@ -87,21 +87,22 @@ impl Monitor {
         new_job
     }
 
-    /// Finish a job. Note that this will return a `JobError` is a Job with the given `job_id`
+    /// Finish a job. Note that this will return an `AppError` is a Job with the given `job_id`
     /// cannot be found in the Monitor, or if the Job isn't currently in progress.
     pub fn finish_job(
         &mut self,
         job_id: Uuid,
         succeeded: bool,
         output: Option<String>,
-    ) -> Result<&Job, JobError> {
+    ) -> Result<&Job, AppError> {
+        let monitor_id = self.monitor_id.clone();
         let job = self.get_job(job_id);
         match job {
             Some(j) => {
                 j.finish(succeeded, output)?;
                 Ok(j)
             }
-            None => Err(JobError::JobNotFound),
+            None => Err(AppError::JobNotFound(monitor_id, job_id)),
         }
     }
 
@@ -123,7 +124,7 @@ mod tests {
 
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use super::{Job, JobError, Monitor, Uuid};
+    use super::{AppError, Job, Monitor, Uuid};
 
     #[test]
     fn creating_new_monitors() {
@@ -352,7 +353,17 @@ mod tests {
         assert!(result1.is_ok());
         assert_eq!(mon.jobs_in_progress().len(), 0);
 
-        let result2 = mon.finish_job(Uuid::new_v4(), false, None);
-        assert_eq!(result2.unwrap_err(), JobError::JobNotFound);
+        let result2 = mon.finish_job(
+            gen_uuid("4631aa50-7780-455a-ab9a-78292f931832"),
+            false,
+            None,
+        );
+        assert_eq!(
+            result2.unwrap_err(),
+            AppError::JobNotFound(
+                mon.monitor_id,
+                gen_uuid("4631aa50-7780-455a-ab9a-78292f931832")
+            )
+        );
     }
 }

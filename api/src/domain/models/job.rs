@@ -3,7 +3,7 @@ use chrono::{offset::Utc, Duration};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
-use crate::domain::errors::JobError;
+use crate::errors::AppError;
 
 /// The Job struct represents a monitored job, encapsulating the time it started, the time it
 /// finished, the resulting status and any output that it produced.
@@ -65,11 +65,11 @@ impl Job {
         )
     }
 
-    /// Finish the Job. Note that if the Job isn't currently in progress, this will return a
-    /// `JobError`.
-    pub fn finish(&mut self, succeeded: bool, output: Option<String>) -> Result<(), JobError> {
+    /// Finish the Job. Note that if the Job isn't currently in progress, this will return an
+    /// `AppError`.
+    pub fn finish(&mut self, succeeded: bool, output: Option<String>) -> Result<(), AppError> {
         if !self.in_progress() {
-            return Err(JobError::JobAlreadyFinished);
+            return Err(AppError::JobAlreadyFinished(self.job_id));
         }
 
         self.succeeded = Some(succeeded);
@@ -150,7 +150,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_relative_datetime};
 
-    use super::{Job, JobError, NaiveDateTime, Uuid};
+    use super::{AppError, Job, NaiveDateTime, Uuid};
 
     #[test]
     fn starting_jobs() {
@@ -178,7 +178,10 @@ mod tests {
 
         // Cannot finish a job again once it's been finished.
         let result2 = job.finish(false, Some("It won't wrong".to_owned()));
-        assert_eq!(result2.unwrap_err(), JobError::JobAlreadyFinished);
+        assert_eq!(
+            result2.unwrap_err(),
+            AppError::JobAlreadyFinished(job.job_id)
+        );
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);
     }
