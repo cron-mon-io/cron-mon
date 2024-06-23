@@ -3,6 +3,7 @@ use diesel::prelude::*;
 use uuid::Uuid;
 
 use crate::domain::models::job::Job;
+use crate::errors::AppError;
 use crate::infrastructure::db_schema::job;
 use crate::infrastructure::models::monitor::MonitorData;
 
@@ -21,8 +22,8 @@ pub struct JobData {
     pub monitor_id: Uuid,
 }
 
-impl Into<Job> for &JobData {
-    fn into(self) -> Job {
+impl Into<Result<Job, AppError>> for &JobData {
+    fn into(self) -> Result<Job, AppError> {
         Job::new(
             self.job_id,
             self.start_time,
@@ -31,8 +32,6 @@ impl Into<Job> for &JobData {
             self.succeeded,
             self.output.clone(),
         )
-        // TODO: Handle this in a better way.
-        .unwrap()
     }
 }
 
@@ -42,7 +41,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_uuid};
 
-    use super::{Job, JobData};
+    use super::{AppError, Job, JobData};
 
     #[test]
     fn test_job_data_into_job() {
@@ -56,7 +55,8 @@ mod tests {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
         };
 
-        let job: Job = (&job_data).into();
+        let job_result: Result<Job, AppError> = (&job_data).into();
+        let job = job_result.unwrap();
 
         assert_eq!(job.job_id, gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"));
         assert_eq!(job.start_time, gen_datetime("2024-04-22T22:43:00"));
@@ -64,5 +64,26 @@ mod tests {
         assert_eq!(job.end_time, Some(gen_datetime("2024-04-22T22:50:00")));
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, Some(String::from("Job completed successfully")));
+    }
+
+    #[test]
+    fn test_job_data_into_job_validation_error() {
+        let job_data = JobData {
+            job_id: gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+            start_time: gen_datetime("2024-04-22T22:43:00"),
+            max_end_time: gen_datetime("2024-04-22T22:53:00"),
+            end_time: None,
+            succeeded: Some(true),
+            output: None,
+            monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+        };
+
+        let job_result: Result<Job, AppError> = (&job_data).into();
+        assert_eq!(
+            job_result,
+            Err(AppError::InvalidJob(
+                "Job is in an invalid state".to_string()
+            ))
+        );
     }
 }

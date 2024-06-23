@@ -30,10 +30,14 @@ impl<'a> MonitorRepository<'a> {
         }
     }
 
-    fn db_to_monitor(&mut self, monitor_data: MonitorData, job_datas: Vec<JobData>) -> Monitor {
-        let mon: Monitor = (&monitor_data, &job_datas).into();
+    fn db_to_monitor(
+        &mut self,
+        monitor_data: MonitorData,
+        job_datas: Vec<JobData>,
+    ) -> Result<Monitor, AppError> {
+        let mon: Monitor = monitor_data.to_model(&job_datas)?;
         self.data.insert(mon.monitor_id, (monitor_data, job_datas));
-        mon
+        Ok(mon)
     }
 }
 
@@ -77,7 +81,7 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
                 .into_iter()
                 .zip(monitor_datas)
                 .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
-                .collect::<Vec<Monitor>>()),
+                .collect::<Result<Vec<Monitor>, AppError>>()?),
         }
     }
 }
@@ -114,7 +118,7 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
             Err(e) => Err(AppError::RepositoryError(e.to_string())),
             Ok(None) => Ok(None),
             Ok(Some((monitor_data, job_datas))) => {
-                Ok(Some(self.db_to_monitor(monitor_data, job_datas)))
+                Ok(Some(self.db_to_monitor(monitor_data, job_datas)?))
             }
         }
     }
@@ -150,7 +154,7 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
                 .into_iter()
                 .zip(monitor_datas)
                 .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
-                .collect::<Vec<Monitor>>()),
+                .collect::<Result<Vec<Monitor>, AppError>>()?),
         }
     }
 }
