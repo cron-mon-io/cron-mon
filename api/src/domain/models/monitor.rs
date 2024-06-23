@@ -78,12 +78,12 @@ impl Monitor {
     }
 
     /// Start a new job
-    pub fn start_job(&mut self) -> Job {
+    pub fn start_job(&mut self) -> Result<Job, AppError> {
         // We give the job the _current_ maximum duration here so that if the monitor is modified,
         // any previous and in progress jobs are not affected.
-        let new_job = Job::start(self.maximum_duration().num_seconds() as u64);
+        let new_job = Job::start(self.maximum_duration().num_seconds() as u64)?;
         self.jobs.push(new_job.clone());
-        new_job
+        Ok(new_job)
     }
 
     /// Finish a job. Note that this will return an `AppError` is a Job with the given `job_id`
@@ -327,9 +327,9 @@ mod tests {
 
         assert!(mon.jobs_in_progress().is_empty());
 
-        let job1 = mon.start_job();
-        let job2 = mon.start_job();
-        let job3 = mon.start_job();
+        let job1 = mon.start_job().expect("Failed to start job");
+        let job2 = mon.start_job().expect("Failed to start job");
+        let job3 = mon.start_job().expect("Failed to start job");
 
         assert_eq!(mon.jobs_in_progress().len(), 3);
 
@@ -343,7 +343,7 @@ mod tests {
     fn finishing_jobs() {
         let mut mon = Monitor::new("new-monitor".to_owned(), 3600, 600);
 
-        let job1 = mon.start_job();
+        let job1 = mon.start_job().expect("Failed to start job");
 
         assert_eq!(mon.jobs_in_progress().len(), 1);
 

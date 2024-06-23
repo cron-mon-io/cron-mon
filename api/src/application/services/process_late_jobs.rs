@@ -85,7 +85,8 @@ mod tests {
                         None,
                         None,
                         None,
-                    ),
+                    )
+                    .unwrap(),
                     Job::new(
                         gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
                         gen_relative_datetime(-1000),
@@ -93,7 +94,8 @@ mod tests {
                         Some(gen_relative_datetime(-550)),
                         Some(true),
                         None,
-                    ),
+                    )
+                    .unwrap(),
                     Job::new(
                         gen_uuid("051c2f13-20ae-456c-922b-b5799689d4ff"),
                         gen_relative_datetime(0),
@@ -101,7 +103,8 @@ mod tests {
                         None,
                         None,
                         None,
-                    ),
+                    )
+                    .unwrap(),
                 ],
             },
             Monitor {
@@ -116,7 +119,8 @@ mod tests {
                     Some(gen_relative_datetime(0)),
                     Some(true),
                     None,
-                )],
+                )
+                .unwrap()],
             },
             Monitor {
                 monitor_id: gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b"),
@@ -130,7 +134,8 @@ mod tests {
                     None,
                     None,
                     None,
-                )],
+                )
+                .unwrap()],
             },
         ])
     }

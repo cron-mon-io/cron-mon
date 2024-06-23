@@ -78,7 +78,8 @@ mod tests {
                 None,
                 None,
                 None,
-            )],
+            )
+            .unwrap()],
         };
 
         let (monitor_data, job_data) = <(MonitorData, Vec<JobData>)>::from(&monitor);

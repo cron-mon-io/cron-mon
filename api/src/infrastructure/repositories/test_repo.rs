@@ -88,7 +88,7 @@ fn repo() -> TestRepository {
             expected_duration: 300,
             grace_duration: 100,
             jobs: vec![
-                Job::start(400),
+                Job::start(400).unwrap(),
                 Job::new(
                     gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
                     gen_relative_datetime(-500),
@@ -96,7 +96,8 @@ fn repo() -> TestRepository {
                     Some(gen_relative_datetime(-200)),
                     Some(true),
                     None,
-                ),
+                )
+                .unwrap(),
             ],
         },
         Monitor {
@@ -118,7 +119,8 @@ fn repo() -> TestRepository {
                 Some(gen_datetime("2024-04-22T09:45:00")), // late!
                 Some(true),
                 None,
-            )],
+            )
+            .unwrap()],
         },
     ])
 }

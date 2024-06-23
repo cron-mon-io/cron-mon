@@ -57,7 +57,8 @@ mod tests {
                 Some(gen_datetime("2024-04-22T22:49:00")),
                 Some(true),
                 None,
-            )],
+            )
+            .unwrap()],
         }])
     }
 
@@ -88,7 +89,7 @@ mod tests {
             Some(gen_datetime("2024-04-22T22:49:00")),
             Some(true),
             None,
-        ))
+        ).unwrap())
     )]
     #[tokio::test]
     async fn test_fetch_job_service(

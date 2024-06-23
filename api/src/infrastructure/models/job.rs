@@ -31,6 +31,8 @@ impl Into<Job> for &JobData {
             self.succeeded,
             self.output.clone(),
         )
+        // TODO: Handle this in a better way.
+        .unwrap()
     }
 }
 

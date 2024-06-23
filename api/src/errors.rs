@@ -9,6 +9,8 @@ pub enum AppError {
     MonitorNotFound(Uuid),
     JobNotFound(Uuid, Uuid),
     JobAlreadyFinished(Uuid),
+    InvalidMonitor(String),
+    InvalidJob(String),
 }
 
 impl Display for AppError {
@@ -27,6 +29,8 @@ impl Display for AppError {
             Self::JobAlreadyFinished(job_id) => {
                 write!(f, "Job('{job_id}') is already finished")
             }
+            Self::InvalidMonitor(reason) => write!(f, "Invalid Monitor: {reason}"),
+            Self::InvalidJob(reason) => write!(f, "Invalid Job: {reason}"),
         }
     }
 }

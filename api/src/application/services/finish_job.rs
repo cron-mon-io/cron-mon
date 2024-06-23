@@ -65,7 +65,8 @@ mod tests {
                     None,
                     None,
                     None,
-                ),
+                )
+                .unwrap(),
                 Job::new(
                     gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1"),
                     gen_relative_datetime(-500),
@@ -73,7 +74,8 @@ mod tests {
                     Some(gen_relative_datetime(-100)),
                     Some(true),
                     None,
-                ),
+                )
+                .unwrap(),
             ],
         }])
     }

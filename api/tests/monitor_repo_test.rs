@@ -93,7 +93,7 @@ async fn test_save() {
     let mut repo = MonitorRepository::new(&mut conn);
 
     let mut new_monitor = Monitor::new("new-monitor".to_owned(), 100, 5);
-    new_monitor.start_job();
+    let _ = new_monitor.start_job().expect("Failed to start job");
     repo.save(&new_monitor).await.unwrap();
     assert_eq!(repo.all().await.unwrap().len(), 4);
 

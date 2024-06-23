@@ -62,7 +62,8 @@ mod tests {
                         Some(gen_datetime("2024-05-01T00:49:00")),
                         Some(true),
                         Some("Orders generated successfully".to_owned()),
-                    ),
+                    )
+                    .unwrap(),
                     Job::new(
                         gen_uuid("c1893113-66d7-4707-9a51-c8be46287b2c"),
                         gen_datetime("2024-05-01T00:00:00"),
@@ -70,7 +71,8 @@ mod tests {
                         Some(gen_datetime("2024-05-01T00:39:00")),
                         Some(false),
                         Some("Failed to generate orders".to_owned()),
-                    ),
+                    )
+                    .unwrap(),
                 ],
             },
             Monitor {
@@ -85,7 +87,8 @@ mod tests {
                     None,
                     None,
                     None,
-                )],
+                )
+                .unwrap()],
             },
         ]
     }

@@ -19,7 +19,7 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> StartJobService<'a, T> {
 
         match &mut monitor_opt {
             Some(monitor) => {
-                let job = monitor.start_job();
+                let job = monitor.start_job()?;
                 self.repo.save(monitor).await?;
 
                 Ok(job)

@@ -14,6 +14,11 @@ impl<'r> Responder<'r, 'static> for AppError {
             AppError::MonitorNotFound(_) => Status::NotFound,
             AppError::JobNotFound(_, _) => Status::NotFound,
             AppError::JobAlreadyFinished(_) => Status::BadRequest,
+            // Both of these could either be server-side or client-side. For now we'll handle the
+            // client providing invalid data outside of where we return these, allowing us to
+            // default to server-side errors.
+            AppError::InvalidMonitor(_) => Status::InternalServerError,
+            AppError::InvalidJob(_) => Status::InternalServerError,
         };
         let body = json!({ "error": self.to_string() }).to_string();
         Response::build()
