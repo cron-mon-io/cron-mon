@@ -25,7 +25,6 @@ pub struct Monitor {
 impl Monitor {
     /// Instatiate a new Monitor.
     pub fn new(name: String, expected_duration: i32, grace_duration: i32) -> Self {
-        // TODO: Add validation checks.
         Self {
             monitor_id: Uuid::new_v4(),
             name,

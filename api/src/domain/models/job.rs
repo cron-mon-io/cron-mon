@@ -110,7 +110,6 @@ impl Job {
 }
 
 impl Serialize for Job {
-    // TODO: Should this be in the infrastructure or presentation layer?
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         #[derive(Serialize)]
         struct SerializedJob {
