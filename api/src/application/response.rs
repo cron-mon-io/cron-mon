@@ -73,6 +73,16 @@ mod tests {
         )))
     }
 
+    #[rocket::get("/invalid_monitor")]
+    fn invalid_monitor() -> Result<(), AppError> {
+        Err(AppError::InvalidMonitor("invalid monitor".to_string()))
+    }
+
+    #[rocket::get("/invalid_job")]
+    fn invalid_job() -> Result<(), AppError> {
+        Err(AppError::InvalidJob("invalid job".to_string()))
+    }
+
     #[fixture]
     fn test_client() -> Client {
         let test_rocket = rocket::build().mount(
@@ -81,7 +91,9 @@ mod tests {
                 repo_error,
                 monitor_not_found,
                 job_not_found,
-                job_already_finished
+                job_already_finished,
+                invalid_monitor,
+                invalid_job
             ],
         );
         Client::tracked(test_rocket)
@@ -158,6 +170,42 @@ mod tests {
                     "code": 400,
                     "reason": "Job Already Finished",
                     "description": "Job('01a92c6c-6803-409d-b675-022fff62575a') is already finished"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_invalid_monitor(test_client: Client) {
+        let response = test_client.get("/invalid_monitor").dispatch();
+
+        assert_eq!(response.status(), Status::InternalServerError);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 500,
+                    "reason": "Invalid Monitor",
+                    "description": "Invalid Monitor: invalid monitor"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_invalid_job(test_client: Client) {
+        let response = test_client.get("/invalid_job").dispatch();
+
+        assert_eq!(response.status(), Status::InternalServerError);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 500,
+                    "reason": "Invalid Job",
+                    "description": "Invalid Job: invalid job"
                 }
             })
         );
