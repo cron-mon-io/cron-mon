@@ -4,14 +4,16 @@ use pretty_assertions::assert_eq;
 use tokio::test;
 use uuid::Uuid;
 
-use test_utils::gen_uuid;
+use test_utils::{gen_datetime, gen_uuid};
 
 use cron_mon_api::domain::models::monitor::Monitor;
+use cron_mon_api::errors::AppError;
+use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
 use cron_mon_api::infrastructure::repositories::monitor::GetWithLateJobs;
 use cron_mon_api::infrastructure::repositories::monitor_repo::MonitorRepository;
 use cron_mon_api::infrastructure::repositories::{All, Delete, Get, Save};
 
-use common::setup_db;
+use common::{seed_db, setup_db};
 
 #[test]
 async fn test_all() {
@@ -124,4 +126,41 @@ async fn test_delete() {
     repo.delete(&monitor).await.unwrap();
     assert!(repo.get(monitor.monitor_id).await.unwrap().is_none());
     assert_eq!(repo.all().await.unwrap().len(), 2);
+}
+
+#[test]
+async fn test_loading_invalid_job() {
+    // Seed the database with a monitor that has an invalid job.
+    let mut conn = seed_db(
+        &vec![MonitorData {
+            monitor_id: gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"),
+            name: "init-philanges".to_string(),
+            expected_duration: 900,
+            grace_duration: 300,
+        }],
+        &vec![JobData {
+            job_id: gen_uuid("73f01432-bf9b-4dc0-8d68-aa7289725bf4"),
+            monitor_id: gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"),
+            start_time: gen_datetime("2024-05-01T00:10:00.000"),
+            max_end_time: gen_datetime("2024-05-01T00:50:00.000"),
+            end_time: None, // Missing end_time
+            succeeded: Some(true),
+            output: Some("Database successfully backed up".to_string()),
+        }],
+    )
+    .await;
+
+    // Attempt to retrieve that monitor.
+    let mut repo = MonitorRepository::new(&mut conn);
+    let monitor_result = repo
+        .get(gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"))
+        .await;
+
+    // Ensure that the monitor is not returned.
+    assert_eq!(
+        monitor_result,
+        Err(AppError::InvalidJob(
+            "Job is in an invalid state".to_string()
+        ))
+    );
 }
