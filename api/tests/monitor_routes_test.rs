@@ -57,6 +57,18 @@ fn test_get_monitor_when_monitor_does_not_exist() {
         .dispatch();
 
     assert_eq!(response.status(), Status::NotFound);
+    assert_eq!(
+        response.into_json::<Value>().unwrap(),
+        json!({
+            "error": {
+                "code": 404,
+                "reason": "Monitor Not Found",
+                "description": (
+                    "Failed to find monitor with id 'cc6cf74e-b25d-4c8c-94a6-914e3f139c14'"
+                )
+            }
+        }),
+    )
 }
 
 #[test]
@@ -211,6 +223,18 @@ fn test_modify_monitor_when_monitor_does_not_exist() {
         .dispatch();
 
     assert_eq!(response.status(), Status::NotFound);
+    assert_eq!(
+        response.into_json::<Value>().unwrap(),
+        json!({
+            "error": {
+                "code": 404,
+                "reason": "Monitor Not Found",
+                "description": (
+                    "Failed to find monitor with id 'cc6cf74e-b25d-4c8c-94a6-914e3f139c14'"
+                )
+            }
+        })
+    );
 }
 
 #[rstest]
