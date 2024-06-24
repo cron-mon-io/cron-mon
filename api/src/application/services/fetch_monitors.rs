@@ -1,4 +1,5 @@
 use crate::domain::models::monitor::Monitor;
+use crate::errors::AppError;
 use crate::infrastructure::repositories::All;
 
 pub struct FetchMonitorsService<'a, T: All<Monitor>, F: Fn(&mut Vec<Monitor>)> {
@@ -14,12 +15,12 @@ impl<'a, T: All<Monitor>, F: Fn(&mut Vec<Monitor>)> FetchMonitorsService<'a, T, 
         }
     }
 
-    pub async fn fetch_all(&mut self) -> Vec<Monitor> {
-        let mut monitors = self.repo.all().await.expect("Failed to retrieve monitors");
+    pub async fn fetch_all(&mut self) -> Result<Vec<Monitor>, AppError> {
+        let mut monitors = self.repo.all().await?;
 
         (self.order_monitors)(&mut monitors);
 
-        monitors
+        Ok(monitors)
     }
 }
 
@@ -70,7 +71,7 @@ mod tests {
     async fn test_fetch_job_service(mut repo: TestRepository) {
         let mut service = FetchMonitorsService::new(&mut repo, &order_monitors);
 
-        let monitors = service.fetch_all().await;
+        let monitors = service.fetch_all().await.expect("Failed to fetch monitors");
 
         let names = monitors
             .iter()

@@ -41,8 +41,8 @@ mod tests {
 
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use crate::domain::errors::JobError;
     use crate::domain::models::{job::Job, monitor::Monitor};
+    use crate::errors::AppError;
     use crate::infrastructure::repositories::test_repo::TestRepository;
 
     use super::{NotifyLateJob, ProcessLateJobsService};
@@ -62,7 +62,7 @@ mod tests {
             &mut self,
             monitor_name: &String,
             late_job: &Job,
-        ) -> Result<(), JobError> {
+        ) -> Result<(), AppError> {
             self.lates
                 .push((monitor_name.clone(), late_job.job_id.clone()));
             Ok(())
@@ -85,7 +85,8 @@ mod tests {
                         None,
                         None,
                         None,
-                    ),
+                    )
+                    .unwrap(),
                     Job::new(
                         gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
                         gen_relative_datetime(-1000),
@@ -93,7 +94,8 @@ mod tests {
                         Some(gen_relative_datetime(-550)),
                         Some(true),
                         None,
-                    ),
+                    )
+                    .unwrap(),
                     Job::new(
                         gen_uuid("051c2f13-20ae-456c-922b-b5799689d4ff"),
                         gen_relative_datetime(0),
@@ -101,7 +103,8 @@ mod tests {
                         None,
                         None,
                         None,
-                    ),
+                    )
+                    .unwrap(),
                 ],
             },
             Monitor {
@@ -116,7 +119,8 @@ mod tests {
                     Some(gen_relative_datetime(0)),
                     Some(true),
                     None,
-                )],
+                )
+                .unwrap()],
             },
             Monitor {
                 monitor_id: gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b"),
@@ -130,7 +134,8 @@ mod tests {
                     None,
                     None,
                     None,
-                )],
+                )
+                .unwrap()],
             },
         ])
     }

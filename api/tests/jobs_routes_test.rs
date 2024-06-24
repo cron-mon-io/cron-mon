@@ -47,7 +47,7 @@ fn test_get_job_when_job_does_not_exist() {
         )
         .dispatch();
 
-    assert_eq!(response.status(), Status::InternalServerError);
+    assert_eq!(response.status(), Status::NotFound);
 }
 
 #[test]
@@ -102,11 +102,11 @@ fn test_finish_job() {
 
 #[rstest]
 // Job already finished.
-#[case("c1893113-66d7-4707-9a51-c8be46287b2c")]
+#[case("c1893113-66d7-4707-9a51-c8be46287b2c", Status::BadRequest)]
 // Job doesn't exist.
-#[case("a74dfbda-5969-4645-ba64-c99f09f8b666")]
+#[case("a74dfbda-5969-4645-ba64-c99f09f8b666", Status::NotFound)]
 #[test]
-fn test_finish_job_errors(#[case] job_id: &str) {
+fn test_finish_job_errors(#[case] job_id: &str, #[case] expected_status: Status) {
     let client = get_test_client(true);
 
     let response = client
@@ -117,7 +117,7 @@ fn test_finish_job_errors(#[case] job_id: &str) {
         .json(&json!({"succeeded": true, "output": "Test output"}))
         .dispatch();
 
-    assert_eq!(response.status(), Status::InternalServerError);
+    assert_eq!(response.status(), expected_status);
 }
 
 pub fn get_job_finished(client: &Client, job_id: &str) -> bool {

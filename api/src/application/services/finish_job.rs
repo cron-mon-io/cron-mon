@@ -2,6 +2,7 @@ use uuid::Uuid;
 
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
+use crate::errors::AppError;
 use crate::infrastructure::repositories::{Get, Save};
 
 pub struct FinishJobService<'a, T: Get<Monitor> + Save<Monitor>> {
@@ -19,22 +20,21 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> FinishJobService<'a, T> {
         job_id: Uuid,
         succeeded: bool,
         output: &Option<String>,
-    ) -> Job {
-        let mut monitor = self
-            .repo
-            .get(monitor_id)
-            .await
-            .expect("Could not retrieve monitor")
-            .unwrap();
+    ) -> Result<Job, AppError> {
+        let monitor_opt = self.repo.get(monitor_id).await?;
 
-        let job = monitor
-            .finish_job(job_id, succeeded, output.clone())
-            .expect("Failed to finish job")
-            .clone();
+        match monitor_opt {
+            Some(mut monitor) => {
+                let job = monitor
+                    .finish_job(job_id, succeeded, output.clone())?
+                    .clone();
 
-        self.repo.save(&monitor).await.expect("Failed to save Job");
+                self.repo.save(&monitor).await?;
 
-        job
+                Ok(job)
+            }
+            None => Err(AppError::MonitorNotFound(monitor_id)),
+        }
     }
 }
 
@@ -42,12 +42,13 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> FinishJobService<'a, T> {
 mod tests {
     use rstest::*;
     use tokio;
+    use uuid::Uuid;
 
     use test_utils::{gen_relative_datetime, gen_uuid};
 
     use crate::infrastructure::repositories::test_repo::TestRepository;
 
-    use super::{FinishJobService, Get, Job, Monitor};
+    use super::{AppError, FinishJobService, Get, Job, Monitor};
 
     #[fixture]
     fn repo() -> TestRepository {
@@ -56,14 +57,26 @@ mod tests {
             name: "foo".to_owned(),
             expected_duration: 300,
             grace_duration: 100,
-            jobs: vec![Job::new(
-                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                gen_relative_datetime(-320),
-                gen_relative_datetime(80),
-                None,
-                None,
-                None,
-            )],
+            jobs: vec![
+                Job::new(
+                    gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                    gen_relative_datetime(-320),
+                    gen_relative_datetime(80),
+                    None,
+                    None,
+                    None,
+                )
+                .unwrap(),
+                Job::new(
+                    gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1"),
+                    gen_relative_datetime(-500),
+                    gen_relative_datetime(-200),
+                    Some(gen_relative_datetime(-100)),
+                    Some(true),
+                    None,
+                )
+                .unwrap(),
+            ],
         }])
     }
 
@@ -87,7 +100,8 @@ mod tests {
                 true,
                 &output,
             )
-            .await;
+            .await
+            .expect("Failed to finish job");
 
         assert_eq!(job.in_progress(), false);
         assert_eq!(job.duration(), Some(320));
@@ -99,5 +113,43 @@ mod tests {
             .unwrap();
         let jobs_after = monitor_after.jobs_in_progress();
         assert_eq!(jobs_after.len(), 0);
+    }
+
+    #[rstest]
+    // Monitor not found.
+    #[case(
+        gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"),
+        gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+        Err(AppError::MonitorNotFound(gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55")))
+    )]
+    // Job not found.
+    #[case(
+        gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+        gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"),
+        Err(AppError::JobNotFound(
+            gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+            gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55")
+        ))
+    )]
+    // Job already finished.
+    #[case(
+        gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+        gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1"),
+        Err(AppError::JobAlreadyFinished(gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1")))
+    )]
+    #[tokio::test(start_paused = true)]
+    async fn test_finish_job_service_error_handling(
+        mut repo: TestRepository,
+        #[case] monitor_id: Uuid,
+        #[case] job_id: Uuid,
+        #[case] expected: Result<Job, AppError>,
+    ) {
+        let mut service = FinishJobService::new(&mut repo);
+        let output = Some("Job complete".to_owned());
+        let result = service
+            .finish_job_for_monitor(monitor_id, job_id, true, &output)
+            .await;
+
+        assert_eq!(result, expected);
     }
 }

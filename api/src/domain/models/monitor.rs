@@ -2,8 +2,8 @@ use chrono::Duration;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::domain::errors::JobError;
 use crate::domain::models::job::Job;
+use crate::errors::AppError;
 
 /// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
 /// part of the Cron Mon domain.
@@ -25,7 +25,6 @@ pub struct Monitor {
 impl Monitor {
     /// Instatiate a new Monitor.
     pub fn new(name: String, expected_duration: i32, grace_duration: i32) -> Self {
-        // TODO: Add validation checks.
         Self {
             monitor_id: Uuid::new_v4(),
             name,
@@ -79,29 +78,30 @@ impl Monitor {
     }
 
     /// Start a new job
-    pub fn start_job(&mut self) -> Job {
+    pub fn start_job(&mut self) -> Result<Job, AppError> {
         // We give the job the _current_ maximum duration here so that if the monitor is modified,
         // any previous and in progress jobs are not affected.
-        let new_job = Job::start(self.maximum_duration().num_seconds() as u64);
+        let new_job = Job::start(self.maximum_duration().num_seconds() as u64)?;
         self.jobs.push(new_job.clone());
-        new_job
+        Ok(new_job)
     }
 
-    /// Finish a job. Note that this will return a `JobError` is a Job with the given `job_id`
+    /// Finish a job. Note that this will return an `AppError` is a Job with the given `job_id`
     /// cannot be found in the Monitor, or if the Job isn't currently in progress.
     pub fn finish_job(
         &mut self,
         job_id: Uuid,
         succeeded: bool,
         output: Option<String>,
-    ) -> Result<&Job, JobError> {
+    ) -> Result<&Job, AppError> {
+        let monitor_id = self.monitor_id.clone();
         let job = self.get_job(job_id);
         match job {
             Some(j) => {
                 j.finish(succeeded, output)?;
                 Ok(j)
             }
-            None => Err(JobError::JobNotFound),
+            None => Err(AppError::JobNotFound(monitor_id, job_id)),
         }
     }
 
@@ -123,7 +123,7 @@ mod tests {
 
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use super::{Job, JobError, Monitor, Uuid};
+    use super::{AppError, Job, Monitor, Uuid};
 
     #[test]
     fn creating_new_monitors() {
@@ -327,9 +327,9 @@ mod tests {
 
         assert!(mon.jobs_in_progress().is_empty());
 
-        let job1 = mon.start_job();
-        let job2 = mon.start_job();
-        let job3 = mon.start_job();
+        let job1 = mon.start_job().expect("Failed to start job");
+        let job2 = mon.start_job().expect("Failed to start job");
+        let job3 = mon.start_job().expect("Failed to start job");
 
         assert_eq!(mon.jobs_in_progress().len(), 3);
 
@@ -343,7 +343,7 @@ mod tests {
     fn finishing_jobs() {
         let mut mon = Monitor::new("new-monitor".to_owned(), 3600, 600);
 
-        let job1 = mon.start_job();
+        let job1 = mon.start_job().expect("Failed to start job");
 
         assert_eq!(mon.jobs_in_progress().len(), 1);
 
@@ -352,7 +352,17 @@ mod tests {
         assert!(result1.is_ok());
         assert_eq!(mon.jobs_in_progress().len(), 0);
 
-        let result2 = mon.finish_job(Uuid::new_v4(), false, None);
-        assert_eq!(result2.unwrap_err(), JobError::JobNotFound);
+        let result2 = mon.finish_job(
+            gen_uuid("4631aa50-7780-455a-ab9a-78292f931832"),
+            false,
+            None,
+        );
+        assert_eq!(
+            result2.unwrap_err(),
+            AppError::JobNotFound(
+                mon.monitor_id,
+                gen_uuid("4631aa50-7780-455a-ab9a-78292f931832")
+            )
+        );
     }
 }

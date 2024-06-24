@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
+use crate::errors::AppError;
 use crate::infrastructure::repositories::{Delete, Get};
 
 pub struct DeleteMonitorService<'a, T: Get<Monitor> + Delete<Monitor>> {
@@ -12,20 +13,13 @@ impl<'a, T: Get<Monitor> + Delete<Monitor>> DeleteMonitorService<'a, T> {
         Self { repo }
     }
 
-    pub async fn delete_by_id(&mut self, monitor_id: Uuid) -> bool {
-        let monitor = self
-            .repo
-            .get(monitor_id)
-            .await
-            .expect("Could not retrieve monitor");
+    pub async fn delete_by_id(&mut self, monitor_id: Uuid) -> Result<(), AppError> {
+        let monitor = self.repo.get(monitor_id).await?;
         if let Some(mon) = monitor {
-            self.repo
-                .delete(&mon)
-                .await
-                .expect("Failed to delete monitor");
-            true
+            self.repo.delete(&mon).await?;
+            Ok(())
         } else {
-            false
+            Err(AppError::MonitorNotFound(monitor_id))
         }
     }
 }
@@ -39,7 +33,7 @@ mod tests {
 
     use crate::infrastructure::repositories::{test_repo::TestRepository, All};
 
-    use super::{DeleteMonitorService, Monitor};
+    use super::{AppError, DeleteMonitorService, Monitor};
 
     #[fixture]
     fn repo() -> TestRepository {
@@ -60,15 +54,17 @@ mod tests {
 
         let mut service = DeleteMonitorService::new(&mut repo);
 
-        let mut deleted = service
-            .delete_by_id(gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"))
-            .await;
-        assert_eq!(deleted, false);
+        let non_existent_id = gen_uuid("01a92c6c-6803-409d-b675-022fff62575a");
+        let mut delete_result = service.delete_by_id(non_existent_id).await;
+        assert_eq!(
+            delete_result,
+            Err(AppError::MonitorNotFound(non_existent_id))
+        );
 
-        deleted = service
+        delete_result = service
             .delete_by_id(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
             .await;
-        assert_eq!(deleted, true);
+        assert_eq!(delete_result, Ok(()));
 
         let monitors_after = repo.all().await.expect("Failed to retrieve test monitors");
         assert_eq!(monitors_after.len(), 0);

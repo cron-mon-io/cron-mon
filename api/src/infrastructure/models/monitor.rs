@@ -1,7 +1,8 @@
 use diesel::prelude::*;
 use uuid::Uuid;
 
-use crate::domain::models::monitor::Monitor;
+use crate::domain::models::{job::Job, monitor::Monitor};
+use crate::errors::AppError;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 
@@ -16,15 +17,18 @@ pub struct MonitorData {
     pub grace_duration: i32,
 }
 
-impl Into<Monitor> for (&MonitorData, &Vec<JobData>) {
-    fn into(self) -> Monitor {
-        Monitor {
-            monitor_id: self.0.monitor_id,
-            name: self.0.name.clone(),
-            expected_duration: self.0.expected_duration,
-            grace_duration: self.0.grace_duration,
-            jobs: self.1.iter().map(|jd: &JobData| jd.into()).collect(),
-        }
+impl MonitorData {
+    pub fn to_model(&self, job_datas: &Vec<JobData>) -> Result<Monitor, AppError> {
+        Ok(Monitor {
+            monitor_id: self.monitor_id,
+            name: self.name.clone(),
+            expected_duration: self.expected_duration,
+            grace_duration: self.grace_duration,
+            jobs: job_datas
+                .iter()
+                .map(|jd| jd.into())
+                .collect::<Result<Vec<Job>, AppError>>()?,
+        })
     }
 }
 
@@ -78,7 +82,8 @@ mod tests {
                 None,
                 None,
                 None,
-            )],
+            )
+            .unwrap()],
         };
 
         let (monitor_data, job_data) = <(MonitorData, Vec<JobData>)>::from(&monitor);
@@ -124,7 +129,7 @@ mod tests {
             output: None,
         }];
 
-        let monitor: Monitor = (&monitor_data, &job_data).into();
+        let monitor = monitor_data.to_model(&job_data).unwrap();
 
         assert_eq!(
             monitor.monitor_id,

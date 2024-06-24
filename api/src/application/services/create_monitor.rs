@@ -1,4 +1,5 @@
 use crate::domain::models::monitor::Monitor;
+use crate::errors::AppError;
 use crate::infrastructure::repositories::Save;
 
 pub struct CreateMonitorService<'a, T: Save<Monitor>> {
@@ -15,15 +16,12 @@ impl<'a, T: Save<Monitor>> CreateMonitorService<'a, T> {
         name: String,
         expected_duration: i32,
         grace_duration: i32,
-    ) -> Monitor {
+    ) -> Result<Monitor, AppError> {
         let mon = Monitor::new(name, expected_duration, grace_duration);
 
-        self.repo
-            .save(&mon)
-            .await
-            .expect("Error saving new monitor");
+        self.repo.save(&mon).await?;
 
-        mon
+        Ok(mon)
     }
 }
 
@@ -48,9 +46,12 @@ mod tests {
         assert_eq!(monitors_before.len(), 0);
 
         let mut service = CreateMonitorService::new(&mut repo);
-        let new_monitor = service
+        let new_monitor_result = service
             .create_by_attributes("foo".to_owned(), 3_600, 300)
             .await;
+
+        assert!(new_monitor_result.is_ok());
+        let new_monitor = new_monitor_result.unwrap();
 
         let monitors_after = repo.all().await.expect("Failed to retrieve test monitors");
         assert_eq!(monitors_after.len(), 1);

@@ -1,5 +1,6 @@
 pub mod application;
 pub mod domain;
+pub mod errors;
 pub mod infrastructure;
 
 use std::env;
@@ -34,6 +35,6 @@ pub fn rocket() -> Rocket<Build> {
         )
         .mount(
             "/api/v1/docs",
-            FileServer::from(env::var("DOCS_DIR").expect("Missing DOC_DIR environment variable")),
+            FileServer::from(env::var("DOCS_DIR").expect("Missing DOCS_DIR environment variable")),
         )
 }

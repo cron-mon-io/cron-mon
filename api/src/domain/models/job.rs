@@ -3,7 +3,7 @@ use chrono::{offset::Utc, Duration};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
-use crate::domain::errors::JobError;
+use crate::errors::AppError;
 
 /// The Job struct represents a monitored job, encapsulating the time it started, the time it
 /// finished, the resulting status and any output that it produced.
@@ -32,27 +32,27 @@ impl Job {
         end_time: Option<NaiveDateTime>,
         succeeded: Option<bool>,
         output: Option<String>,
-    ) -> Self {
+    ) -> Result<Self, AppError> {
         // Job's must either have no end_time or succeeded, or both.
         if end_time.is_some() || succeeded.is_some() {
             if end_time.is_none() || succeeded.is_none() {
-                // TODO: Figure out a nicer way of handling this - probably need to return
-                // Result<Self, Err> and propogate it up through the levels?
-                panic!("Job is in an invalid state!");
+                return Err(AppError::InvalidJob(
+                    "Job is in an invalid state".to_owned(),
+                ));
             }
         }
-        Job {
+        Ok(Job {
             job_id,
             start_time,
             max_end_time,
             end_time,
             succeeded,
             output,
-        }
+        })
     }
 
     /// Start a Job.
-    pub fn start(maximum_duration: u64) -> Self {
+    pub fn start(maximum_duration: u64) -> Result<Self, AppError> {
         let now = Utc::now().naive_utc();
 
         Job::new(
@@ -65,11 +65,11 @@ impl Job {
         )
     }
 
-    /// Finish the Job. Note that if the Job isn't currently in progress, this will return a
-    /// `JobError`.
-    pub fn finish(&mut self, succeeded: bool, output: Option<String>) -> Result<(), JobError> {
+    /// Finish the Job. Note that if the Job isn't currently in progress, this will return an
+    /// `AppError`.
+    pub fn finish(&mut self, succeeded: bool, output: Option<String>) -> Result<(), AppError> {
         if !self.in_progress() {
-            return Err(JobError::JobAlreadyFinished);
+            return Err(AppError::JobAlreadyFinished(self.job_id));
         }
 
         self.succeeded = Some(succeeded);
@@ -110,7 +110,6 @@ impl Job {
 }
 
 impl Serialize for Job {
-    // TODO: Should this be in the infrastructure or presentation layer?
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         #[derive(Serialize)]
         struct SerializedJob {
@@ -150,11 +149,11 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_relative_datetime};
 
-    use super::{Job, JobError, NaiveDateTime, Uuid};
+    use super::{AppError, Job, NaiveDateTime, Uuid};
 
     #[test]
     fn starting_jobs() {
-        let job = Job::start(300);
+        let job = Job::start(300).expect("Failed to start job");
 
         assert_eq!(job.max_end_time - job.start_time, Duration::seconds(300));
         assert_eq!(job.end_time, None);
@@ -167,7 +166,7 @@ mod tests {
 
     #[test]
     fn finishing_jobs() {
-        let mut job = Job::start(300);
+        let mut job = Job::start(300).expect("Failed to start job");
 
         let result1 = job.finish(true, None);
         assert!(result1.is_ok());
@@ -178,7 +177,10 @@ mod tests {
 
         // Cannot finish a job again once it's been finished.
         let result2 = job.finish(false, Some("It won't wrong".to_owned()));
-        assert_eq!(result2.unwrap_err(), JobError::JobAlreadyFinished);
+        assert_eq!(
+            result2.unwrap_err(),
+            AppError::JobAlreadyFinished(job.job_id)
+        );
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);
     }
@@ -198,7 +200,8 @@ mod tests {
             end_time,
             succeeded,
             None,
-        );
+        )
+        .expect("Failed to create job");
 
         assert_eq!(job.duration(), expected_duration);
     }
@@ -230,9 +233,28 @@ mod tests {
             result.0,
             result.1,
             None,
-        );
+        )
+        .expect("Failed to create job");
 
         assert_eq!(job.late(), expected_late);
+    }
+
+    #[test]
+    fn validation() {
+        let job = Job::new(
+            Uuid::new_v4(),
+            gen_datetime("2024-04-20T20:30:30"),
+            gen_datetime("2024-04-20T20:40:30"),
+            Some(gen_datetime("2024-04-20T20:35:30")),
+            None,
+            None,
+        );
+
+        assert!(job.is_err());
+        assert_eq!(
+            job.unwrap_err(),
+            AppError::InvalidJob("Job is in an invalid state".to_owned())
+        );
     }
 
     #[test]
@@ -244,7 +266,8 @@ mod tests {
             Some(gen_datetime("2024-04-20T20:40:30")),
             Some(true),
             None,
-        );
+        )
+        .unwrap();
 
         let serialized = json!({"job": job});
         assert_eq!(

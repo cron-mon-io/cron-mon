@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
+use crate::errors::AppError;
 use crate::infrastructure::repositories::{Get, Save};
 
 pub struct UpdateMonitorService<'a, T: Get<Monitor> + Save<Monitor>> {
@@ -18,26 +19,25 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<'a, T> {
         new_name: String,
         new_expected: i32,
         new_grace: i32,
-    ) -> Option<Monitor> {
-        let mut monitor = self
-            .repo
-            .get(monitor_id)
-            .await
-            .expect("Could not retrieve monitor")?;
+    ) -> Result<Monitor, AppError> {
+        let monitor_opt = self.repo.get(monitor_id).await?;
 
-        monitor.edit_details(new_name, new_expected, new_grace);
+        match monitor_opt {
+            Some(mut monitor) => {
+                monitor.edit_details(new_name, new_expected, new_grace);
 
-        self.repo
-            .save(&monitor)
-            .await
-            .expect("Failed to update monitor");
+                self.repo.save(&monitor).await?;
 
-        Some(monitor)
+                Ok(monitor)
+            }
+            None => Err(AppError::MonitorNotFound(monitor_id)),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
     use rstest::*;
     use tokio::test;
 
@@ -45,7 +45,7 @@ mod tests {
 
     use crate::infrastructure::repositories::test_repo::TestRepository;
 
-    use super::{Get, Monitor, UpdateMonitorService};
+    use super::{AppError, Get, Monitor, UpdateMonitorService};
 
     #[fixture]
     fn repo() -> TestRepository {
@@ -69,7 +69,7 @@ mod tests {
 
         let mut service = UpdateMonitorService::new(&mut repo);
 
-        let should_be_none = service
+        let should_be_err = service
             .update_by_id(
                 gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
                 "new-name".to_owned(),
@@ -77,7 +77,12 @@ mod tests {
                 200,
             )
             .await;
-        assert!(should_be_none.is_none());
+        assert_eq!(
+            should_be_err,
+            Err(AppError::MonitorNotFound(gen_uuid(
+                "01a92c6c-6803-409d-b675-022fff62575a"
+            )))
+        );
 
         let monitor = service
             .update_by_id(
