@@ -9,18 +9,20 @@ use crate::errors::AppError;
 
 impl<'r> Responder<'r, 'static> for AppError {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        let status = match self {
-            AppError::RepositoryError(_) => Status::InternalServerError,
-            AppError::MonitorNotFound(_) => Status::NotFound,
-            AppError::JobNotFound(_, _) => Status::NotFound,
-            AppError::JobAlreadyFinished(_) => Status::BadRequest,
+        let (status, reason) = match self {
+            AppError::RepositoryError(_) => (Status::InternalServerError, "Repository Error"),
+            AppError::MonitorNotFound(_) => (Status::NotFound, "Monitor Not Found"),
+            AppError::JobNotFound(_, _) => (Status::NotFound, "Job Not Found"),
+            AppError::JobAlreadyFinished(_) => (Status::BadRequest, "Job Already Finished"),
             // Both of these could either be server-side or client-side. For now we'll handle the
             // client providing invalid data outside of where we return these, allowing us to
             // default to server-side errors.
-            AppError::InvalidMonitor(_) => Status::InternalServerError,
-            AppError::InvalidJob(_) => Status::InternalServerError,
+            AppError::InvalidMonitor(_) => (Status::InternalServerError, "Invalid Monitor"),
+            AppError::InvalidJob(_) => (Status::InternalServerError, "Invalid Job"),
         };
-        let body = json!({ "error": self.to_string() }).to_string();
+        let body =
+            json!({ "error": {"code": status.code, "reason": reason, "description": self.to_string()} })
+                .to_string();
         Response::build()
             .status(status)
             .header(ContentType::JSON)
@@ -94,7 +96,13 @@ mod tests {
         assert_eq!(response.content_type(), Some(ContentType::JSON));
         assert_eq!(
             response.into_json::<Value>().unwrap(),
-            json!({"error": "Failed to read or write data: something went wrong"})
+            json!({
+                "error": {
+                    "code": 500,
+                    "reason": "Repository Error",
+                    "description": "Failed to read or write data: something went wrong"
+                }
+            })
         );
     }
 
@@ -107,7 +115,12 @@ mod tests {
         assert_eq!(
             response.into_json::<Value>().unwrap(),
             json!({
-                "error": "Failed to find monitor with id '41ebffb4-a188-48e9-8ec1-61380085cde3'"
+                "error": {
+                    "code": 404,
+                    "reason": "Monitor Not Found",
+                    "description": "Failed to find monitor with id \
+                                    '41ebffb4-a188-48e9-8ec1-61380085cde3'"
+                }
             })
         );
     }
@@ -121,8 +134,13 @@ mod tests {
         assert_eq!(
             response.into_json::<Value>().unwrap(),
             json!({
-                "error": "Failed to find job with id '01a92c6c-6803-409d-b675-022fff62575a' \
-                          in Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3')"
+                "error": {
+                    "code": 404,
+                    "reason": "Job Not Found",
+                    "description": "Failed to find job with id \
+                                    '01a92c6c-6803-409d-b675-022fff62575a' in \
+                                    Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3')"
+                }
             })
         );
     }
@@ -136,7 +154,11 @@ mod tests {
         assert_eq!(
             response.into_json::<Value>().unwrap(),
             json!({
-                "error": "Job('01a92c6c-6803-409d-b675-022fff62575a') is already finished"
+                "error": {
+                    "code": 400,
+                    "reason": "Job Already Finished",
+                    "description": "Job('01a92c6c-6803-409d-b675-022fff62575a') is already finished"
+                }
             })
         );
     }
