@@ -48,6 +48,17 @@ fn test_get_job_when_job_does_not_exist() {
         .dispatch();
 
     assert_eq!(response.status(), Status::NotFound);
+    assert_eq!(
+        response.into_json::<Value>().unwrap(),
+        json!({
+            "error": {
+                "code": 404,
+                "reason": "Job Not Found",
+                "description": "Failed to find job with id 'a74dfbda-5969-4645-ba64-c99f09f8b666' \
+                                in Monitor('c1bf0515-df39-448b-aa95-686360a33b36')"
+            }
+        })
+    );
 }
 
 #[test]
@@ -102,11 +113,28 @@ fn test_finish_job() {
 
 #[rstest]
 // Job already finished.
-#[case("c1893113-66d7-4707-9a51-c8be46287b2c", Status::BadRequest)]
+#[case("c1893113-66d7-4707-9a51-c8be46287b2c", Status::BadRequest, json!({
+    "error": {
+        "code": 400,
+        "reason": "Job Already Finished",
+        "description": "Job('c1893113-66d7-4707-9a51-c8be46287b2c') is already finished"
+    }
+}))]
 // Job doesn't exist.
-#[case("a74dfbda-5969-4645-ba64-c99f09f8b666", Status::NotFound)]
+#[case("a74dfbda-5969-4645-ba64-c99f09f8b666", Status::NotFound, json!({
+    "error": {
+        "code": 404,
+        "reason": "Job Not Found",
+        "description": "Failed to find job with id 'a74dfbda-5969-4645-ba64-c99f09f8b666' in \
+                        Monitor('c1bf0515-df39-448b-aa95-686360a33b36')"
+    }
+}))]
 #[test]
-fn test_finish_job_errors(#[case] job_id: &str, #[case] expected_status: Status) {
+fn test_finish_job_errors(
+    #[case] job_id: &str,
+    #[case] expected_status: Status,
+    #[case] expected_body: Value,
+) {
     let client = get_test_client(true);
 
     let response = client
@@ -118,6 +146,7 @@ fn test_finish_job_errors(#[case] job_id: &str, #[case] expected_status: Status)
         .dispatch();
 
     assert_eq!(response.status(), expected_status);
+    assert_eq!(response.into_json::<Value>().unwrap(), expected_body);
 }
 
 pub fn get_job_finished(client: &Client, job_id: &str) -> bool {
