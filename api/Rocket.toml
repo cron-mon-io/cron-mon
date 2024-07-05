@@ -1,9 +1,13 @@
 [default]
 address = "0.0.0.0"
 ident = "Cron Mon API"
+log_level = "normal"
 
 [debug]
 ident = "Cron Mon API - debug"
+
+[release]
+ident = "Cron Mon API (prod)"
 
 [github]
 ident = "Cron Mon API - GitHub Actions"
