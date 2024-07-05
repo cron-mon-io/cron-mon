@@ -6,11 +6,17 @@ build-containers:
 run:
 	docker compose up api
 
+run-debug:
+	docker compose up api-debug
+
 run-monitor:
 	docker compose up monitor
 
+run-monitor-debug:
+	docker compose up monitor-debug
+
 test:
-	docker compose run --rm --no-deps api bash -c 'cargo test --lib --no-fail-fast'
+	docker compose run --rm --no-deps api-debug bash -c 'cargo test --lib --no-fail-fast'
 
 # Note that running this locally will re-seed your local DB so you'll lose
 # everything in there currently.

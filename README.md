@@ -69,8 +69,10 @@ reliable debug configuration (this is tried and tested on Visual Studio Code).
 - `install`: Builds all application containers, installs the required Node modules in the Vue
   application and sets up a local PostgreSQL database with test data.
 - `build-containers`: Builds all application containers.
-- `run`: Run the CronMon API
-- `run-monitor`: Run the CronMon monitoring service.
+- `run`: Run the CronMon API (release build).
+- `run-debug` Run a debug build of the CronMon API.
+- `run-monitor`: Run the CronMon monitoring service (release build).
+- `run-monitor-debug`: Run a debug build of the CronMon monitoring service.
 - `test`: Run all units tests.
 - `integration-tests`: Run the **integration** tests (note that this will remove whatever's in your
   local database, and as such these tests will never run unless they're invoked via this command).
