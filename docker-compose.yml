@@ -52,11 +52,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    command: [
-      "postgres",
-      "-c",
-      "log_statement=all"
-    ]
+    command: [ "postgres", "-c", "log_statement=all" ]
 
   seeder:
     container_name: cron-mon-db-seeder

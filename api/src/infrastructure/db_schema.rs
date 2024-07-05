@@ -27,4 +27,7 @@ diesel::table! {
 
 diesel::joinable!(job -> monitor (monitor_id));
 
-diesel::allow_tables_to_appear_in_same_query!(job, monitor);
+diesel::allow_tables_to_appear_in_same_query!(
+    job,
+    monitor,
+);
