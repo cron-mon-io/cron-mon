@@ -11,12 +11,3 @@ ident = "Cron Mon API (prod)"
 
 [github]
 ident = "Cron Mon API - GitHub Actions"
-
-[default.databases.monitors]
-url = "postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon"
-
-[release.databases.monitors]
-url = "postgres://cron-mon-api:itsasecret@host.docker.internal:54320/cron-mon"
-
-[vscode.databases.monitors]
-url = "postgres://cron-mon-api:itsasecret@host.docker.internal:54320/cron-mon"
