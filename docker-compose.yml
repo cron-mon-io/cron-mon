@@ -80,6 +80,7 @@ services:
     build:
       dockerfile: ./Dockerfile
       context: .
+      target: builder
     stdin_open: true
     tty: true
     environment:

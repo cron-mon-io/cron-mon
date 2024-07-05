@@ -2,7 +2,8 @@
   "name": "CronMon Dev Container",
   "build": {
     "dockerfile": "../Dockerfile",
-    "context": ".."
+    "context": "..",
+    "target": "builder"
   },
   "containerEnv": {
     "RUST_BACKTRACE": "full",
