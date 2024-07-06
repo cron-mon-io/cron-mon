@@ -27,10 +27,10 @@ migration:
 	docker compose run --rm api-debug diesel migration generate $(name)
 
 migrate:
-	docker compose run --rm api diesel migration run
+	docker compose run --rm api-debug diesel migration run
 
 migrate-redo:
-	docker compose run --rm api diesel migration redo
+	docker compose run --rm api-debug diesel migration redo
 
 seed:
 	docker compose run --rm seeder
