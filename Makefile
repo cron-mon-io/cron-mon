@@ -24,7 +24,7 @@ integration-tests:
 	docker compose up integration-tests-rs
 
 migration:
-	docker compose run --rm api diesel migration generate $(name)
+	docker compose run --rm api-debug diesel migration generate $(name)
 
 migrate:
 	docker compose run --rm api diesel migration run
