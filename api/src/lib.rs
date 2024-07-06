@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::application::fairings::{cors::CORS, default_json::DefaultJSON};
 use crate::application::routes::{health, jobs, monitors};
-use crate::infrastructure::database::Db;
+use crate::infrastructure::database::{run_migrations, Db};
 
 #[derive(Debug, Deserialize, Serialize)]
 struct DbConfig {
@@ -21,6 +21,8 @@ struct DbConfig {
 
 #[rocket::launch]
 pub fn rocket() -> Rocket<Build> {
+    run_migrations();
+
     let figment = Config::figment().merge((
         "databases.monitors",
         DbConfig {

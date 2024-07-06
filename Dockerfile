@@ -18,6 +18,8 @@ RUN groupadd -g 1000 cron-mon && \
     mkdir /usr/bin/cron-mon && chown cron-mon:cron-mon /usr/bin/cron-mon
 WORKDIR /usr/bin/cron-mon
 
+RUN apt-get update && apt-get install libpq-dev -y
+
 COPY --from=builder \
     --chown=cron-mon:cron-mon \
     /usr/cron-mon/api/diesel.toml /usr/bin/cron-mon/diesel.toml
