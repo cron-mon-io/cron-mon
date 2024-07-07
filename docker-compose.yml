@@ -103,7 +103,6 @@ services:
     tty: true
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
-      DOCS_DIR: /usr/cron-mon/api/docs
     volumes:
       - ./api:/usr/cron-mon/api
 
@@ -117,7 +116,6 @@ services:
     tty: true
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
-      DOCS_DIR: /usr/cron-mon/api/docs
     volumes:
       - ./api:/usr/cron-mon/api
 

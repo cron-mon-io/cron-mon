@@ -48,8 +48,5 @@ pub fn rocket() -> Rocket<Build> {
                 jobs::finish_job,
             ],
         )
-        .mount(
-            "/api/v1/docs",
-            FileServer::from(env::var("DOCS_DIR").expect("Missing DOCS_DIR environment variable")),
-        )
+        .mount("/api/v1/docs", FileServer::from("./docs"))
 }
