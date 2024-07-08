@@ -81,6 +81,7 @@ reliable debug configuration (this is tried and tested on Visual Studio Code).
   write the actual migration scripts within the generated `up.sql` and `down.sql` files in the
   generated migration.
 - `migrate`: Run any migrations that haven't been applied to the local database.
+- `migrate-revert`: Downgrade the latest migration on the local database.
 - `migrate-redo`: Downgrade and then re apply the latest migration on the local database.
 - `seed`: Remove all data from the local database and insert the test data (this is the same test
   data that get's written to the local database during `make install`).

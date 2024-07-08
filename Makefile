@@ -29,6 +29,9 @@ migration:
 migrate:
 	docker compose run --rm rust-cargo diesel migration run
 
+migrate-revert:
+	docker compose run --rm rust-cargo diesel migration revert
+
 migrate-redo:
 	docker compose run --rm rust-cargo diesel migration redo
 
