@@ -14,7 +14,7 @@ services:
       - cron-mon-network
 
   api-debug:
-    extends: rust-debug
+    extends: rust-cargo
     container_name: cron-mon-api-debug
     ports:
       - 8000:8000
@@ -38,7 +38,7 @@ services:
       - cron-mon-network
 
   monitor-debug:
-    extends: rust-debug
+    extends: rust-cargo
     container_name: cron-mon-monitor-debug
     depends_on:
       db:
@@ -49,7 +49,7 @@ services:
       - cron-mon-network
 
   integration-tests-rs:
-    extends: rust-debug
+    extends: rust-cargo
     container_name: rust-integration-tests
     depends_on:
       db:
@@ -106,8 +106,8 @@ services:
     volumes:
       - ./api:/usr/cron-mon/api
 
-  rust-debug:
-    image: cron-mon/rust-debug-image
+  rust-cargo:
+    image: cron-mon/rust-cargo-image
     build:
       dockerfile: ./Dockerfile
       context: .

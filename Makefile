@@ -16,7 +16,7 @@ run-monitor-debug:
 	docker compose up monitor-debug
 
 test:
-	docker compose run --rm --no-deps api-debug bash -c 'cargo test --lib --no-fail-fast'
+	docker compose run --rm --no-deps rust-cargo bash -c 'cargo test --lib --no-fail-fast'
 
 # Note that running this locally will re-seed your local DB so you'll lose
 # everything in there currently.
@@ -24,13 +24,13 @@ integration-tests:
 	docker compose up integration-tests-rs
 
 migration:
-	docker compose run --rm api-debug diesel migration generate $(name)
+	docker compose run --rm rust-cargo diesel migration generate $(name)
 
 migrate:
-	docker compose run --rm api-debug diesel migration run
+	docker compose run --rm rust-cargo diesel migration run
 
 migrate-redo:
-	docker compose run --rm api-debug diesel migration redo
+	docker compose run --rm rust-cargo diesel migration redo
 
 seed:
 	docker compose run --rm seeder
