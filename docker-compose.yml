@@ -1,9 +1,21 @@
-version: '3.7'
 services:
 
   api:
-    extends: base-rust
+    extends: rust-release
     container_name: cron-mon-api
+    ports:
+      - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ./api
+    networks:
+      - default
+      - cron-mon-network
+
+  api-debug:
+    extends: rust-cargo
+    container_name: cron-mon-api-debug
     ports:
       - 8000:8000
     depends_on:
@@ -15,8 +27,19 @@ services:
       - cron-mon-network
 
   monitor:
-    extends: base-rust
+    extends: rust-release
     container_name: cron-mon-monitor
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ./monitor
+    networks:
+      - default
+      - cron-mon-network
+
+  monitor-debug:
+    extends: rust-cargo
+    container_name: cron-mon-monitor-debug
     depends_on:
       db:
         condition: service_healthy
@@ -26,7 +49,7 @@ services:
       - cron-mon-network
 
   integration-tests-rs:
-    extends: base-rust
+    extends: rust-cargo
     container_name: rust-integration-tests
     depends_on:
       db:
@@ -52,11 +75,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    command: [
-      "postgres",
-      "-c",
-      "log_statement=all"
-    ]
+    command: [ "postgres", "-c", "log_statement=all" ]
 
   seeder:
     container_name: cron-mon-db-seeder
@@ -75,8 +94,8 @@ services:
         condition: service_healthy
     command: psql -f /usr/share/seeds.sql
 
-  base-rust:
-    image: cron-mon/base-rust-image
+  rust-release:
+    image: cron-mon/rust-release-image
     build:
       dockerfile: ./Dockerfile
       context: .
@@ -84,7 +103,19 @@ services:
     tty: true
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
-      DOCS_DIR: /usr/cron-mon/api/docs
+    volumes:
+      - ./api:/usr/cron-mon/api
+
+  rust-cargo:
+    image: cron-mon/rust-cargo-image
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+      target: builder
+    stdin_open: true
+    tty: true
+    environment:
+      DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
     volumes:
       - ./api:/usr/cron-mon/api
 

@@ -6,16 +6,31 @@ pub mod infrastructure;
 use std::env;
 
 use rocket::fs::FileServer;
-use rocket::{routes, Build, Rocket};
+use rocket::{routes, Build, Config, Rocket};
 use rocket_db_pools::Database;
+use serde::{Deserialize, Serialize};
 
 use crate::application::fairings::{cors::CORS, default_json::DefaultJSON};
 use crate::application::routes::{health, jobs, monitors};
-use crate::infrastructure::database::Db;
+use crate::infrastructure::database::{run_migrations, Db};
+
+#[derive(Debug, Deserialize, Serialize)]
+struct DbConfig {
+    url: String,
+}
 
 #[rocket::launch]
 pub fn rocket() -> Rocket<Build> {
-    rocket::build()
+    run_migrations();
+
+    let figment = Config::figment().merge((
+        "databases.monitors",
+        DbConfig {
+            url: env::var("DATABASE_URL").expect("'DATABASE_URL' missing from environment"),
+        },
+    ));
+
+    rocket::custom(figment)
         .attach(Db::init())
         .attach(CORS)
         .attach(DefaultJSON)
@@ -33,8 +48,5 @@ pub fn rocket() -> Rocket<Build> {
                 jobs::finish_job,
             ],
         )
-        .mount(
-            "/api/v1/docs",
-            FileServer::from(env::var("DOCS_DIR").expect("Missing DOCS_DIR environment variable")),
-        )
+        .mount("/api/v1/docs", FileServer::from("./docs"))
 }

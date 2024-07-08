@@ -11,11 +11,12 @@
             "program": "${workspaceFolder}/api/target/debug/api",
             "args": [],
             "cwd": "${workspaceFolder}/api",
-            "initCommands":["settings set target.disable-aslr false"],
+            "initCommands": [
+                "settings set target.disable-aslr false"
+            ],
             "env": {
                 "RUST_BACKTRACE": "full",
                 "DATABASE_URL": "postgres://cron-mon-api:itsasecret@host.docker.internal:54320/cron-mon",
-                "DOCS_DIR": "/usr/cron-mon/api/docs",
                 "ROCKET_PROFILE": "vscode"
             }
         }
