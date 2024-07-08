@@ -38,6 +38,9 @@ migrate-redo:
 seed:
 	docker compose run --rm seeder
 
+shell:
+	docker compose run --rm rust-cargo bash
+
 
 # Can't delete the volume when PostgreSQL is running.
 delete-postgres-volume:

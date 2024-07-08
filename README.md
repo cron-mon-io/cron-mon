@@ -64,11 +64,28 @@ A [Development container](https://containers.dev/) configuration file is also pr
 your IDE can use your local containers' environments and to provide a pre-setup, consistent and
 reliable debug configuration (this is tried and tested on Visual Studio Code).
 
-### Makefile
+### Makefiles
+
+There are two `Makefile`s provided to make local development a bit easier; one at the root of the
+project, intended to be ran on your host machine, running through Docker; and another within `/api`,
+intended to be ran within the application container of development container.
+
+Both `Makefile`s have mostly the same commands, with the exception of the following commands that
+only the root-level `Makefile` has:
 
 - `install`: Builds all application containers, installs the required Node modules in the Vue
   application and sets up a local PostgreSQL database with test data.
 - `build-containers`: Builds all application containers.
+- `seed`: Remove all data from the local database and insert the test data (this is the same test
+  data that get's written to the local database during `make install`).
+- `shell`: Open a `bash` shell on the application container, where you can use the _other_
+  `Makefile` to run commands without the overhead of spinning up containers for each command.
+- `delete-postgres-volume`: Remove the Docker volume being used to make PostgreSQL data persist.
+  This can be handy is you run into any problems with your local database and you just want to trash
+  it and start again. The next time the database container runs this will be recreated naturally
+
+The following commands are present in both `Makefile`s:
+
 - `run`: Run the CronMon API (release build).
 - `run-debug` Run a debug build of the CronMon API.
 - `run-monitor`: Run the CronMon monitoring service (release build).
@@ -83,11 +100,6 @@ reliable debug configuration (this is tried and tested on Visual Studio Code).
 - `migrate`: Run any migrations that haven't been applied to the local database.
 - `migrate-revert`: Downgrade the latest migration on the local database.
 - `migrate-redo`: Downgrade and then re apply the latest migration on the local database.
-- `seed`: Remove all data from the local database and insert the test data (this is the same test
-  data that get's written to the local database during `make install`).
-- `delete-postgres-volume`: Remove the Docker volume being used to make PostgreSQL data persist.
-  This can be handy is you run into any problems with your local database and you just want to trash
-  it and start again. The next time the database container runs this will be recreated naturally
 
 ## Deployment
 
