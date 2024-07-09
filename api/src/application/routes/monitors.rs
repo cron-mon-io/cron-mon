@@ -25,7 +25,7 @@ pub struct MonitorData {
 
 #[rocket::get("/monitors")]
 pub async fn list_monitors(mut connection: Connection<Db>) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut **connection);
+    let mut repo = MonitorRepository::new(&mut connection);
     let mut service = FetchMonitorsService::new(&mut repo, &order_monitors_by_last_started_job);
     let monitors = service.fetch_all().await?;
 
@@ -50,7 +50,7 @@ pub async fn create_monitor(
     mut connection: Connection<Db>,
     new_monitor: Json<MonitorData>,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut **connection);
+    let mut repo = MonitorRepository::new(&mut connection);
     let mut service = CreateMonitorService::new(&mut repo);
 
     let mon = service
@@ -69,7 +69,7 @@ pub async fn get_monitor(
     mut connection: Connection<Db>,
     monitor_id: Uuid,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut **connection);
+    let mut repo = MonitorRepository::new(&mut connection);
     let monitor = repo.get(monitor_id).await?;
 
     if let Some(mon) = monitor {
@@ -84,7 +84,7 @@ pub async fn delete_monitor(
     mut connection: Connection<Db>,
     monitor_id: Uuid,
 ) -> Result<(), AppError> {
-    let mut repo = MonitorRepository::new(&mut **connection);
+    let mut repo = MonitorRepository::new(&mut connection);
     let mut service = DeleteMonitorService::new(&mut repo);
 
     service.delete_by_id(monitor_id).await
@@ -96,7 +96,7 @@ pub async fn update_monitor(
     monitor_id: Uuid,
     updated_monitor: Json<MonitorData>,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut **connection);
+    let mut repo = MonitorRepository::new(&mut connection);
     let mut service = UpdateMonitorService::new(&mut repo);
 
     let mon = service

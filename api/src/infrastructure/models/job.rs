@@ -22,15 +22,15 @@ pub struct JobData {
     pub monitor_id: Uuid,
 }
 
-impl Into<Result<Job, AppError>> for &JobData {
-    fn into(self) -> Result<Job, AppError> {
+impl From<&JobData> for Result<Job, AppError> {
+    fn from(val: &JobData) -> Self {
         Job::new(
-            self.job_id,
-            self.start_time,
-            self.max_end_time,
-            self.end_time,
-            self.succeeded,
-            self.output.clone(),
+            val.job_id,
+            val.start_time,
+            val.max_end_time,
+            val.end_time,
+            val.succeeded,
+            val.output.clone(),
         )
     }
 }

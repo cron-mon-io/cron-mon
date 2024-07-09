@@ -18,7 +18,7 @@ pub struct MonitorData {
 }
 
 impl MonitorData {
-    pub fn to_model(&self, job_datas: &Vec<JobData>) -> Result<Monitor, AppError> {
+    pub fn to_model(&self, job_datas: &[JobData]) -> Result<Monitor, AppError> {
         Ok(Monitor {
             monitor_id: self.monitor_id,
             name: self.name.clone(),

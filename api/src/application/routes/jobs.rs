@@ -24,7 +24,7 @@ pub async fn get_job(
     monitor_id: Uuid,
     job_id: Uuid,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut **connection);
+    let mut repo = MonitorRepository::new(&mut connection);
     let mut service = FetchJobService::new(&mut repo);
 
     let job = service.fetch_by_id(monitor_id, job_id).await?;
@@ -37,7 +37,7 @@ pub async fn start_job(
     mut connection: Connection<Db>,
     monitor_id: Uuid,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut **connection);
+    let mut repo = MonitorRepository::new(&mut connection);
     let mut service = StartJobService::new(&mut repo);
 
     let job = service.start_job_for_monitor(monitor_id).await?;
@@ -54,7 +54,7 @@ pub async fn finish_job(
     job_id: Uuid,
     finish_job_info: Json<FinishJobInfo>,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut **connection);
+    let mut repo = MonitorRepository::new(&mut connection);
     let mut service = FinishJobService::new(&mut repo);
 
     let job = service

@@ -58,13 +58,8 @@ mod tests {
     }
 
     impl NotifyLateJob for FakeJobNotifier {
-        fn notify_late_job(
-            &mut self,
-            monitor_name: &String,
-            late_job: &Job,
-        ) -> Result<(), AppError> {
-            self.lates
-                .push((monitor_name.clone(), late_job.job_id.clone()));
+        fn notify_late_job(&mut self, monitor_name: &str, late_job: &Job) -> Result<(), AppError> {
+            self.lates.push((monitor_name.to_owned(), late_job.job_id));
             Ok(())
         }
     }
