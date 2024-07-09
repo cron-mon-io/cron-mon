@@ -8,7 +8,7 @@ name: CI
 
 jobs:
   check:
-    name: Check
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -22,8 +22,8 @@ jobs:
         with:
           workspaces: "api"
 
-      - name: Run cargo check
-        run: cd api && cargo check
+      - name: Run cargo fmt and clippy
+        run: cd api && cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings
 
   unit-tests:
     name: Unit tests

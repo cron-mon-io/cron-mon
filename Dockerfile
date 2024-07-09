@@ -1,7 +1,7 @@
 FROM public.ecr.aws/docker/library/rust:1.79.0-slim as builder
 
 RUN apt-get update && apt-get install build-essential libpq-dev -y
-RUN rustup component add rustfmt
+RUN rustup component add rustfmt clippy
 RUN cargo install diesel_cli --no-default-features --features postgres
 
 WORKDIR /usr/cron-mon/api

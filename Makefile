@@ -15,8 +15,14 @@ run-monitor:
 run-monitor-debug:
 	docker compose up monitor-debug
 
-test:
+test: lint unit-test
+
+unit-test:
 	docker compose run --rm --no-deps rust-cargo bash -c 'cargo test --lib --no-fail-fast'
+
+lint:
+	docker compose run --rm --no-deps rust-cargo bash -c '\
+		cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings'
 
 # Note that running this locally will re-seed your local DB so you'll lose
 # everything in there currently.
