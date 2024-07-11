@@ -1,4 +1,5 @@
 # Rust stuff
+.cargo
 api/target
 
 # PostgreSQL
