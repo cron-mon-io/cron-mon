@@ -5,30 +5,24 @@ pub mod infrastructure;
 
 use std::env;
 
+use figment::util::map;
+use figment::Figment;
 use rocket::fs::FileServer;
 use rocket::{routes, Build, Config, Rocket};
 use rocket_db_pools::Database;
-use serde::{Deserialize, Serialize};
 
 use crate::application::fairings::{cors::CORS, default_json::DefaultJSON};
 use crate::application::routes::{health, jobs, monitors};
 use crate::infrastructure::database::{run_migrations, Db};
 
-#[derive(Debug, Deserialize, Serialize)]
-struct DbConfig {
-    url: String,
-}
-
 #[rocket::launch]
 pub fn rocket() -> Rocket<Build> {
     run_migrations();
 
-    let figment = Config::figment().merge((
+    let figment = Config::figment().merge(Figment::new().join((
         "databases.monitors",
-        DbConfig {
-            url: env::var("DATABASE_URL").expect("'DATABASE_URL' missing from environment"),
-        },
-    ));
+        map!["url" => env::var("DATABASE_URL").expect("'DATABASE_URL' missing from environment")],
+    )));
 
     rocket::custom(figment)
         .attach(Db::init())
