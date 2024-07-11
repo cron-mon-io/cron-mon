@@ -12,11 +12,11 @@ run-monitor-debug:
 
 test: lint unit-test
 
-unit-test:
-	cargo test --lib --no-fail-fast
-
 lint:
 	cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings
+
+unit-test:
+	cargo test --lib --no-fail-fast
 
 # Note that running this locally will re-seed your local DB so you'll lose
 # everything in there currently.
