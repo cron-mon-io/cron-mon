@@ -32,7 +32,9 @@ async fn main() {
         let mut notifier = LateJobNotifer::new();
         let mut service = ProcessLateJobsService::new(&mut repo, &mut notifier);
 
-        service.process_late_jobs().await;
+        if let Err(error) = service.process_late_jobs().await {
+            eprintln!("Error processing late jobs: {:?}", error);
+        }
     })
     .await;
 }
