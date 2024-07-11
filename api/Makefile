@@ -23,6 +23,10 @@ unit-test:
 integration-tests:
 	cargo test --no-fail-fast --test "*" -- --test-threads=1
 
+# This will also re-seed your local DB, as it effectively runs *all* tests.
+test-coverage:
+	./coverage.sh
+
 migration:
 	diesel migration generate $(name)
 
