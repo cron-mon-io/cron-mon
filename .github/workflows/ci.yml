@@ -10,6 +10,9 @@ jobs:
   check:
     name: Lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -23,11 +26,14 @@ jobs:
           workspaces: "api"
 
       - name: Run cargo fmt and clippy
-        run: cd api && cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings
+        run: make lint
 
   unit-tests:
     name: Unit tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -41,11 +47,14 @@ jobs:
           workspaces: "api"
 
       - name: Run cargo test
-        run: cd api && cargo test --lib --no-fail-fast
+        run: make unit-test
 
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api
     container: public.ecr.aws/docker/library/rust:1.79.0-slim
     services:
       cron-mon-db:
@@ -74,14 +83,14 @@ jobs:
           workspaces: "api"
 
       - name: Install diesel-cli
-        run: cd api && cargo install diesel_cli --no-default-features --features postgres
+        run: cargo install diesel_cli --no-default-features --features postgres
 
       - name: Run migrations
-        run: cd api && diesel migration run
+        run: make migrate
         env:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
 
       - name: Run cargo test
-        run: cd api && cargo test --no-fail-fast --test "*" -- --test-threads=1
+        run: make integration-test
         env:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
