@@ -7,7 +7,7 @@ on:
 name: CI
 
 jobs:
-  check:
+  lint:
     name: Lint
     runs-on: ubuntu-latest
     defaults:
