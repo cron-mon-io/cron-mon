@@ -4,7 +4,6 @@ use diesel::Connection;
 use diesel::PgConnection;
 use diesel_async::{AsyncConnection, AsyncPgConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use rocket::futures::TryFutureExt;
 use rocket_db_pools::{diesel, Database};
 
 use crate::errors::AppError;

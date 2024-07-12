@@ -105,7 +105,7 @@ pub async fn seed_db(
     monitor_seeds: &Vec<MonitorData>,
     job_seeds: &Vec<JobData>,
 ) -> AsyncPgConnection {
-    let mut conn = establish_connection().await;
+    let mut conn = establish_connection().await.unwrap();
 
     diesel::delete(monitor::table)
         .execute(&mut conn)
