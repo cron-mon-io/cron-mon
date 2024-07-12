@@ -90,8 +90,8 @@ jobs:
         env:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
 
-      - name: Run cargo test
-        run: make integration-test
+      - name: Run integration test
+        run: make integration-tests
         env:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
 
