@@ -2,12 +2,12 @@ use crate::domain::models::monitor::Monitor;
 use crate::errors::AppError;
 use crate::infrastructure::repositories::All;
 
-pub struct FetchMonitorsService<'a, T: All<Monitor>, F: Fn(&mut Vec<Monitor>)> {
+pub struct FetchMonitorsService<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> {
     repo: &'a mut T,
     order_monitors: &'a F,
 }
 
-impl<'a, T: All<Monitor>, F: Fn(&mut Vec<Monitor>)> FetchMonitorsService<'a, T, F> {
+impl<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a, T, F> {
     pub fn new(repo: &'a mut T, order_monitors: &'a F) -> Self {
         Self {
             repo,
@@ -35,7 +35,7 @@ mod tests {
 
     use super::{FetchMonitorsService, Monitor};
 
-    fn order_monitors(monitors: &mut Vec<Monitor>) {
+    fn order_monitors(monitors: &mut [Monitor]) {
         monitors.sort_by(|lh_mon: &Monitor, rh_mon: &Monitor| lh_mon.name.cmp(&rh_mon.name));
     }
 

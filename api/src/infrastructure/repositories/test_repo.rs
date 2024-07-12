@@ -34,7 +34,7 @@ impl GetWithLateJobs for TestRepository {
             .data
             .iter()
             .filter_map(|(_, monitor)| {
-                if monitor.late_jobs().len() > 0 {
+                if !monitor.late_jobs().is_empty() {
                     Some(monitor.clone())
                 } else {
                     None
@@ -47,12 +47,7 @@ impl GetWithLateJobs for TestRepository {
 #[async_trait]
 impl Get<Monitor> for TestRepository {
     async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, AppError> {
-        let monitor = if let Some(monitor) = self.data.get(&monitor_id) {
-            Some(monitor.clone())
-        } else {
-            None
-        };
-        Ok(monitor)
+        Ok(self.data.get(&monitor_id).cloned())
     }
 }
 

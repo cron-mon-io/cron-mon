@@ -229,6 +229,7 @@ dependencies = [
  "diesel",
  "diesel-async",
  "diesel_migrations",
+ "figment",
  "pretty_assertions",
  "rocket",
  "rocket_db_pools",

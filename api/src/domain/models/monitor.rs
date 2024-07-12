@@ -43,10 +43,7 @@ impl Monitor {
 
     /// Retrieve the jobs currently in progress.
     pub fn jobs_in_progress(&self) -> Vec<&Job> {
-        self.jobs
-            .iter()
-            .filter_map(|job| if job.in_progress() { Some(job) } else { None })
-            .collect()
+        self.jobs.iter().filter(|job| job.in_progress()).collect()
     }
 
     /// Retrieve late jobs.
@@ -55,10 +52,7 @@ impl Monitor {
     /// `expected_duration + grace_duration`. Note that late Jobs can still finish, either
     /// successfully or in error.
     pub fn late_jobs(&self) -> Vec<&Job> {
-        self.jobs
-            .iter()
-            .filter_map(|job| if job.late() { Some(job) } else { None })
-            .collect()
+        self.jobs.iter().filter(|job| job.late()).collect()
     }
 
     /// Retrieve the most recently finished job.
@@ -70,7 +64,7 @@ impl Monitor {
     pub fn last_started_job(&self) -> Option<&Job> {
         // Jobs will be naturally ordered by start_time, so we can just take a reference to the
         // first job - if we have any.
-        if self.jobs.len() > 0 {
+        if !self.jobs.is_empty() {
             Some(&self.jobs[0])
         } else {
             None
@@ -94,7 +88,7 @@ impl Monitor {
         succeeded: bool,
         output: Option<String>,
     ) -> Result<&Job, AppError> {
-        let monitor_id = self.monitor_id.clone();
+        let monitor_id = self.monitor_id;
         let job = self.get_job(job_id);
         match job {
             Some(j) => {

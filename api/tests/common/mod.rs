@@ -24,7 +24,6 @@ pub fn get_test_client(seed_db: bool) -> Client {
             .unwrap()
             .block_on(async {
                 setup_db().await;
-                ()
             })
     }
     Client::tracked(rocket()).expect("Invalid rocket instance")

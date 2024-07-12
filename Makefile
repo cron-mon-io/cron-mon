@@ -15,13 +15,23 @@ run-monitor:
 run-monitor-debug:
 	docker compose up monitor-debug
 
-test:
+test: lint unit-test
+
+lint:
+	docker compose run --rm --no-deps rust-cargo bash -c '\
+		cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings'
+
+unit-test:
 	docker compose run --rm --no-deps rust-cargo bash -c 'cargo test --lib --no-fail-fast'
 
 # Note that running this locally will re-seed your local DB so you'll lose
 # everything in there currently.
 integration-tests:
 	docker compose up integration-tests-rs
+
+# This will also re-seed your local DB, as it effectively runs *all* tests.
+test-coverage:
+	docker compose run --rm --no-deps rust-cargo bash -c './coverage.sh'
 
 migration:
 	docker compose run --rm rust-cargo diesel migration generate $(name)

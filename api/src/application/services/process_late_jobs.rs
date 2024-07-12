@@ -1,3 +1,4 @@
+use crate::errors::AppError;
 use crate::infrastructure::notify::NotifyLateJob;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 
@@ -13,23 +14,18 @@ impl<'a, Repo: GetWithLateJobs, Notifier: NotifyLateJob>
         Self { repo, notifier }
     }
 
-    pub async fn process_late_jobs(&mut self) {
+    pub async fn process_late_jobs(&mut self) -> Result<(), AppError> {
         println!("Beginning check for late Jobs...");
-        let monitors_with_late_jobs = self
-            .repo
-            .get_with_late_jobs()
-            .await
-            .expect("Failed to retrieve Monitors with late jobs");
+        let monitors_with_late_jobs = self.repo.get_with_late_jobs().await?;
 
         for mon in &monitors_with_late_jobs {
             for late_job in mon.late_jobs() {
-                self.notifier
-                    .notify_late_job(&mon.name, late_job)
-                    .expect("Failed to notify job is late");
+                self.notifier.notify_late_job(&mon.name, late_job)?;
             }
         }
 
         println!("Check for late Jobs complete\n");
+        Ok(())
     }
 }
 
@@ -58,13 +54,8 @@ mod tests {
     }
 
     impl NotifyLateJob for FakeJobNotifier {
-        fn notify_late_job(
-            &mut self,
-            monitor_name: &String,
-            late_job: &Job,
-        ) -> Result<(), AppError> {
-            self.lates
-                .push((monitor_name.clone(), late_job.job_id.clone()));
+        fn notify_late_job(&mut self, monitor_name: &str, late_job: &Job) -> Result<(), AppError> {
+            self.lates.push((monitor_name.to_owned(), late_job.job_id));
             Ok(())
         }
     }
@@ -146,7 +137,8 @@ mod tests {
         let mut notifier = FakeJobNotifier::new();
         let mut service = ProcessLateJobsService::new(&mut repo, &mut notifier);
 
-        service.process_late_jobs().await;
+        let result = service.process_late_jobs().await;
+        assert!(result.is_ok());
 
         // Order the data so we can reliably perform assertions on it.
         notifier

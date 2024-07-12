@@ -103,7 +103,7 @@ mod tests {
             .await
             .expect("Failed to finish job");
 
-        assert_eq!(job.in_progress(), false);
+        assert!(!job.in_progress());
         assert_eq!(job.duration(), Some(320));
 
         let monitor_after = repo

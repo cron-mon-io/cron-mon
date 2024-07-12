@@ -34,12 +34,12 @@ impl Job {
         output: Option<String>,
     ) -> Result<Self, AppError> {
         // Job's must either have no end_time or succeeded, or both.
-        if end_time.is_some() || succeeded.is_some() {
-            if end_time.is_none() || succeeded.is_none() {
-                return Err(AppError::InvalidJob(
-                    "Job is in an invalid state".to_owned(),
-                ));
-            }
+        if (end_time.is_some() || succeeded.is_some())
+            && (end_time.is_none() || succeeded.is_none())
+        {
+            return Err(AppError::InvalidJob(
+                "Job is in an invalid state".to_owned(),
+            ));
         }
         Ok(Job {
             job_id,
@@ -170,7 +170,7 @@ mod tests {
 
         let result1 = job.finish(true, None);
         assert!(result1.is_ok());
-        assert_eq!(job.in_progress(), false);
+        assert!(!job.in_progress());
         assert!(job.end_time.is_some());
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);

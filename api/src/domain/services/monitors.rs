@@ -5,7 +5,7 @@ use crate::domain::models::monitor::Monitor;
 
 /// Orders the monitors by the time of the last job that was started. Monitors that don't have any
 /// jobs yet should be at the end of the list.
-pub fn order_monitors_by_last_started_job(monitors: &mut Vec<Monitor>) {
+pub fn order_monitors_by_last_started_job(monitors: &mut [Monitor]) {
     monitors.sort_by(|lh_mon: &Monitor, rh_mon: &Monitor| {
         let earliest_time = Utc
             .with_ymd_and_hms(1970, 1, 1, 0, 1, 1)
@@ -24,7 +24,7 @@ pub fn order_monitors_by_last_started_job(monitors: &mut Vec<Monitor>) {
             &earliest_time
         };
 
-        rh_t.cmp(&lh_t)
+        rh_t.cmp(lh_t)
     });
 }
 

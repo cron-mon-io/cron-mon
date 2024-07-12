@@ -69,7 +69,7 @@ mod tests {
             .await
             .expect("Failed to start job");
 
-        assert_eq!(job.in_progress(), true);
+        assert!(job.in_progress());
 
         let monitor_after = repo
             .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))

@@ -2,9 +2,6 @@ use std::future::Future;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use signal_hook;
-use tokio;
-
 use cron_mon_api::application::services::process_late_jobs::ProcessLateJobsService;
 use cron_mon_api::infrastructure::database::establish_connection;
 use cron_mon_api::infrastructure::notify::late_job_logger::LateJobNotifer;
@@ -35,7 +32,9 @@ async fn main() {
         let mut notifier = LateJobNotifer::new();
         let mut service = ProcessLateJobsService::new(&mut repo, &mut notifier);
 
-        service.process_late_jobs().await;
+        if let Err(error) = service.process_late_jobs().await {
+            eprintln!("Error processing late jobs: {:?}", error);
+        }
     })
     .await;
 }
