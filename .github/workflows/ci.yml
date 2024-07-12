@@ -75,15 +75,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: apt-get update && apt-get install build-essential libpq-dev -y
+        run: |
+          apt-get update && apt-get install build-essential libpq-dev -y
+          cargo install diesel_cli --no-default-features --features postgres
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: "api"
-
-      - name: Install diesel-cli
-        run: cargo install diesel_cli --no-default-features --features postgres
 
       - name: Run migrations
         run: make migrate
@@ -122,15 +121,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: apt-get update && apt-get install build-essential libpq-dev -y
+        run: |
+          apt-get update && apt-get install build-essential libpq-dev -y
+          cargo install grcov
+          cargo install diesel_cli --no-default-features --features postgres
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: "api"
-
-      - name: Install diesel-cli
-        run: cargo install diesel_cli --no-default-features --features postgres
 
       - name: Run migrations
         run: make migrate
