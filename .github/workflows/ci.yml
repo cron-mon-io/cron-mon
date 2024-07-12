@@ -74,8 +74,8 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install libpq
-        run: apt-get update && apt-get install libpq-dev -y
+      - name: Install dependencies
+        run: apt-get update && apt-get install build-essential libpq-dev -y
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
@@ -121,8 +121,8 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install libpq
-        run: apt-get update && apt-get install libpq-dev -y
+      - name: Install dependencies
+        run: apt-get update && apt-get install build-essential libpq-dev -y
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
