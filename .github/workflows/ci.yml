@@ -123,6 +123,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update && apt-get install build-essential libpq-dev -y
+          rustup component add llvm-tools-preview
           cargo install grcov
           cargo install diesel_cli --no-default-features --features postgres
 
