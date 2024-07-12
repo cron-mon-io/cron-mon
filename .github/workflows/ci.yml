@@ -85,4 +85,3 @@ jobs:
         run: cd api && cargo test --no-fail-fast --test "*" -- --test-threads=1
         env:
           DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
-          ROCKET_PROFILE: github

@@ -8,6 +8,3 @@ ident = "Cron Mon API - debug"
 
 [release]
 ident = "Cron Mon API (prod)"
-
-[github]
-ident = "Cron Mon API - GitHub Actions"
