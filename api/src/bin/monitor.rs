@@ -27,13 +27,17 @@ where
 #[tokio::main]
 async fn main() {
     run_periodically(10, || async move {
-        let mut db = establish_connection().await;
-        let mut repo = MonitorRepository::new(&mut db);
-        let mut notifier = LateJobNotifer::new();
-        let mut service = ProcessLateJobsService::new(&mut repo, &mut notifier);
+        match establish_connection().await {
+            Ok(mut db) => {
+                let mut repo = MonitorRepository::new(&mut db);
+                let mut notifier = LateJobNotifer::new();
+                let mut service = ProcessLateJobsService::new(&mut repo, &mut notifier);
 
-        if let Err(error) = service.process_late_jobs().await {
-            eprintln!("Error processing late jobs: {:?}", error);
+                if let Err(error) = service.process_late_jobs().await {
+                    eprintln!("Error processing late jobs: {:?}", error);
+                }
+            }
+            Err(error) => eprintln!("Error establishing connection: {:?}", error),
         }
     })
     .await;

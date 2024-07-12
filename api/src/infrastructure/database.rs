@@ -1,11 +1,13 @@
 use std::env;
 
-use ::diesel::Connection;
+use diesel::Connection;
 use diesel::PgConnection;
 use diesel_async::{AsyncConnection, AsyncPgConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use rocket::futures::TryFutureExt;
 use rocket_db_pools::{diesel, Database};
+
+use crate::errors::AppError;
 
 #[derive(Database)]
 #[database("monitors")]
@@ -13,10 +15,14 @@ pub struct Db(diesel::PgPool);
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("src/infrastructure/migrations");
 
-pub async fn establish_connection() -> AsyncPgConnection {
-    AsyncPgConnection::establish(&get_database_url())
-        .unwrap_or_else(|_| panic!("Failed to establish DB connection"))
-        .await
+pub async fn establish_connection() -> Result<AsyncPgConnection, AppError> {
+    match AsyncPgConnection::establish(&get_database_url()).await {
+        Ok(conn) => Ok(conn),
+        Err(e) => Err(AppError::RepositoryError(format!(
+            "Failed to establish DB connection: {:?}",
+            e
+        ))),
+    }
 }
 
 pub fn run_migrations() {
