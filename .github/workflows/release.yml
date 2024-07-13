@@ -1,0 +1,32 @@
+name: release
+
+on:
+  release:
+    types: [ published ]
+
+# ${{ github.event.release.tag_name }} is the tag of the release
+
+jobs:
+  retag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Retag image
+        run: |
+          sha=$(git rev-list -n 1 ${{ github.event.release.tag_name }})
+          docker image tag ghcr.io/${{ github.repository }}:"${sha}" ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
+          docker push ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}

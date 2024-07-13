@@ -1,6 +1,13 @@
 version: 2
 
 updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      time: "04:00"
+    labels:
+      - "dependencies"
   - package-ecosystem: "cargo"
     directory: "/api"
     schedule:
