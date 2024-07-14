@@ -234,3 +234,24 @@ async fn test_delete(mut data: HashMap<Uuid, Monitor>) {
         .expect("Error when retrieving monitors");
     assert!(should_now_be_none.is_none());
 }
+
+#[rstest]
+#[test]
+async fn test_multiple_repos(mut data: HashMap<Uuid, Monitor>) {
+    let monitor = Monitor::new("new-monitor".to_owned(), 100, 10);
+
+    {
+        let mut repo1 = TestRepository::new(&mut data);
+        assert_eq!(repo1.all().await.unwrap().len(), 3);
+
+        repo1.save(&monitor).await.unwrap();
+
+        assert_eq!(repo1.all().await.unwrap().len(), 4);
+    }
+
+    {
+        let mut repo2 = TestRepository::new(&mut data);
+        assert_eq!(repo2.all().await.unwrap().len(), 4);
+        assert!(repo2.get(monitor.monitor_id).await.unwrap().is_some());
+    }
+}
