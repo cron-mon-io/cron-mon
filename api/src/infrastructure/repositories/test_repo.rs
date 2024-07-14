@@ -12,23 +12,25 @@ use crate::errors::AppError;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 use crate::infrastructure::repositories::{All, Delete, Get, Save};
 
-pub struct TestRepository {
-    data: HashMap<Uuid, Monitor>,
+pub fn to_hashmap(monitors: Vec<Monitor>) -> HashMap<Uuid, Monitor> {
+    monitors
+        .iter()
+        .map(|monitor| (monitor.monitor_id, monitor.clone()))
+        .collect::<HashMap<Uuid, Monitor>>()
 }
 
-impl TestRepository {
-    pub fn new(monitors: Vec<Monitor>) -> Self {
-        Self {
-            data: monitors
-                .iter()
-                .map(|monitor| (monitor.monitor_id, monitor.clone()))
-                .collect::<HashMap<Uuid, Monitor>>(),
-        }
+pub struct TestRepository<'a> {
+    data: &'a mut HashMap<Uuid, Monitor>,
+}
+
+impl<'a> TestRepository<'a> {
+    pub fn new(data: &'a mut HashMap<Uuid, Monitor>) -> Self {
+        Self { data: data }
     }
 }
 
 #[async_trait]
-impl GetWithLateJobs for TestRepository {
+impl GetWithLateJobs for TestRepository<'_> {
     async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, AppError> {
         Ok(self
             .data
@@ -45,21 +47,21 @@ impl GetWithLateJobs for TestRepository {
 }
 
 #[async_trait]
-impl Get<Monitor> for TestRepository {
+impl Get<Monitor> for TestRepository<'_> {
     async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, AppError> {
         Ok(self.data.get(&monitor_id).cloned())
     }
 }
 
 #[async_trait]
-impl All<Monitor> for TestRepository {
+impl All<Monitor> for TestRepository<'_> {
     async fn all(&mut self) -> Result<Vec<Monitor>, AppError> {
         Ok(self.data.iter().map(|d| d.1.clone()).collect())
     }
 }
 
 #[async_trait]
-impl Save<Monitor> for TestRepository {
+impl Save<Monitor> for TestRepository<'_> {
     async fn save(&mut self, monitor: &Monitor) -> Result<(), AppError> {
         self.data.insert(monitor.monitor_id, monitor.clone());
         Ok(())
@@ -67,7 +69,7 @@ impl Save<Monitor> for TestRepository {
 }
 
 #[async_trait]
-impl Delete<Monitor> for TestRepository {
+impl Delete<Monitor> for TestRepository<'_> {
     async fn delete(&mut self, monitor: &Monitor) -> Result<(), AppError> {
         self.data.remove(&monitor.monitor_id);
         Ok(())
@@ -75,8 +77,8 @@ impl Delete<Monitor> for TestRepository {
 }
 
 #[fixture]
-fn repo() -> TestRepository {
-    TestRepository::new(vec![
+fn data() -> HashMap<Uuid, Monitor> {
+    to_hashmap(vec![
         Monitor {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             name: "background-task.sh".to_owned(),
@@ -122,7 +124,9 @@ fn repo() -> TestRepository {
 
 #[rstest]
 #[test]
-async fn test_get_with_late_jobs(mut repo: TestRepository) {
+async fn test_get_with_late_jobs(mut data: HashMap<Uuid, Monitor>) {
+    let mut repo = TestRepository::new(&mut data);
+
     let monitors_with_late_jobs = repo
         .get_with_late_jobs()
         .await
@@ -137,7 +141,9 @@ async fn test_get_with_late_jobs(mut repo: TestRepository) {
 
 #[rstest]
 #[test]
-async fn test_get(mut repo: TestRepository) {
+async fn test_get(mut data: HashMap<Uuid, Monitor>) {
+    let mut repo = TestRepository::new(&mut data);
+
     let monitor = repo
         .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
         .await
@@ -164,7 +170,9 @@ async fn test_get(mut repo: TestRepository) {
 
 #[rstest]
 #[test]
-async fn test_all(mut repo: TestRepository) {
+async fn test_all(mut data: HashMap<Uuid, Monitor>) {
+    let mut repo = TestRepository::new(&mut data);
+
     let monitors = repo.all().await.expect("Error when retrieving monitors");
     let mut monitor_ids = monitors
         .iter()
@@ -186,7 +194,9 @@ async fn test_all(mut repo: TestRepository) {
 
 #[rstest]
 #[test]
-async fn test_save(mut repo: TestRepository) {
+async fn test_save(mut data: HashMap<Uuid, Monitor>) {
+    let mut repo = TestRepository::new(&mut data);
+
     let should_be_none = repo
         .get(gen_uuid("7a3152a3-cf23-4b0b-8522-417a1eeb09d0"))
         .await
@@ -205,7 +215,9 @@ async fn test_save(mut repo: TestRepository) {
 
 #[rstest]
 #[test]
-async fn test_delete(mut repo: TestRepository) {
+async fn test_delete(mut data: HashMap<Uuid, Monitor>) {
+    let mut repo = TestRepository::new(&mut data);
+
     let monitor = repo
         .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
         .await
