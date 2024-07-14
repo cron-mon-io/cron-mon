@@ -5,9 +5,9 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use crate::application::services::create_monitor::CreateMonitorService;
 use crate::application::services::delete_monitor::DeleteMonitorService;
 use crate::application::services::fetch_monitors::FetchMonitorsService;
+use crate::application::services::get_create_monitor_service;
 use crate::application::services::update_monitor::UpdateMonitorService;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::errors::AppError;
@@ -50,8 +50,7 @@ pub async fn create_monitor(
     mut connection: Connection<Db>,
     new_monitor: Json<MonitorData>,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut connection);
-    let mut service = CreateMonitorService::new(&mut repo);
+    let mut service = get_create_monitor_service(&mut connection);
 
     let mon = service
         .create_by_attributes(

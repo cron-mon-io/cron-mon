@@ -2,12 +2,12 @@ use crate::domain::models::monitor::Monitor;
 use crate::errors::AppError;
 use crate::infrastructure::repositories::Save;
 
-pub struct CreateMonitorService<'a, T: Save<Monitor>> {
-    repo: &'a mut T,
+pub struct CreateMonitorService<T: Save<Monitor>> {
+    repo: T,
 }
 
-impl<'a, T: Save<Monitor>> CreateMonitorService<'a, T> {
-    pub fn new(repo: &'a mut T) -> Self {
+impl<T: Save<Monitor>> CreateMonitorService<T> {
+    pub fn new(repo: T) -> Self {
         Self { repo }
     }
 
@@ -27,34 +27,48 @@ impl<'a, T: Save<Monitor>> CreateMonitorService<'a, T> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use rstest::*;
     use tokio::test;
+    use uuid::Uuid;
 
-    use crate::infrastructure::repositories::{test_repo::TestRepository, All};
+    use crate::domain::models::monitor::Monitor;
+    use crate::infrastructure::repositories::test_repo::TestRepository;
+    use crate::infrastructure::repositories::All;
 
     use super::CreateMonitorService;
 
     #[fixture]
-    fn repo() -> TestRepository {
-        TestRepository::new(vec![])
+    fn data() -> HashMap<Uuid, Monitor> {
+        HashMap::new()
     }
 
     #[rstest]
     #[test]
-    async fn test_create_monitor_service(mut repo: TestRepository) {
-        let monitors_before = repo.all().await.expect("Failed to retrieve test montiors");
-        assert_eq!(monitors_before.len(), 0);
+    async fn test_create_monitor_service(mut data: HashMap<Uuid, Monitor>) {
+        {
+            let mut repo = TestRepository::new(&mut data);
+            let monitors_before = repo.all().await.expect("Failed to retrieve test montiors");
+            assert_eq!(monitors_before.len(), 0);
+        }
 
-        let mut service = CreateMonitorService::new(&mut repo);
-        let new_monitor_result = service
-            .create_by_attributes("foo".to_owned(), 3_600, 300)
-            .await;
+        let new_monitor: Monitor;
+        {
+            let mut service = CreateMonitorService::new(TestRepository::new(&mut data));
+            let new_monitor_result = service
+                .create_by_attributes("foo".to_owned(), 3_600, 300)
+                .await;
 
-        assert!(new_monitor_result.is_ok());
-        let new_monitor = new_monitor_result.unwrap();
+            assert!(new_monitor_result.is_ok());
+            new_monitor = new_monitor_result.unwrap();
+        }
 
-        let monitors_after = repo.all().await.expect("Failed to retrieve test monitors");
-        assert_eq!(monitors_after.len(), 1);
-        assert_eq!(monitors_after[0], new_monitor);
+        {
+            let mut repo = TestRepository::new(&mut data);
+            let monitors_after = repo.all().await.expect("Failed to retrieve test monitors");
+            assert_eq!(monitors_after.len(), 1);
+            assert_eq!(monitors_after[0], new_monitor);
+        }
     }
 }
