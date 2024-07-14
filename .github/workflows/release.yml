@@ -31,4 +31,4 @@ jobs:
           docker pull ghcr.io/${{ github.repository }}:"${sha}"
           tag=$(echo "${{ github.event.release.tag_name }}" | tr -d 'v')
           docker image tag ghcr.io/${{ github.repository }}:"${sha}" ghcr.io/${{ github.repository }}:"${tag}"
-          docker push ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
+          docker push ghcr.io/${{ github.repository }}:"${tag}"
