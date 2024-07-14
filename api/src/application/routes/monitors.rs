@@ -5,10 +5,9 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use crate::application::services::delete_monitor::DeleteMonitorService;
 use crate::application::services::fetch_monitors::FetchMonitorsService;
-use crate::application::services::get_create_monitor_service;
 use crate::application::services::update_monitor::UpdateMonitorService;
+use crate::application::services::{get_create_monitor_service, get_delete_monitor_service};
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::errors::AppError;
 use crate::infrastructure::database::Db;
@@ -83,8 +82,7 @@ pub async fn delete_monitor(
     mut connection: Connection<Db>,
     monitor_id: Uuid,
 ) -> Result<(), AppError> {
-    let mut repo = MonitorRepository::new(&mut connection);
-    let mut service = DeleteMonitorService::new(&mut repo);
+    let mut service = get_delete_monitor_service(&mut connection);
 
     service.delete_by_id(monitor_id).await
 }
