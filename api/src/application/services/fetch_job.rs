@@ -5,12 +5,12 @@ use crate::domain::models::monitor::Monitor;
 use crate::errors::AppError;
 use crate::infrastructure::repositories::Get;
 
-pub struct FetchJobService<'a, T: Get<Monitor>> {
-    repo: &'a mut T,
+pub struct FetchJobService<T: Get<Monitor>> {
+    repo: T,
 }
 
-impl<'a, T: Get<Monitor>> FetchJobService<'a, T> {
-    pub fn new(repo: &'a mut T) -> Self {
+impl<T: Get<Monitor>> FetchJobService<T> {
+    pub fn new(repo: T) -> Self {
         Self { repo }
     }
 
@@ -32,6 +32,8 @@ impl<'a, T: Get<Monitor>> FetchJobService<'a, T> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use pretty_assertions::assert_eq;
     use rstest::*;
     use tokio;
@@ -39,13 +41,13 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_uuid};
 
-    use crate::infrastructure::repositories::test_repo::TestRepository;
+    use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{AppError, FetchJobService, Job, Monitor};
 
     #[fixture]
-    fn repo() -> TestRepository {
-        TestRepository::new(vec![Monitor {
+    fn data() -> HashMap<Uuid, Monitor> {
+        to_hashmap(vec![Monitor {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             name: "foo".to_owned(),
             expected_duration: 300,
@@ -93,12 +95,12 @@ mod tests {
     )]
     #[tokio::test]
     async fn test_fetch_job_service(
-        mut repo: TestRepository,
+        mut data: HashMap<Uuid, Monitor>,
         #[case] monitor_id: Uuid,
         #[case] job_id: Uuid,
         #[case] expected: Result<Job, AppError>,
     ) {
-        let mut service = FetchJobService::new(&mut repo);
+        let mut service = FetchJobService::new(TestRepository::new(&mut data));
 
         let job_result = service.fetch_by_id(monitor_id, job_id).await;
 

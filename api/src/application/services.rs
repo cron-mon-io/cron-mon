@@ -12,6 +12,7 @@ use diesel_async::AsyncPgConnection;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 use create_monitor::CreateMonitorService;
 use delete_monitor::DeleteMonitorService;
+use fetch_job::FetchJobService;
 
 pub fn get_create_monitor_service(
     conection: &mut AsyncPgConnection,
@@ -23,4 +24,10 @@ pub fn get_delete_monitor_service(
     conection: &mut AsyncPgConnection,
 ) -> DeleteMonitorService<MonitorRepository> {
     DeleteMonitorService::new(MonitorRepository::new(conection))
+}
+
+pub fn get_fetch_job_service(
+    conection: &mut AsyncPgConnection,
+) -> FetchJobService<MonitorRepository> {
+    FetchJobService::new(MonitorRepository::new(conection))
 }

@@ -5,8 +5,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use crate::application::services::fetch_job::FetchJobService;
 use crate::application::services::finish_job::FinishJobService;
+use crate::application::services::get_fetch_job_service;
 use crate::application::services::start_job::StartJobService;
 use crate::errors::AppError;
 use crate::infrastructure::database::Db;
@@ -24,8 +24,7 @@ pub async fn get_job(
     monitor_id: Uuid,
     job_id: Uuid,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut connection);
-    let mut service = FetchJobService::new(&mut repo);
+    let mut service = get_fetch_job_service(&mut connection);
 
     let job = service.fetch_by_id(monitor_id, job_id).await?;
 
