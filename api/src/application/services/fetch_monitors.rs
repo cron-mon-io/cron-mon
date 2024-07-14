@@ -3,12 +3,12 @@ use crate::errors::AppError;
 use crate::infrastructure::repositories::All;
 
 pub struct FetchMonitorsService<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> {
-    repo: &'a mut T,
+    repo: T,
     order_monitors: &'a F,
 }
 
 impl<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a, T, F> {
-    pub fn new(repo: &'a mut T, order_monitors: &'a F) -> Self {
+    pub fn new(repo: T, order_monitors: &'a F) -> Self {
         Self {
             repo,
             order_monitors,
@@ -26,12 +26,15 @@ impl<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a, T, F> 
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use rstest::*;
     use tokio::test;
+    use uuid::Uuid;
 
     use test_utils::gen_uuid;
 
-    use crate::infrastructure::repositories::test_repo::TestRepository;
+    use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{FetchMonitorsService, Monitor};
 
@@ -40,8 +43,8 @@ mod tests {
     }
 
     #[fixture]
-    fn repo() -> TestRepository {
-        TestRepository::new(vec![
+    fn data() -> HashMap<Uuid, Monitor> {
+        to_hashmap(vec![
             Monitor {
                 monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
                 name: "foo".to_owned(),
@@ -68,8 +71,9 @@ mod tests {
 
     #[rstest]
     #[test]
-    async fn test_fetch_job_service(mut repo: TestRepository) {
-        let mut service = FetchMonitorsService::new(&mut repo, &order_monitors);
+    async fn test_fetch_job_service(mut data: HashMap<Uuid, Monitor>) {
+        let mut service =
+            FetchMonitorsService::new(TestRepository::new(&mut data), &order_monitors);
 
         let monitors = service.fetch_all().await.expect("Failed to fetch monitors");
 

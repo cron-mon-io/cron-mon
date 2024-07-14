@@ -9,10 +9,14 @@ pub mod update_monitor;
 
 use diesel_async::AsyncPgConnection;
 
+use crate::domain::models::monitor::Monitor;
+use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
+
 use create_monitor::CreateMonitorService;
 use delete_monitor::DeleteMonitorService;
 use fetch_job::FetchJobService;
+use fetch_monitors::FetchMonitorsService;
 
 pub fn get_create_monitor_service(
     conection: &mut AsyncPgConnection,
@@ -30,4 +34,13 @@ pub fn get_fetch_job_service(
     conection: &mut AsyncPgConnection,
 ) -> FetchJobService<MonitorRepository> {
     FetchJobService::new(MonitorRepository::new(conection))
+}
+
+pub fn get_fetch_monitors_service(
+    conection: &mut AsyncPgConnection,
+) -> FetchMonitorsService<MonitorRepository, impl Fn(&mut [Monitor])> {
+    FetchMonitorsService::new(
+        MonitorRepository::new(conection),
+        &order_monitors_by_last_started_job,
+    )
 }
