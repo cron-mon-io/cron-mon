@@ -2,10 +2,8 @@ use std::future::Future;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use cron_mon_api::application::services::process_late_jobs::ProcessLateJobsService;
+use cron_mon_api::application::services::get_process_late_jobs_service;
 use cron_mon_api::infrastructure::database::establish_connection;
-use cron_mon_api::infrastructure::notify::late_job_logger::LateJobNotifer;
-use cron_mon_api::infrastructure::repositories::monitor_repo::MonitorRepository;
 
 async fn run_periodically<F, Fut>(seconds: u64, func: F)
 where
@@ -29,9 +27,7 @@ async fn main() {
     run_periodically(10, || async move {
         match establish_connection().await {
             Ok(mut db) => {
-                let mut repo = MonitorRepository::new(&mut db);
-                let mut notifier = LateJobNotifer::new();
-                let mut service = ProcessLateJobsService::new(&mut repo, &mut notifier);
+                let mut service = get_process_late_jobs_service(&mut db);
 
                 if let Err(error) = service.process_late_jobs().await {
                     eprintln!("Error processing late jobs: {:?}", error);

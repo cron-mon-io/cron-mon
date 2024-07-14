@@ -11,6 +11,7 @@ use diesel_async::AsyncPgConnection;
 
 use crate::domain::models::monitor::Monitor;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
+use crate::infrastructure::notify::late_job_logger::LateJobNotifer;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
 use create_monitor::CreateMonitorService;
@@ -18,6 +19,7 @@ use delete_monitor::DeleteMonitorService;
 use fetch_job::FetchJobService;
 use fetch_monitors::FetchMonitorsService;
 use finish_job::FinishJobService;
+use process_late_jobs::ProcessLateJobsService;
 
 pub fn get_create_monitor_service(
     conection: &mut AsyncPgConnection,
@@ -50,4 +52,10 @@ pub fn get_finish_job_service(
     conection: &mut AsyncPgConnection,
 ) -> FinishJobService<MonitorRepository> {
     FinishJobService::new(MonitorRepository::new(conection))
+}
+
+pub fn get_process_late_jobs_service(
+    conection: &mut AsyncPgConnection,
+) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer> {
+    ProcessLateJobsService::new(MonitorRepository::new(conection), LateJobNotifer::new())
 }
