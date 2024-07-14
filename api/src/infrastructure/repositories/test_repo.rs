@@ -127,10 +127,7 @@ fn data() -> HashMap<Uuid, Monitor> {
 async fn test_get_with_late_jobs(mut data: HashMap<Uuid, Monitor>) {
     let mut repo = TestRepository::new(&mut data);
 
-    let monitors_with_late_jobs = repo
-        .get_with_late_jobs()
-        .await
-        .expect("Failed to get monitors with late jobs");
+    let monitors_with_late_jobs = repo.get_with_late_jobs().await.unwrap();
 
     assert_eq!(monitors_with_late_jobs.len(), 1);
     assert_eq!(
@@ -147,7 +144,7 @@ async fn test_get(mut data: HashMap<Uuid, Monitor>) {
     let monitor = repo
         .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
         .await
-        .expect("Error when retrieving monitors")
+        .unwrap()
         .unwrap();
 
     assert_eq!(
@@ -164,7 +161,7 @@ async fn test_get(mut data: HashMap<Uuid, Monitor>) {
     let should_be_none = repo
         .get(gen_uuid("7a3152a3-cf23-4b0b-8522-417a1eeb09d0"))
         .await
-        .expect("Error when retrieving monitors");
+        .unwrap();
     assert_eq!(should_be_none, None);
 }
 
@@ -173,7 +170,7 @@ async fn test_get(mut data: HashMap<Uuid, Monitor>) {
 async fn test_all(mut data: HashMap<Uuid, Monitor>) {
     let mut repo = TestRepository::new(&mut data);
 
-    let monitors = repo.all().await.expect("Error when retrieving monitors");
+    let monitors = repo.all().await.unwrap();
     let mut monitor_ids = monitors
         .iter()
         .map(|monitor| monitor.monitor_id.to_string())
@@ -200,16 +197,13 @@ async fn test_save(mut data: HashMap<Uuid, Monitor>) {
     let should_be_none = repo
         .get(gen_uuid("7a3152a3-cf23-4b0b-8522-417a1eeb09d0"))
         .await
-        .expect("Error when retrieving monitors");
+        .unwrap();
     assert!(should_be_none.is_none());
 
     let monitor = Monitor::new("new monitor".to_owned(), 120, 10);
-    repo.save(&monitor).await.expect("Error saving monitor");
+    repo.save(&monitor).await.unwrap();
 
-    let should_not_be_none = repo
-        .get(monitor.monitor_id)
-        .await
-        .expect("Error retrieving new monitor");
+    let should_not_be_none = repo.get(monitor.monitor_id).await.unwrap();
     assert!(should_not_be_none.is_some());
 }
 
@@ -221,17 +215,15 @@ async fn test_delete(mut data: HashMap<Uuid, Monitor>) {
     let monitor = repo
         .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
         .await
-        .expect("Error when retrieving monitors")
+        .unwrap()
         .unwrap();
 
-    repo.delete(&monitor)
-        .await
-        .expect("Failed to delete monitor");
+    repo.delete(&monitor).await.unwrap();
 
     let should_now_be_none = repo
         .get(gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"))
         .await
-        .expect("Error when retrieving monitors");
+        .unwrap();
     assert!(should_now_be_none.is_none());
 }
 
