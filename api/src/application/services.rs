@@ -17,6 +17,7 @@ use create_monitor::CreateMonitorService;
 use delete_monitor::DeleteMonitorService;
 use fetch_job::FetchJobService;
 use fetch_monitors::FetchMonitorsService;
+use finish_job::FinishJobService;
 
 pub fn get_create_monitor_service(
     conection: &mut AsyncPgConnection,
@@ -43,4 +44,10 @@ pub fn get_fetch_monitors_service(
         MonitorRepository::new(conection),
         &order_monitors_by_last_started_job,
     )
+}
+
+pub fn get_finish_job_service(
+    conection: &mut AsyncPgConnection,
+) -> FinishJobService<MonitorRepository> {
+    FinishJobService::new(MonitorRepository::new(conection))
 }
