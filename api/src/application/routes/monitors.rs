@@ -5,9 +5,9 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use crate::application::services::update_monitor::UpdateMonitorService;
 use crate::application::services::{
     get_create_monitor_service, get_delete_monitor_service, get_fetch_monitors_service,
+    get_update_monitor_service,
 };
 use crate::errors::AppError;
 use crate::infrastructure::database::Db;
@@ -92,8 +92,7 @@ pub async fn update_monitor(
     monitor_id: Uuid,
     updated_monitor: Json<MonitorData>,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut connection);
-    let mut service = UpdateMonitorService::new(&mut repo);
+    let mut service = get_update_monitor_service(&mut connection);
 
     let mon = service
         .update_by_id(

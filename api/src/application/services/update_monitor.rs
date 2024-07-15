@@ -4,12 +4,12 @@ use crate::domain::models::monitor::Monitor;
 use crate::errors::AppError;
 use crate::infrastructure::repositories::{Get, Save};
 
-pub struct UpdateMonitorService<'a, T: Get<Monitor> + Save<Monitor>> {
-    repo: &'a mut T,
+pub struct UpdateMonitorService<T: Get<Monitor> + Save<Monitor>> {
+    repo: T,
 }
 
-impl<'a, T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<'a, T> {
-    pub fn new(repo: &'a mut T) -> Self {
+impl<T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<T> {
+    pub fn new(repo: T) -> Self {
         Self { repo }
     }
 
@@ -37,19 +37,22 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<'a, T> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use pretty_assertions::assert_eq;
     use rstest::*;
     use tokio::test;
+    use uuid::Uuid;
 
     use test_utils::gen_uuid;
 
-    use crate::infrastructure::repositories::test_repo::TestRepository;
+    use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{AppError, Get, Monitor, UpdateMonitorService};
 
     #[fixture]
-    fn repo() -> TestRepository {
-        TestRepository::new(vec![Monitor {
+    fn data() -> HashMap<Uuid, Monitor> {
+        to_hashmap(vec![Monitor {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             name: "foo".to_owned(),
             expected_duration: 300,
@@ -60,45 +63,54 @@ mod tests {
 
     #[rstest]
     #[test]
-    async fn test_update_monitor_service(mut repo: TestRepository) {
-        let monitor_before = repo
-            .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
-            .await
-            .expect("Failed to retrieve test monitor")
-            .unwrap();
+    async fn test_update_monitor_service(mut data: HashMap<Uuid, Monitor>) {
+        let monitor_before: Monitor;
+        {
+            monitor_before = TestRepository::new(&mut data)
+                .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
+                .await
+                .expect("Failed to retrieve test monitor")
+                .unwrap();
+        }
 
-        let mut service = UpdateMonitorService::new(&mut repo);
+        let monitor: Monitor;
+        {
+            let mut service = UpdateMonitorService::new(TestRepository::new(&mut data));
 
-        let should_be_err = service
-            .update_by_id(
-                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                "new-name".to_owned(),
-                600,
-                200,
-            )
-            .await;
-        assert_eq!(
-            should_be_err,
-            Err(AppError::MonitorNotFound(gen_uuid(
-                "01a92c6c-6803-409d-b675-022fff62575a"
-            )))
-        );
+            let should_be_err = service
+                .update_by_id(
+                    gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                    "new-name".to_owned(),
+                    600,
+                    200,
+                )
+                .await;
+            assert_eq!(
+                should_be_err,
+                Err(AppError::MonitorNotFound(gen_uuid(
+                    "01a92c6c-6803-409d-b675-022fff62575a"
+                )))
+            );
 
-        let monitor = service
-            .update_by_id(
-                gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-                "new-name".to_owned(),
-                600,
-                200,
-            )
-            .await
-            .unwrap();
+            monitor = service
+                .update_by_id(
+                    gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                    "new-name".to_owned(),
+                    600,
+                    200,
+                )
+                .await
+                .unwrap();
+        }
 
-        let monitor_after = repo
-            .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
-            .await
-            .expect("Failed to retrieve test monitor")
-            .unwrap();
+        let monitor_after: Monitor;
+        {
+            monitor_after = TestRepository::new(&mut data)
+                .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
+                .await
+                .expect("Failed to retrieve test monitor")
+                .unwrap();
+        }
 
         assert_eq!(monitor.name, "new-name".to_owned());
         assert_eq!(monitor.expected_duration, 600);
