@@ -90,7 +90,7 @@ mod tests {
             let monitor_before = repo
                 .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
                 .await
-                .expect("Failed to retrieve test monitor")
+                .unwrap()
                 .unwrap();
             let jobs_before = monitor_before.jobs_in_progress();
             assert_eq!(jobs_before.len(), 1);
@@ -107,7 +107,7 @@ mod tests {
                     &output,
                 )
                 .await
-                .expect("Failed to finish job");
+                .unwrap();
 
             assert!(!job.in_progress());
             assert_eq!(job.duration(), Some(320));
@@ -118,7 +118,7 @@ mod tests {
             let monitor_after = repo
                 .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
                 .await
-                .expect("Failed to retrieve test monitor")
+                .unwrap()
                 .unwrap();
             let jobs_after = monitor_after.jobs_in_progress();
             assert_eq!(jobs_after.len(), 0);

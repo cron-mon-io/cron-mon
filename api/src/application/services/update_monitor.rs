@@ -69,7 +69,7 @@ mod tests {
             monitor_before = TestRepository::new(&mut data)
                 .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
                 .await
-                .expect("Failed to retrieve test monitor")
+                .unwrap()
                 .unwrap();
         }
 
@@ -108,7 +108,7 @@ mod tests {
             monitor_after = TestRepository::new(&mut data)
                 .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
                 .await
-                .expect("Failed to retrieve test monitor")
+                .unwrap()
                 .unwrap();
         }
 

@@ -49,7 +49,7 @@ mod tests {
     async fn test_create_monitor_service(mut data: HashMap<Uuid, Monitor>) {
         {
             let mut repo = TestRepository::new(&mut data);
-            let monitors_before = repo.all().await.expect("Failed to retrieve test montiors");
+            let monitors_before = repo.all().await.unwrap();
             assert_eq!(monitors_before.len(), 0);
         }
 
@@ -66,7 +66,7 @@ mod tests {
 
         {
             let mut repo = TestRepository::new(&mut data);
-            let monitors_after = repo.all().await.expect("Failed to retrieve test monitors");
+            let monitors_after = repo.all().await.unwrap();
             assert_eq!(monitors_after.len(), 1);
             assert_eq!(monitors_after[0], new_monitor);
         }

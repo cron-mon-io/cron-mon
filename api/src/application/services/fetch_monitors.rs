@@ -75,7 +75,7 @@ mod tests {
         let mut service =
             FetchMonitorsService::new(TestRepository::new(&mut data), &order_monitors);
 
-        let monitors = service.fetch_all().await.expect("Failed to fetch monitors");
+        let monitors = service.fetch_all().await.unwrap();
 
         let names = monitors
             .iter()
