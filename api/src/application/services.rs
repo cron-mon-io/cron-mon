@@ -20,6 +20,7 @@ use fetch_job::FetchJobService;
 use fetch_monitors::FetchMonitorsService;
 use finish_job::FinishJobService;
 use process_late_jobs::ProcessLateJobsService;
+use start_job::StartJobService;
 
 pub fn get_create_monitor_service(
     conection: &mut AsyncPgConnection,
@@ -58,4 +59,10 @@ pub fn get_process_late_jobs_service(
     conection: &mut AsyncPgConnection,
 ) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer> {
     ProcessLateJobsService::new(MonitorRepository::new(conection), LateJobNotifer::new())
+}
+
+pub fn get_start_job_service(
+    conection: &mut AsyncPgConnection,
+) -> StartJobService<MonitorRepository> {
+    StartJobService::new(MonitorRepository::new(conection))
 }
