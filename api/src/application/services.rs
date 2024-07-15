@@ -24,52 +24,52 @@ use start_job::StartJobService;
 use update_monitor::UpdateMonitorService;
 
 pub fn get_create_monitor_service(
-    conection: &mut AsyncPgConnection,
+    connection: &mut AsyncPgConnection,
 ) -> CreateMonitorService<MonitorRepository> {
-    CreateMonitorService::new(MonitorRepository::new(conection))
+    CreateMonitorService::new(MonitorRepository::new(connection))
 }
 
 pub fn get_delete_monitor_service(
-    conection: &mut AsyncPgConnection,
+    connection: &mut AsyncPgConnection,
 ) -> DeleteMonitorService<MonitorRepository> {
-    DeleteMonitorService::new(MonitorRepository::new(conection))
+    DeleteMonitorService::new(MonitorRepository::new(connection))
 }
 
 pub fn get_fetch_job_service(
-    conection: &mut AsyncPgConnection,
+    connection: &mut AsyncPgConnection,
 ) -> FetchJobService<MonitorRepository> {
-    FetchJobService::new(MonitorRepository::new(conection))
+    FetchJobService::new(MonitorRepository::new(connection))
 }
 
 pub fn get_fetch_monitors_service(
-    conection: &mut AsyncPgConnection,
+    connection: &mut AsyncPgConnection,
 ) -> FetchMonitorsService<MonitorRepository, impl Fn(&mut [Monitor])> {
     FetchMonitorsService::new(
-        MonitorRepository::new(conection),
+        MonitorRepository::new(connection),
         &order_monitors_by_last_started_job,
     )
 }
 
 pub fn get_finish_job_service(
-    conection: &mut AsyncPgConnection,
+    connection: &mut AsyncPgConnection,
 ) -> FinishJobService<MonitorRepository> {
-    FinishJobService::new(MonitorRepository::new(conection))
+    FinishJobService::new(MonitorRepository::new(connection))
 }
 
 pub fn get_process_late_jobs_service(
-    conection: &mut AsyncPgConnection,
+    connection: &mut AsyncPgConnection,
 ) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer> {
-    ProcessLateJobsService::new(MonitorRepository::new(conection), LateJobNotifer::new())
+    ProcessLateJobsService::new(MonitorRepository::new(connection), LateJobNotifer::new())
 }
 
 pub fn get_start_job_service(
-    conection: &mut AsyncPgConnection,
+    connection: &mut AsyncPgConnection,
 ) -> StartJobService<MonitorRepository> {
-    StartJobService::new(MonitorRepository::new(conection))
+    StartJobService::new(MonitorRepository::new(connection))
 }
 
 pub fn get_update_monitor_service(
-    conection: &mut AsyncPgConnection,
+    connection: &mut AsyncPgConnection,
 ) -> UpdateMonitorService<MonitorRepository> {
-    UpdateMonitorService::new(MonitorRepository::new(conection))
+    UpdateMonitorService::new(MonitorRepository::new(connection))
 }
