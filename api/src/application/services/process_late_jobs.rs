@@ -2,15 +2,13 @@ use crate::errors::AppError;
 use crate::infrastructure::notify::NotifyLateJob;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 
-pub struct ProcessLateJobsService<'a, Repo: GetWithLateJobs, Notifier: NotifyLateJob> {
-    repo: &'a mut Repo,
-    notifier: &'a mut Notifier,
+pub struct ProcessLateJobsService<Repo: GetWithLateJobs, Notifier: NotifyLateJob> {
+    repo: Repo,
+    notifier: Notifier,
 }
 
-impl<'a, Repo: GetWithLateJobs, Notifier: NotifyLateJob>
-    ProcessLateJobsService<'a, Repo, Notifier>
-{
-    pub fn new(repo: &'a mut Repo, notifier: &'a mut Notifier) -> Self {
+impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo, Notifier> {
+    pub fn new(repo: Repo, notifier: Notifier) -> Self {
         Self { repo, notifier }
     }
 
@@ -31,6 +29,8 @@ impl<'a, Repo: GetWithLateJobs, Notifier: NotifyLateJob>
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use rstest::*;
     use tokio;
     use uuid::Uuid;
@@ -39,21 +39,21 @@ mod tests {
 
     use crate::domain::models::{job::Job, monitor::Monitor};
     use crate::errors::AppError;
-    use crate::infrastructure::repositories::test_repo::TestRepository;
+    use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{NotifyLateJob, ProcessLateJobsService};
 
-    struct FakeJobNotifier {
-        pub lates: Vec<(String, Uuid)>,
+    struct FakeJobNotifier<'a> {
+        pub lates: &'a mut Vec<(String, Uuid)>,
     }
 
-    impl FakeJobNotifier {
-        pub fn new() -> Self {
-            Self { lates: vec![] }
+    impl<'a> FakeJobNotifier<'a> {
+        pub fn new(lates: &'a mut Vec<(String, Uuid)>) -> Self {
+            Self { lates }
         }
     }
 
-    impl NotifyLateJob for FakeJobNotifier {
+    impl<'a> NotifyLateJob for FakeJobNotifier<'a> {
         fn notify_late_job(&mut self, monitor_name: &str, late_job: &Job) -> Result<(), AppError> {
             self.lates.push((monitor_name.to_owned(), late_job.job_id));
             Ok(())
@@ -61,8 +61,8 @@ mod tests {
     }
 
     #[fixture]
-    fn repo() -> TestRepository {
-        TestRepository::new(vec![
+    fn data() -> HashMap<Uuid, Monitor> {
+        to_hashmap(vec![
             Monitor {
                 monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
                 name: "background-task.sh".to_owned(),
@@ -133,20 +133,26 @@ mod tests {
 
     #[rstest]
     #[tokio::test(start_paused = true)]
-    async fn test_start_job_service(mut repo: TestRepository) {
-        let mut notifier = FakeJobNotifier::new();
-        let mut service = ProcessLateJobsService::new(&mut repo, &mut notifier);
+    async fn test_start_job_service(mut data: HashMap<Uuid, Monitor>) {
+        let mut lates = vec![];
+        {
+            let mut service = ProcessLateJobsService::new(
+                TestRepository::new(&mut data),
+                FakeJobNotifier::new(&mut lates),
+            );
 
-        let result = service.process_late_jobs().await;
-        assert!(result.is_ok());
+            let result = service.process_late_jobs().await;
+            assert!(result.is_ok());
+        }
 
         // Order the data so we can reliably perform assertions on it.
+        let notifier = FakeJobNotifier::new(&mut lates);
         notifier
             .lates
             .sort_by(|a, b| a.1.to_string().cmp(&b.1.to_string()));
 
         assert_eq!(
-            notifier.lates,
+            *notifier.lates,
             vec![
                 (
                     "background-task.sh".to_owned(),

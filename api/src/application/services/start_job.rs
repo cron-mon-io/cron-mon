@@ -5,12 +5,12 @@ use crate::domain::models::monitor::Monitor;
 use crate::errors::AppError;
 use crate::infrastructure::repositories::{Get, Save};
 
-pub struct StartJobService<'a, T: Get<Monitor> + Save<Monitor>> {
-    repo: &'a mut T,
+pub struct StartJobService<T: Get<Monitor> + Save<Monitor>> {
+    repo: T,
 }
 
-impl<'a, T: Get<Monitor> + Save<Monitor>> StartJobService<'a, T> {
-    pub fn new(repo: &'a mut T) -> Self {
+impl<T: Get<Monitor> + Save<Monitor>> StartJobService<T> {
+    pub fn new(repo: T) -> Self {
         Self { repo }
     }
 
@@ -31,18 +31,21 @@ impl<'a, T: Get<Monitor> + Save<Monitor>> StartJobService<'a, T> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use rstest::*;
     use tokio::test;
+    use uuid::Uuid;
 
     use test_utils::gen_uuid;
 
-    use crate::infrastructure::repositories::test_repo::TestRepository;
+    use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{AppError, Get, Monitor, StartJobService};
 
     #[fixture]
-    fn repo() -> TestRepository {
-        TestRepository::new(vec![Monitor {
+    fn data() -> HashMap<Uuid, Monitor> {
+        to_hashmap(vec![Monitor {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             name: "foo".to_owned(),
             expected_duration: 300,
@@ -53,29 +56,37 @@ mod tests {
 
     #[rstest]
     #[test]
-    async fn test_start_job_service(mut repo: TestRepository) {
-        let monitor_before = repo
-            .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
-            .await
-            .expect("Failed to retrieve test monitor")
-            .unwrap();
+    async fn test_start_job_service(mut data: HashMap<Uuid, Monitor>) {
+        let monitor_before: Monitor;
+        {
+            monitor_before = TestRepository::new(&mut data)
+                .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
+                .await
+                .unwrap()
+                .unwrap();
+        }
 
         let num_jobs_before = monitor_before.jobs.len();
         let num_in_progress_jobs_before = monitor_before.jobs_in_progress().len();
 
-        let mut service = StartJobService::new(&mut repo);
-        let job = service
-            .start_job_for_monitor(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
-            .await
-            .expect("Failed to start job");
+        {
+            let mut service = StartJobService::new(TestRepository::new(&mut data));
+            let job = service
+                .start_job_for_monitor(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
+                .await
+                .unwrap();
 
-        assert!(job.in_progress());
+            assert!(job.in_progress());
+        }
 
-        let monitor_after = repo
-            .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
-            .await
-            .expect("Failed to retrieve test monitor")
-            .unwrap();
+        let monitor_after: Monitor;
+        {
+            monitor_after = TestRepository::new(&mut data)
+                .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
+                .await
+                .unwrap()
+                .unwrap();
+        }
 
         let num_jobs_after = monitor_after.jobs.len();
         let num_in_progress_jobs_after = monitor_after.jobs_in_progress().len();
@@ -86,8 +97,8 @@ mod tests {
 
     #[rstest]
     #[test]
-    async fn test_start_job_service_error_handling(mut repo: TestRepository) {
-        let mut service = StartJobService::new(&mut repo);
+    async fn test_start_job_service_error_handling(mut data: HashMap<Uuid, Monitor>) {
+        let mut service = StartJobService::new(TestRepository::new(&mut data));
 
         let non_existent_id = gen_uuid("01a92c6c-6803-409d-b675-022fff62575a");
         let start_result = service.start_job_for_monitor(non_existent_id).await;

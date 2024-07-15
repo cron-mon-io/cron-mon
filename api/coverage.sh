@@ -21,8 +21,10 @@ grcov target/coverage/profraw \
     --ignore "src/infrastructure/db_schema.rs" \
     --ignore "src/infrastructure/notify/late_job_logger.rs" \
     --excl-line "#\[rocket::launch\]" \
-    --excl-start "#\[cfg\(test\)\]" \
-    --excl-br-start "#\[cfg\(test\)\]" \
+    --excl-start "#\[cfg\(test\)\]|\[coverage\(off\)\]" \
+    --excl-br-start "#\[cfg\(test\)\]|\[coverage\(off\)\]" \
+    --excl-stop "#\[coverage\(on\)\]" \
+    --excl-br-stop "#\[coverage\(on\)\]" \
     -o target/coverage/grcov.md
 
 cat target/coverage/grcov.md

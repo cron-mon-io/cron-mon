@@ -5,11 +5,10 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use crate::application::services::create_monitor::CreateMonitorService;
-use crate::application::services::delete_monitor::DeleteMonitorService;
-use crate::application::services::fetch_monitors::FetchMonitorsService;
-use crate::application::services::update_monitor::UpdateMonitorService;
-use crate::domain::services::monitors::order_monitors_by_last_started_job;
+use crate::application::services::{
+    get_create_monitor_service, get_delete_monitor_service, get_fetch_monitors_service,
+    get_update_monitor_service,
+};
 use crate::errors::AppError;
 use crate::infrastructure::database::Db;
 use crate::infrastructure::paging::Paging;
@@ -25,8 +24,7 @@ pub struct MonitorData {
 
 #[rocket::get("/monitors")]
 pub async fn list_monitors(mut connection: Connection<Db>) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut connection);
-    let mut service = FetchMonitorsService::new(&mut repo, &order_monitors_by_last_started_job);
+    let mut service = get_fetch_monitors_service(&mut connection);
     let monitors = service.fetch_all().await?;
 
     Ok(json!({
@@ -50,8 +48,7 @@ pub async fn create_monitor(
     mut connection: Connection<Db>,
     new_monitor: Json<MonitorData>,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut connection);
-    let mut service = CreateMonitorService::new(&mut repo);
+    let mut service = get_create_monitor_service(&mut connection);
 
     let mon = service
         .create_by_attributes(
@@ -84,8 +81,7 @@ pub async fn delete_monitor(
     mut connection: Connection<Db>,
     monitor_id: Uuid,
 ) -> Result<(), AppError> {
-    let mut repo = MonitorRepository::new(&mut connection);
-    let mut service = DeleteMonitorService::new(&mut repo);
+    let mut service = get_delete_monitor_service(&mut connection);
 
     service.delete_by_id(monitor_id).await
 }
@@ -96,8 +92,7 @@ pub async fn update_monitor(
     monitor_id: Uuid,
     updated_monitor: Json<MonitorData>,
 ) -> Result<Value, AppError> {
-    let mut repo = MonitorRepository::new(&mut connection);
-    let mut service = UpdateMonitorService::new(&mut repo);
+    let mut service = get_update_monitor_service(&mut connection);
 
     let mon = service
         .update_by_id(
