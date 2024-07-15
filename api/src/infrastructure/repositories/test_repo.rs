@@ -25,7 +25,7 @@ pub struct TestRepository<'a> {
 
 impl<'a> TestRepository<'a> {
     pub fn new(data: &'a mut HashMap<Uuid, Monitor>) -> Self {
-        Self { data: data }
+        Self { data }
     }
 }
 

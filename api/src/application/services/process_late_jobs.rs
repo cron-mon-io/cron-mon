@@ -49,7 +49,7 @@ mod tests {
 
     impl<'a> FakeJobNotifier<'a> {
         pub fn new(lates: &'a mut Vec<(String, Uuid)>) -> Self {
-            Self { lates: lates }
+            Self { lates }
         }
     }
 
