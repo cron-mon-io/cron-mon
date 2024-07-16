@@ -25,7 +25,13 @@ integration-tests:
 
 # This will also re-seed your local DB, as it effectively runs *all* tests.
 test-coverage:
-	./coverage.sh
+	cargo tarpaulin \
+		--fail-under=100 \
+		--skip-clean \
+		--jobs=6 \
+		--exclude-files test_utils/* src/bin/* */db_schema.rs */late_job_logger.rs \
+		-- --test-threads=1
+	# cargo tarpaulin --engine=Llvm --fail-under=100 -- --test-threads=1
 
 migration:
 	diesel migration generate $(name)
