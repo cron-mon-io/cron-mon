@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 async-trait = "0.1.81"
+cargo-llvm-cov = "0.6.10"
 chrono = { version = "0.4", features = ["serde"]}
 diesel = { version = "2.1.6", features = ["chrono", "uuid", "postgres"] }
 diesel-async = { version = "0.4.1", features = ["postgres"] }

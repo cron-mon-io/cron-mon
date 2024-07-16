@@ -1,3 +1,5 @@
+// #![cfg_attr(coverage, feature(coverage))]
+
 pub mod create_monitor;
 pub mod delete_monitor;
 pub mod fetch_job;
@@ -56,15 +58,12 @@ pub fn get_finish_job_service(
     FinishJobService::new(MonitorRepository::new(connection))
 }
 
-// #[coverage(off)] We need to comment this out for now as this feature isn't stable yet.
-// See https://github.com/rust-lang/rust/issues/84605
+#[coverage(off)]
 pub fn get_process_late_jobs_service(
     connection: &mut AsyncPgConnection,
 ) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer> {
     ProcessLateJobsService::new(MonitorRepository::new(connection), LateJobNotifer::new())
 }
-// #[coverage(on)] We won't need this once the feature is stable, but for now we're using these as
-// markers for grcov so we need a start and an end.
 
 pub fn get_start_job_service(
     connection: &mut AsyncPgConnection,

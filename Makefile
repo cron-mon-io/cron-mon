@@ -31,7 +31,8 @@ integration-tests:
 
 # This will also re-seed your local DB, as it effectively runs *all* tests.
 test-coverage:
-	docker compose run --rm --no-deps rust-cargo bash -c './coverage.sh'
+	docker compose run --rm --no-deps rust-cargo bash -c '\
+		cargo llvm-cov --no-clean --fail-under-lines=100 -- --test-threads=1'
 
 migration:
 	docker compose run --rm rust-cargo diesel migration generate $(name)
