@@ -53,8 +53,8 @@ pub fn get_fetch_monitors_service(
 
 pub fn get_finish_job_service(
     connection: &mut AsyncPgConnection,
-) -> FinishJobService<MonitorRepository> {
-    FinishJobService::new(MonitorRepository::new(connection))
+) -> FinishJobService<MonitorRepository, TracingLogger> {
+    FinishJobService::new(MonitorRepository::new(connection), TracingLogger {})
 }
 
 // #[coverage(off)] We need to comment this out for now as this feature isn't stable yet.
