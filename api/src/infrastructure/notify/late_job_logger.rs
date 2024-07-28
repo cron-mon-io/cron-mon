@@ -1,27 +1,36 @@
+use serde_json::json;
+
 use crate::domain::models::job::Job;
 use crate::errors::AppError;
+use crate::infrastructure::logging::Logger;
 use crate::infrastructure::notify::NotifyLateJob;
 
-pub struct LateJobNotifer {}
+pub struct LateJobNotifer<L: Logger> {
+    logger: L,
+}
 
-impl Default for LateJobNotifer {
-    fn default() -> Self {
-        Self::new()
+impl<L: Logger> LateJobNotifer<L> {
+    pub fn new(logger: L) -> Self {
+        Self { logger }
     }
 }
 
-impl LateJobNotifer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl NotifyLateJob for LateJobNotifer {
+impl<L: Logger> NotifyLateJob for LateJobNotifer<L> {
     fn notify_late_job(&mut self, monitor_name: &str, late_job: &Job) -> Result<(), AppError> {
-        println!(
-            "A job ('{}') for the '{}' Monitor was expected \
-            to finish by {} but it hasn't made it yet",
-            late_job.job_id, monitor_name, late_job.max_end_time
+        self.logger.info_with_context(
+            format!("Job('{}') is late", late_job.job_id),
+            json!({
+                "monitor_name": monitor_name,
+                "job_id": late_job.job_id.to_string(),
+                "job_start": late_job.start_time.to_string(),
+                "job_max_end": late_job.max_end_time.to_string(),
+                "job_actual_end": late_job
+                    .end_time
+                    .iter()
+                    .map(|time| time.to_string())
+                    .collect::<String>(),
+
+            }),
         );
         Ok(())
     }
