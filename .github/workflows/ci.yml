@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install rust
-        run: rustup install 1.79.0
+        run: rustup install 1.80.0
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install rust
-        run: rustup install 1.79.0
+        run: rustup install 1.80.0
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
@@ -55,7 +55,7 @@ jobs:
     defaults:
       run:
         working-directory: ./api
-    container: public.ecr.aws/docker/library/rust:1.79.0-slim
+    container: public.ecr.aws/docker/library/rust:1.80.0-slim
     services:
       cron-mon-db:
         image: public.ecr.aws/docker/library/postgres:16.1
@@ -101,7 +101,7 @@ jobs:
     defaults:
       run:
         working-directory: ./api
-    container: public.ecr.aws/docker/library/rust:1.79.0-slim
+    container: public.ecr.aws/docker/library/rust:1.80.0-slim
     services:
       cron-mon-db:
         image: public.ecr.aws/docker/library/postgres:16.1
