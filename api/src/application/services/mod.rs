@@ -26,14 +26,14 @@ use update_monitor::UpdateMonitorService;
 
 pub fn get_create_monitor_service(
     connection: &mut AsyncPgConnection,
-) -> CreateMonitorService<MonitorRepository> {
-    CreateMonitorService::new(MonitorRepository::new(connection))
+) -> CreateMonitorService<MonitorRepository, TracingLogger> {
+    CreateMonitorService::new(MonitorRepository::new(connection), TracingLogger {})
 }
 
 pub fn get_delete_monitor_service(
     connection: &mut AsyncPgConnection,
-) -> DeleteMonitorService<MonitorRepository> {
-    DeleteMonitorService::new(MonitorRepository::new(connection))
+) -> DeleteMonitorService<MonitorRepository, TracingLogger> {
+    DeleteMonitorService::new(MonitorRepository::new(connection), TracingLogger {})
 }
 
 pub fn get_fetch_job_service(
@@ -79,6 +79,6 @@ pub fn get_start_job_service(
 
 pub fn get_update_monitor_service(
     connection: &mut AsyncPgConnection,
-) -> UpdateMonitorService<MonitorRepository> {
-    UpdateMonitorService::new(MonitorRepository::new(connection))
+) -> UpdateMonitorService<MonitorRepository, TracingLogger> {
+    UpdateMonitorService::new(MonitorRepository::new(connection), TracingLogger {})
 }
