@@ -13,7 +13,7 @@ impl<T: Save<Monitor>> CreateMonitorService<T> {
 
     pub async fn create_by_attributes(
         &mut self,
-        name: String,
+        name: &String,
         expected_duration: i32,
         grace_duration: i32,
     ) -> Result<Monitor, AppError> {
@@ -57,7 +57,7 @@ mod tests {
         {
             let mut service = CreateMonitorService::new(TestRepository::new(&mut data));
             let new_monitor_result = service
-                .create_by_attributes("foo".to_owned(), 3_600, 300)
+                .create_by_attributes(&"foo".to_owned(), 3_600, 300)
                 .await;
 
             assert!(new_monitor_result.is_ok());

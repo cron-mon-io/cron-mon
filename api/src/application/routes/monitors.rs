@@ -52,7 +52,7 @@ pub async fn create_monitor(
 
     let mon = service
         .create_by_attributes(
-            new_monitor.name.clone(),
+            &new_monitor.name,
             new_monitor.expected_duration,
             new_monitor.grace_duration,
         )
@@ -97,7 +97,7 @@ pub async fn update_monitor(
     let mon = service
         .update_by_id(
             monitor_id,
-            updated_monitor.name.clone(),
+            &updated_monitor.name,
             updated_monitor.expected_duration,
             updated_monitor.grace_duration,
         )

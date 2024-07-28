@@ -16,7 +16,7 @@ impl<T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<T> {
     pub async fn update_by_id(
         &mut self,
         monitor_id: Uuid,
-        new_name: String,
+        new_name: &String,
         new_expected: i32,
         new_grace: i32,
     ) -> Result<Monitor, AppError> {
@@ -24,7 +24,7 @@ impl<T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<T> {
 
         match monitor_opt {
             Some(mut monitor) => {
-                monitor.edit_details(new_name, new_expected, new_grace);
+                monitor.edit_details(new_name.clone(), new_expected, new_grace);
 
                 self.repo.save(&monitor).await?;
 
@@ -80,7 +80,7 @@ mod tests {
             let should_be_err = service
                 .update_by_id(
                     gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                    "new-name".to_owned(),
+                    &"new-name".to_owned(),
                     600,
                     200,
                 )
@@ -95,7 +95,7 @@ mod tests {
             monitor = service
                 .update_by_id(
                     gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-                    "new-name".to_owned(),
+                    &"new-name".to_owned(),
                     600,
                     200,
                 )
