@@ -55,7 +55,7 @@ jobs:
     defaults:
       run:
         working-directory: ./api
-    container: public.ecr.aws/docker/library/rust80.0-slim
+    container: public.ecr.aws/docker/library/rust:1.80.0-slim
     services:
       cron-mon-db:
         image: public.ecr.aws/docker/library/postgres:16.1
