@@ -73,8 +73,8 @@ pub fn get_process_late_jobs_service(
 
 pub fn get_start_job_service(
     connection: &mut AsyncPgConnection,
-) -> StartJobService<MonitorRepository> {
-    StartJobService::new(MonitorRepository::new(connection))
+) -> StartJobService<MonitorRepository, TracingLogger> {
+    StartJobService::new(MonitorRepository::new(connection), TracingLogger {})
 }
 
 pub fn get_update_monitor_service(
