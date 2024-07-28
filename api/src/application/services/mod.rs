@@ -11,6 +11,7 @@ use diesel_async::AsyncPgConnection;
 
 use crate::domain::models::monitor::Monitor;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
+use crate::infrastructure::logging::tracing_logger::TracingLogger;
 use crate::infrastructure::notify::late_job_logger::LateJobNotifer;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
@@ -60,8 +61,12 @@ pub fn get_finish_job_service(
 // See https://github.com/rust-lang/rust/issues/84605
 pub fn get_process_late_jobs_service(
     connection: &mut AsyncPgConnection,
-) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer> {
-    ProcessLateJobsService::new(MonitorRepository::new(connection), LateJobNotifer::new())
+) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer<TracingLogger>, TracingLogger> {
+    ProcessLateJobsService::new(
+        MonitorRepository::new(connection),
+        LateJobNotifer::new(TracingLogger {}),
+        TracingLogger {},
+    )
 }
 // #[coverage(on)] We won't need this once the feature is stable, but for now we're using these as
 // markers for grcov so we need a start and an end.
