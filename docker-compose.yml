@@ -5,9 +5,6 @@ services:
     container_name: cron-mon-api
     ports:
       - 8000:8000
-    depends_on:
-      db:
-        condition: service_healthy
     command: ./api
     networks:
       - default
@@ -18,9 +15,6 @@ services:
     container_name: cron-mon-api-debug
     ports:
       - 8000:8000
-    depends_on:
-      db:
-        condition: service_healthy
     command: cargo run --bin api
     networks:
       - default
@@ -29,9 +23,6 @@ services:
   monitor:
     extends: rust-release
     container_name: cron-mon-monitor
-    depends_on:
-      db:
-        condition: service_healthy
     command: ./monitor
     networks:
       - default
@@ -40,9 +31,6 @@ services:
   monitor-debug:
     extends: rust-cargo
     container_name: cron-mon-monitor-debug
-    depends_on:
-      db:
-        condition: service_healthy
     command: cargo run --bin monitor
     networks:
       - default
@@ -51,9 +39,6 @@ services:
   integration-tests-rs:
     extends: rust-cargo
     container_name: rust-integration-tests
-    depends_on:
-      db:
-        condition: service_healthy
     command: cargo test --no-fail-fast --test "*" -- --test-threads=1
     networks:
       - default
@@ -101,6 +86,9 @@ services:
       context: .
     stdin_open: true
     tty: true
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
       CARGO_HOME: /usr/cron-mon/.cargo
@@ -115,6 +103,9 @@ services:
       target: builder
     stdin_open: true
     tty: true
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
       JSON_LOGGING: true
