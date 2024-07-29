@@ -117,6 +117,7 @@ services:
     tty: true
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
+      JSON_LOGGING: true
       CARGO_HOME: /usr/cron-mon/.cargo
     volumes:
       - ./api:/usr/cron-mon/api

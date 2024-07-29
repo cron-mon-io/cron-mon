@@ -1,22 +1,25 @@
+use serde_json::json;
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
 use crate::errors::AppError;
+use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::{Get, Save};
 
-pub struct UpdateMonitorService<T: Get<Monitor> + Save<Monitor>> {
+pub struct UpdateMonitorService<T: Get<Monitor> + Save<Monitor>, L: Logger> {
     repo: T,
+    logger: L,
 }
 
-impl<T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<T> {
-    pub fn new(repo: T) -> Self {
-        Self { repo }
+impl<T: Get<Monitor> + Save<Monitor>, L: Logger> UpdateMonitorService<T, L> {
+    pub fn new(repo: T, logger: L) -> Self {
+        Self { repo, logger }
     }
 
     pub async fn update_by_id(
         &mut self,
         monitor_id: Uuid,
-        new_name: String,
+        new_name: &str,
         new_expected: i32,
         new_grace: i32,
     ) -> Result<Monitor, AppError> {
@@ -24,9 +27,29 @@ impl<T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<T> {
 
         match monitor_opt {
             Some(mut monitor) => {
-                monitor.edit_details(new_name, new_expected, new_grace);
+                let original_values = (
+                    monitor.name.clone(),
+                    monitor.expected_duration,
+                    monitor.grace_duration,
+                );
+                monitor.edit_details(new_name.to_owned(), new_expected, new_grace);
 
                 self.repo.save(&monitor).await?;
+                self.logger.info_with_context(
+                    format!("Modified Monitor('{}'", &monitor.monitor_id),
+                    json!({
+                        "original_values": {
+                            "name": original_values.0,
+                            "expected_duration": original_values.1,
+                            "grace_duration": original_values.2
+                        },
+                        "new_values": {
+                            "name": monitor.name,
+                            "expected_duration": monitor.expected_duration,
+                            "grace_duration": monitor.grace_duration
+                        }
+                    }),
+                );
 
                 Ok(monitor)
             }
@@ -41,11 +64,13 @@ mod tests {
 
     use pretty_assertions::assert_eq;
     use rstest::*;
+    use serde_json::json;
     use tokio::test;
     use uuid::Uuid;
 
     use test_utils::gen_uuid;
 
+    use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{AppError, Get, Monitor, UpdateMonitorService};
@@ -75,12 +100,18 @@ mod tests {
 
         let monitor: Monitor;
         {
-            let mut service = UpdateMonitorService::new(TestRepository::new(&mut data));
+            let mut log_messages = vec![];
+            let mut service = UpdateMonitorService::new(
+                TestRepository::new(&mut data),
+                TestLogger {
+                    messages: &mut log_messages,
+                },
+            );
 
             let should_be_err = service
                 .update_by_id(
                     gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                    "new-name".to_owned(),
+                    "new-name",
                     600,
                     200,
                 )
@@ -95,12 +126,32 @@ mod tests {
             monitor = service
                 .update_by_id(
                     gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-                    "new-name".to_owned(),
+                    "new-name",
                     600,
                     200,
                 )
                 .await
                 .unwrap();
+
+            assert_eq!(
+                log_messages,
+                vec![TestLogRecord {
+                    level: TestLogLevel::Info,
+                    message: "Modified Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3'".to_owned(),
+                    context: Some(json!({
+                        "original_values": {
+                            "name": "foo",
+                            "expected_duration": 300,
+                            "grace_duration": 100
+                        },
+                        "new_values": {
+                            "name": "new-name",
+                            "expected_duration": 600,
+                            "grace_duration": 200
+                        }
+                    }))
+                }]
+            );
         }
 
         let monitor_after: Monitor;

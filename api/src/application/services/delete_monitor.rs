@@ -2,21 +2,25 @@ use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
 use crate::errors::AppError;
+use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::{Delete, Get};
 
-pub struct DeleteMonitorService<T: Get<Monitor> + Delete<Monitor>> {
+pub struct DeleteMonitorService<T: Get<Monitor> + Delete<Monitor>, L: Logger> {
     repo: T,
+    logger: L,
 }
 
-impl<T: Get<Monitor> + Delete<Monitor>> DeleteMonitorService<T> {
-    pub fn new(repo: T) -> Self {
-        Self { repo }
+impl<T: Get<Monitor> + Delete<Monitor>, L: Logger> DeleteMonitorService<T, L> {
+    pub fn new(repo: T, logger: L) -> Self {
+        Self { repo, logger }
     }
 
     pub async fn delete_by_id(&mut self, monitor_id: Uuid) -> Result<(), AppError> {
         let monitor = self.repo.get(monitor_id).await?;
         if let Some(mon) = monitor {
             self.repo.delete(&mon).await?;
+            self.logger
+                .info(format!("Deleted Monitor('{}')", &monitor_id));
             Ok(())
         } else {
             Err(AppError::MonitorNotFound(monitor_id))
@@ -34,6 +38,7 @@ mod tests {
 
     use test_utils::gen_uuid;
 
+    use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
     use crate::infrastructure::repositories::All;
 
@@ -60,7 +65,13 @@ mod tests {
         }
 
         {
-            let mut service = DeleteMonitorService::new(TestRepository::new(&mut data));
+            let mut log_messages = vec![];
+            let mut service = DeleteMonitorService::new(
+                TestRepository::new(&mut data),
+                TestLogger {
+                    messages: &mut log_messages,
+                },
+            );
 
             let non_existent_id = gen_uuid("01a92c6c-6803-409d-b675-022fff62575a");
             let mut delete_result = service.delete_by_id(non_existent_id).await;
@@ -73,6 +84,14 @@ mod tests {
                 .delete_by_id(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
                 .await;
             assert_eq!(delete_result, Ok(()));
+            assert_eq!(
+                log_messages,
+                vec![TestLogRecord {
+                    level: TestLogLevel::Info,
+                    message: "Deleted Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3')".to_owned(),
+                    context: None
+                }]
+            )
         }
 
         let mut repo = TestRepository::new(&mut data);

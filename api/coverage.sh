@@ -7,7 +7,7 @@ rm -rf target/coverage
 CARGO_INCREMENTAL=0 \
 RUSTFLAGS='-Cinstrument-coverage' \
 LLVM_PROFILE_FILE='target/coverage/profraw/cargo-test-%p-%m.profraw' \
-    cargo test -- --test-threads=1
+    cargo test --jobs=5 -- --test-threads=1
 
 grcov target/coverage/profraw \
     --binary-path ./target/debug/deps/ -s . -t markdown --branch \

@@ -11,6 +11,7 @@ use diesel_async::AsyncPgConnection;
 
 use crate::domain::models::monitor::Monitor;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
+use crate::infrastructure::logging::tracing_logger::TracingLogger;
 use crate::infrastructure::notify::late_job_logger::LateJobNotifer;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
@@ -25,14 +26,14 @@ use update_monitor::UpdateMonitorService;
 
 pub fn get_create_monitor_service(
     connection: &mut AsyncPgConnection,
-) -> CreateMonitorService<MonitorRepository> {
-    CreateMonitorService::new(MonitorRepository::new(connection))
+) -> CreateMonitorService<MonitorRepository, TracingLogger> {
+    CreateMonitorService::new(MonitorRepository::new(connection), TracingLogger {})
 }
 
 pub fn get_delete_monitor_service(
     connection: &mut AsyncPgConnection,
-) -> DeleteMonitorService<MonitorRepository> {
-    DeleteMonitorService::new(MonitorRepository::new(connection))
+) -> DeleteMonitorService<MonitorRepository, TracingLogger> {
+    DeleteMonitorService::new(MonitorRepository::new(connection), TracingLogger {})
 }
 
 pub fn get_fetch_job_service(
@@ -52,28 +53,32 @@ pub fn get_fetch_monitors_service(
 
 pub fn get_finish_job_service(
     connection: &mut AsyncPgConnection,
-) -> FinishJobService<MonitorRepository> {
-    FinishJobService::new(MonitorRepository::new(connection))
+) -> FinishJobService<MonitorRepository, TracingLogger> {
+    FinishJobService::new(MonitorRepository::new(connection), TracingLogger {})
 }
 
 // #[coverage(off)] We need to comment this out for now as this feature isn't stable yet.
 // See https://github.com/rust-lang/rust/issues/84605
 pub fn get_process_late_jobs_service(
     connection: &mut AsyncPgConnection,
-) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer> {
-    ProcessLateJobsService::new(MonitorRepository::new(connection), LateJobNotifer::new())
+) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer<TracingLogger>, TracingLogger> {
+    ProcessLateJobsService::new(
+        MonitorRepository::new(connection),
+        LateJobNotifer::new(TracingLogger {}),
+        TracingLogger {},
+    )
 }
 // #[coverage(on)] We won't need this once the feature is stable, but for now we're using these as
 // markers for grcov so we need a start and an end.
 
 pub fn get_start_job_service(
     connection: &mut AsyncPgConnection,
-) -> StartJobService<MonitorRepository> {
-    StartJobService::new(MonitorRepository::new(connection))
+) -> StartJobService<MonitorRepository, TracingLogger> {
+    StartJobService::new(MonitorRepository::new(connection), TracingLogger {})
 }
 
 pub fn get_update_monitor_service(
     connection: &mut AsyncPgConnection,
-) -> UpdateMonitorService<MonitorRepository> {
-    UpdateMonitorService::new(MonitorRepository::new(connection))
+) -> UpdateMonitorService<MonitorRepository, TracingLogger> {
+    UpdateMonitorService::new(MonitorRepository::new(connection), TracingLogger {})
 }
