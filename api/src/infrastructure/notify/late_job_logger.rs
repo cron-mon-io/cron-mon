@@ -21,7 +21,7 @@ impl<L: Logger> NotifyLateJob for LateJobNotifer<L> {
             format!("Job('{}') is late", late_job.job_id),
             json!({
                 "monitor_name": monitor_name,
-                "job_id": late_job.job_id.to_string(),
+                "job_id": late_job.job_id,
                 "job_start": late_job.start_time.to_string(),
                 "job_max_end": late_job.max_end_time.to_string(),
                 "job_actual_end": late_job

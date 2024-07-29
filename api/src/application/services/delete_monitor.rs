@@ -20,7 +20,7 @@ impl<T: Get<Monitor> + Delete<Monitor>, L: Logger> DeleteMonitorService<T, L> {
         if let Some(mon) = monitor {
             self.repo.delete(&mon).await?;
             self.logger
-                .info(format!("Deleted Monitor('{}')", &monitor_id.to_string()));
+                .info(format!("Deleted Monitor('{}')", &monitor_id));
             Ok(())
         } else {
             Err(AppError::MonitorNotFound(monitor_id))

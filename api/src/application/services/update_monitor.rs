@@ -19,7 +19,7 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> UpdateMonitorService<T, L> {
     pub async fn update_by_id(
         &mut self,
         monitor_id: Uuid,
-        new_name: &String,
+        new_name: &str,
         new_expected: i32,
         new_grace: i32,
     ) -> Result<Monitor, AppError> {
@@ -32,11 +32,11 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> UpdateMonitorService<T, L> {
                     monitor.expected_duration,
                     monitor.grace_duration,
                 );
-                monitor.edit_details(new_name.clone(), new_expected, new_grace);
+                monitor.edit_details(new_name.to_owned(), new_expected, new_grace);
 
                 self.repo.save(&monitor).await?;
                 self.logger.info_with_context(
-                    format!("Modified Monitor('{}'", &monitor.monitor_id.to_string()),
+                    format!("Modified Monitor('{}'", &monitor.monitor_id),
                     json!({
                         "original_values": {
                             "name": original_values.0,
@@ -111,7 +111,7 @@ mod tests {
             let should_be_err = service
                 .update_by_id(
                     gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                    &"new-name".to_owned(),
+                    "new-name",
                     600,
                     200,
                 )
@@ -126,7 +126,7 @@ mod tests {
             monitor = service
                 .update_by_id(
                     gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-                    &"new-name".to_owned(),
+                    "new-name",
                     600,
                     200,
                 )
