@@ -68,9 +68,7 @@ mod tests {
             let mut log_messages = vec![];
             let mut service = DeleteMonitorService::new(
                 TestRepository::new(&mut data),
-                TestLogger {
-                    messages: &mut log_messages,
-                },
+                TestLogger::new(&mut log_messages),
             );
 
             let non_existent_id = gen_uuid("01a92c6c-6803-409d-b675-022fff62575a");

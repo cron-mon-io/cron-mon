@@ -80,9 +80,7 @@ mod tests {
             let mut log_messages = vec![];
             let mut service = StartJobService::new(
                 TestRepository::new(&mut data),
-                TestLogger {
-                    messages: &mut log_messages,
-                },
+                TestLogger::new(&mut log_messages),
             );
             let job = service
                 .start_job_for_monitor(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
@@ -122,9 +120,7 @@ mod tests {
         let mut log_messages = vec![];
         let mut service = StartJobService::new(
             TestRepository::new(&mut data),
-            TestLogger {
-                messages: &mut log_messages,
-            },
+            TestLogger::new(&mut log_messages),
         );
 
         let non_existent_id = gen_uuid("01a92c6c-6803-409d-b675-022fff62575a");

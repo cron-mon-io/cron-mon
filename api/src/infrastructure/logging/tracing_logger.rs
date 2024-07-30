@@ -25,6 +25,10 @@ impl TracingLogger {
         }
     }
     // #[coverage(on)]
+
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 impl Logger for TracingLogger {
@@ -51,7 +55,7 @@ mod tests {
     #[test]
     #[traced_test]
     fn test_info() {
-        let mut logger = TracingLogger {};
+        let mut logger = TracingLogger::new();
         logger.info("info message".to_string());
 
         logs_assert(|lines: &[&str]| {
@@ -75,7 +79,7 @@ mod tests {
     #[test]
     #[traced_test]
     fn test_info_with_context() {
-        let mut logger = TracingLogger {};
+        let mut logger = TracingLogger::new();
         logger.info_with_context(
             "info message".to_string(),
             serde_json::json!({"key": "value"}),
@@ -105,7 +109,7 @@ mod tests {
     #[test]
     #[traced_test]
     fn test_error() {
-        let mut logger = TracingLogger {};
+        let mut logger = TracingLogger::new();
         logger.error("error message".to_string());
 
         logs_assert(|lines: &[&str]| {

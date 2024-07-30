@@ -116,9 +116,7 @@ mod tests {
             let mut log_messages = vec![];
             let mut service = FinishJobService::new(
                 TestRepository::new(&mut data),
-                TestLogger {
-                    messages: &mut log_messages,
-                },
+                TestLogger::new(&mut log_messages),
             );
             let output = Some("Job complete".to_owned());
             let job = service
@@ -199,9 +197,7 @@ mod tests {
         let mut log_messages = vec![];
         let mut service = FinishJobService::new(
             TestRepository::new(&mut data),
-            TestLogger {
-                messages: &mut log_messages,
-            },
+            TestLogger::new(&mut log_messages),
         );
         let output = Some("Job complete".to_owned());
         let result = service

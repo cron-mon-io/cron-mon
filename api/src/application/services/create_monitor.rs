@@ -65,9 +65,7 @@ mod tests {
             let mut log_messages = vec![];
             let mut service = CreateMonitorService::new(
                 TestRepository::new(&mut data),
-                TestLogger {
-                    messages: &mut log_messages,
-                },
+                TestLogger::new(&mut log_messages),
             );
             let new_monitor_result = service
                 .create_by_attributes(&"foo".to_owned(), 3_600, 300)

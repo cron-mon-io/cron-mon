@@ -27,13 +27,13 @@ use update_monitor::UpdateMonitorService;
 pub fn get_create_monitor_service(
     connection: &mut AsyncPgConnection,
 ) -> CreateMonitorService<MonitorRepository, TracingLogger> {
-    CreateMonitorService::new(MonitorRepository::new(connection), TracingLogger {})
+    CreateMonitorService::new(MonitorRepository::new(connection), TracingLogger::new())
 }
 
 pub fn get_delete_monitor_service(
     connection: &mut AsyncPgConnection,
 ) -> DeleteMonitorService<MonitorRepository, TracingLogger> {
-    DeleteMonitorService::new(MonitorRepository::new(connection), TracingLogger {})
+    DeleteMonitorService::new(MonitorRepository::new(connection), TracingLogger::new())
 }
 
 pub fn get_fetch_job_service(
@@ -54,7 +54,7 @@ pub fn get_fetch_monitors_service(
 pub fn get_finish_job_service(
     connection: &mut AsyncPgConnection,
 ) -> FinishJobService<MonitorRepository, TracingLogger> {
-    FinishJobService::new(MonitorRepository::new(connection), TracingLogger {})
+    FinishJobService::new(MonitorRepository::new(connection), TracingLogger::new())
 }
 
 // #[coverage(off)] We need to comment this out for now as this feature isn't stable yet.
@@ -64,8 +64,8 @@ pub fn get_process_late_jobs_service(
 ) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer<TracingLogger>, TracingLogger> {
     ProcessLateJobsService::new(
         MonitorRepository::new(connection),
-        LateJobNotifer::new(TracingLogger {}),
-        TracingLogger {},
+        LateJobNotifer::new(TracingLogger::new()),
+        TracingLogger::new(),
     )
 }
 // #[coverage(on)] We won't need this once the feature is stable, but for now we're using these as
@@ -74,11 +74,11 @@ pub fn get_process_late_jobs_service(
 pub fn get_start_job_service(
     connection: &mut AsyncPgConnection,
 ) -> StartJobService<MonitorRepository, TracingLogger> {
-    StartJobService::new(MonitorRepository::new(connection), TracingLogger {})
+    StartJobService::new(MonitorRepository::new(connection), TracingLogger::new())
 }
 
 pub fn get_update_monitor_service(
     connection: &mut AsyncPgConnection,
 ) -> UpdateMonitorService<MonitorRepository, TracingLogger> {
-    UpdateMonitorService::new(MonitorRepository::new(connection), TracingLogger {})
+    UpdateMonitorService::new(MonitorRepository::new(connection), TracingLogger::new())
 }

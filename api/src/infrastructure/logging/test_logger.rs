@@ -19,6 +19,12 @@ pub struct TestLogger<'a> {
     pub messages: &'a mut Vec<TestLogRecord>,
 }
 
+impl<'a> TestLogger<'a> {
+    pub fn new(messages: &'a mut Vec<TestLogRecord>) -> Self {
+        Self { messages }
+    }
+}
+
 impl<'a> Logger for TestLogger<'a> {
     fn info(&mut self, message: String) {
         self.messages.push(TestLogRecord {
@@ -48,9 +54,7 @@ impl<'a> Logger for TestLogger<'a> {
 #[test]
 fn test_logger() {
     let mut messages = Vec::new();
-    let mut logger = TestLogger {
-        messages: &mut messages,
-    };
+    let mut logger = TestLogger::new(&mut messages);
 
     logger.info("info message".to_string());
     logger.error("error message".to_string());

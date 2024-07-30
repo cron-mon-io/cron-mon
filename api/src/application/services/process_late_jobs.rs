@@ -151,9 +151,7 @@ mod tests {
             let mut service = ProcessLateJobsService::new(
                 TestRepository::new(&mut data),
                 FakeJobNotifier::new(&mut lates),
-                TestLogger {
-                    messages: &mut log_messages,
-                },
+                TestLogger::new(&mut log_messages),
             );
 
             let result = service.process_late_jobs().await;

@@ -29,7 +29,7 @@ async fn main() {
     TracingLogger::init_subscriber();
 
     run_periodically(10, || async move {
-        let mut logger = TracingLogger {};
+        let mut logger = TracingLogger::new();
         match establish_connection().await {
             Ok(mut db) => {
                 let mut service = get_process_late_jobs_service(&mut db);
