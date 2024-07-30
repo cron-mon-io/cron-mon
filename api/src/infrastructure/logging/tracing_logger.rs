@@ -31,6 +31,12 @@ impl TracingLogger {
     }
 }
 
+impl Default for TracingLogger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Logger for TracingLogger {
     fn info(&mut self, message: String) {
         tracing::info!(message);
@@ -55,7 +61,7 @@ mod tests {
     #[test]
     #[traced_test]
     fn test_info() {
-        let mut logger = TracingLogger::new();
+        let mut logger: TracingLogger = Default::default();
         logger.info("info message".to_string());
 
         logs_assert(|lines: &[&str]| {
