@@ -62,6 +62,27 @@ services:
       retries: 5
     command: [ "postgres", "-c", "log_statement=all" ]
 
+  keycloak:
+    container_name: cron-mon-keycloak
+    image: quay.io/keycloak/keycloak:25.0.2
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: true
+    ports:
+      - 8080:8080
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    networks:
+      - default
+      - cron-mon-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    command: ["start-dev", "--import-realm"]
+
   seeder:
     container_name: cron-mon-db-seeder
     build:
@@ -89,6 +110,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
       CARGO_HOME: /usr/cron-mon/.cargo
@@ -105,6 +128,8 @@ services:
     tty: true
     depends_on:
       db:
+        condition: service_healthy
+      keycloak:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
