@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter, Result};
 
 use uuid::Uuid;
 
-/// An error that might occur when finishing a Job.
+/// Application level errors.
 #[derive(Clone, Debug, PartialEq)]
 pub enum AppError {
     RepositoryError(String),
