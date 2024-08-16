@@ -1,6 +1,6 @@
 FROM public.ecr.aws/docker/library/rust:1.80.0-slim as builder
 
-RUN apt-get update && apt-get install build-essential libpq-dev -y
+RUN apt-get update && apt-get install build-essential libpq-dev libssl-dev pkg-config -y
 RUN rustup component add rustfmt clippy llvm-tools-preview
 RUN cargo install diesel_cli --no-default-features --features postgres && \
     cargo install grcov
@@ -19,7 +19,9 @@ RUN groupadd -g 1000 cron-mon && \
     mkdir /usr/bin/cron-mon && chown cron-mon:cron-mon /usr/bin/cron-mon
 WORKDIR /usr/bin/cron-mon
 
-RUN apt-get update && apt-get install libpq-dev -y
+RUN apt-get update && apt-get install libpq-dev -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder \
     --chown=cron-mon:cron-mon \
