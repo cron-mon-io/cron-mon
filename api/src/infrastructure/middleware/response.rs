@@ -19,6 +19,7 @@ impl<'r> Responder<'r, 'static> for Error {
             // default to server-side errors.
             Error::InvalidMonitor(_) => (Status::InternalServerError, "Invalid Monitor"),
             Error::InvalidJob(_) => (Status::InternalServerError, "Invalid Job"),
+            Error::Unauthorized(_) => (Status::Unauthorized, "Unauthorized"),
         };
         let body =
             json!({ "error": {"code": status.code, "reason": reason, "description": self.to_string()} })
@@ -81,6 +82,11 @@ mod tests {
         Err(Error::InvalidJob("invalid job".to_string()))
     }
 
+    #[rocket::get("/unauthorized")]
+    fn unauthorized() -> Result<(), Error> {
+        Err(Error::Unauthorized("insufficient permissions".to_string()))
+    }
+
     #[fixture]
     fn test_client() -> Client {
         let test_rocket = rocket::build().mount(
@@ -91,7 +97,8 @@ mod tests {
                 job_not_found,
                 job_already_finished,
                 invalid_monitor,
-                invalid_job
+                invalid_job,
+                unauthorized
             ],
         );
         Client::tracked(test_rocket)
@@ -204,6 +211,24 @@ mod tests {
                     "code": 500,
                     "reason": "Invalid Job",
                     "description": "Invalid Job: invalid job"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_unauthorized(test_client: Client) {
+        let response = test_client.get("/unauthorized").dispatch();
+
+        assert_eq!(response.status(), Status::Unauthorized);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 401,
+                    "reason": "Unauthorized",
+                    "description": "Unauthorized: insufficient permissions"
                 }
             })
         );
