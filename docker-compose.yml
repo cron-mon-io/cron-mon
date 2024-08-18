@@ -125,6 +125,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
+      KEYCLOAK_CERTS_URL: http://cron-mon-keycloak:8080/realms/cron-mon-io/protocol/openid-connect/certs
       CARGO_HOME: /usr/cron-mon/.cargo
     volumes:
       - ./api:/usr/cron-mon/api
@@ -145,6 +146,7 @@ services:
     environment:
       DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
       JSON_LOGGING: true
+      KEYCLOAK_CERTS_URL: http://cron-mon-keycloak:8080/realms/cron-mon-io/protocol/openid-connect/certs
       CARGO_HOME: /usr/cron-mon/.cargo
     volumes:
       - ./api:/usr/cron-mon/api
