@@ -20,6 +20,7 @@ impl<'r> Responder<'r, 'static> for Error {
             Error::InvalidMonitor(_) => (Status::InternalServerError, "Invalid Monitor"),
             Error::InvalidJob(_) => (Status::InternalServerError, "Invalid Job"),
             Error::Unauthorized(_) => (Status::Unauthorized, "Unauthorized"),
+            Error::AuthenticationError(_) => (Status::InternalServerError, "Authentication Error"),
         };
         let body =
             json!({ "error": {"code": status.code, "reason": reason, "description": self.to_string()} })
@@ -87,6 +88,13 @@ mod tests {
         Err(Error::Unauthorized("insufficient permissions".to_string()))
     }
 
+    #[rocket::get("/auth_erpr")]
+    fn auth_error() -> Result<(), Error> {
+        Err(Error::AuthenticationError(
+            "something went wrong".to_string(),
+        ))
+    }
+
     #[fixture]
     fn test_client() -> Client {
         let test_rocket = rocket::build().mount(
@@ -98,7 +106,8 @@ mod tests {
                 job_already_finished,
                 invalid_monitor,
                 invalid_job,
-                unauthorized
+                unauthorized,
+                auth_error
             ],
         );
         Client::tracked(test_rocket)
@@ -229,6 +238,24 @@ mod tests {
                     "code": 401,
                     "reason": "Unauthorized",
                     "description": "Unauthorized: insufficient permissions"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_authentication_error(test_client: Client) {
+        let response = test_client.get("/auth_erpr").dispatch();
+
+        assert_eq!(response.status(), Status::InternalServerError);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 500,
+                    "reason": "Authentication Error",
+                    "description": "Authentication error: something went wrong"
                 }
             })
         );
