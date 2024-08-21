@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::repositories::Get;
 
 pub struct FetchJobService<T: Get<Monitor>> {
@@ -14,7 +14,7 @@ impl<T: Get<Monitor>> FetchJobService<T> {
         Self { repo }
     }
 
-    pub async fn fetch_by_id(&mut self, monitor_id: Uuid, job_id: Uuid) -> Result<Job, AppError> {
+    pub async fn fetch_by_id(&mut self, monitor_id: Uuid, job_id: Uuid) -> Result<Job, Error> {
         let monitor_opt = self.repo.get(monitor_id).await?;
 
         match monitor_opt {
@@ -22,10 +22,10 @@ impl<T: Get<Monitor>> FetchJobService<T> {
                 if let Some(job) = monitor.get_job(job_id) {
                     Ok(job.clone())
                 } else {
-                    Err(AppError::JobNotFound(monitor_id, job_id))
+                    Err(Error::JobNotFound(monitor_id, job_id))
                 }
             }
-            None => Err(AppError::MonitorNotFound(monitor_id)),
+            None => Err(Error::MonitorNotFound(monitor_id)),
         }
     }
 }
@@ -43,7 +43,7 @@ mod tests {
 
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
-    use super::{AppError, FetchJobService, Job, Monitor};
+    use super::{Error, FetchJobService, Job, Monitor};
 
     #[fixture]
     fn data() -> HashMap<Uuid, Monitor> {
@@ -69,13 +69,13 @@ mod tests {
     #[case(
         gen_uuid("71d1c46c-ef86-4fcb-b8b4-b2fee56a4d2f"),
         gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-        Err(AppError::MonitorNotFound(gen_uuid("71d1c46c-ef86-4fcb-b8b4-b2fee56a4d2f")))
+        Err(Error::MonitorNotFound(gen_uuid("71d1c46c-ef86-4fcb-b8b4-b2fee56a4d2f")))
     )]
     // Job doesn't exist
     #[case(
         gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
         gen_uuid("71d1c46c-ef86-4fcb-b8b4-b2fee56a4d2f"),
-        Err(AppError::JobNotFound(
+        Err(Error::JobNotFound(
             gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             gen_uuid("71d1c46c-ef86-4fcb-b8b4-b2fee56a4d2f")
         ))
@@ -98,7 +98,7 @@ mod tests {
         mut data: HashMap<Uuid, Monitor>,
         #[case] monitor_id: Uuid,
         #[case] job_id: Uuid,
-        #[case] expected: Result<Job, AppError>,
+        #[case] expected: Result<Job, Error>,
     ) {
         let mut service = FetchJobService::new(TestRepository::new(&mut data));
 

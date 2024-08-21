@@ -1,4 +1,4 @@
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::logging::Logger;
 use crate::infrastructure::notify::NotifyLateJob;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
@@ -20,7 +20,7 @@ impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob, Log: Logger>
         }
     }
 
-    pub async fn process_late_jobs(&mut self) -> Result<(), AppError> {
+    pub async fn process_late_jobs(&mut self) -> Result<(), Error> {
         self.logger
             .info("Beginning check for late Jobs...".to_owned());
         let monitors_with_late_jobs = self.repo.get_with_late_jobs().await?;
@@ -48,7 +48,7 @@ mod tests {
     use test_utils::{gen_relative_datetime, gen_uuid};
 
     use crate::domain::models::{job::Job, monitor::Monitor};
-    use crate::errors::AppError;
+    use crate::errors::Error;
     use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
@@ -65,7 +65,7 @@ mod tests {
     }
 
     impl<'a> NotifyLateJob for FakeJobNotifier<'a> {
-        fn notify_late_job(&mut self, monitor_name: &str, late_job: &Job) -> Result<(), AppError> {
+        fn notify_late_job(&mut self, monitor_name: &str, late_job: &Job) -> Result<(), Error> {
             self.lates.push((monitor_name.to_owned(), late_job.job_id));
             Ok(())
         }

@@ -3,7 +3,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 use crate::domain::models::job::Job;
-use crate::errors::AppError;
+use crate::errors::Error;
 
 /// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
 /// part of the Cron Mon domain.
@@ -72,7 +72,7 @@ impl Monitor {
     }
 
     /// Start a new job
-    pub fn start_job(&mut self) -> Result<Job, AppError> {
+    pub fn start_job(&mut self) -> Result<Job, Error> {
         // We give the job the _current_ maximum duration here so that if the monitor is modified,
         // any previous and in progress jobs are not affected.
         let new_job = Job::start(self.maximum_duration().num_seconds() as u64)?;
@@ -80,14 +80,14 @@ impl Monitor {
         Ok(new_job)
     }
 
-    /// Finish a job. Note that this will return an `AppError` is a Job with the given `job_id`
+    /// Finish a job. Note that this will return an `Error` is a Job with the given `job_id`
     /// cannot be found in the Monitor, or if the Job isn't currently in progress.
     pub fn finish_job(
         &mut self,
         job_id: Uuid,
         succeeded: bool,
         output: Option<String>,
-    ) -> Result<&Job, AppError> {
+    ) -> Result<&Job, Error> {
         let monitor_id = self.monitor_id;
         let job = self.get_job(job_id);
         match job {
@@ -95,7 +95,7 @@ impl Monitor {
                 j.finish(succeeded, output)?;
                 Ok(j)
             }
-            None => Err(AppError::JobNotFound(monitor_id, job_id)),
+            None => Err(Error::JobNotFound(monitor_id, job_id)),
         }
     }
 
@@ -117,7 +117,7 @@ mod tests {
 
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use super::{AppError, Job, Monitor, Uuid};
+    use super::{Error, Job, Monitor, Uuid};
 
     #[test]
     fn creating_new_monitors() {
@@ -353,7 +353,7 @@ mod tests {
         );
         assert_eq!(
             result2.unwrap_err(),
-            AppError::JobNotFound(
+            Error::JobNotFound(
                 mon.monitor_id,
                 gen_uuid("4631aa50-7780-455a-ab9a-78292f931832")
             )

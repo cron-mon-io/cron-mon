@@ -2,7 +2,7 @@ use std::env;
 
 use tokio::test;
 
-use cron_mon_api::{errors::AppError, infrastructure::database::establish_connection};
+use cron_mon_api::{errors::Error, infrastructure::database::establish_connection};
 
 #[test]
 async fn test_establish_connection() {
@@ -19,8 +19,5 @@ async fn test_establish_connection_error() {
 
     let conn = establish_connection().await;
     assert!(conn.is_err());
-    assert!(matches!(
-        conn.err().unwrap(),
-        AppError::RepositoryError { .. }
-    ));
+    assert!(matches!(conn.err().unwrap(), Error::RepositoryError { .. }));
 }

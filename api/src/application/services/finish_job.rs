@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::{Get, Save};
 
@@ -22,7 +22,7 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> FinishJobService<T, L> {
         job_id: Uuid,
         succeeded: bool,
         output: &Option<String>,
-    ) -> Result<Job, AppError> {
+    ) -> Result<Job, Error> {
         let monitor_opt = self.repo.get(monitor_id).await?;
 
         match monitor_opt {
@@ -48,7 +48,7 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> FinishJobService<T, L> {
                     Err(e)
                 }
             },
-            None => Err(AppError::MonitorNotFound(monitor_id)),
+            None => Err(Error::MonitorNotFound(monitor_id)),
         }
     }
 }
@@ -66,7 +66,7 @@ mod tests {
     use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
-    use super::{AppError, FinishJobService, Get, Job, Monitor};
+    use super::{Error, FinishJobService, Get, Job, Monitor};
 
     #[fixture]
     fn data() -> HashMap<Uuid, Monitor> {
@@ -158,14 +158,14 @@ mod tests {
     #[case(
         gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"),
         gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-        Err(AppError::MonitorNotFound(gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"))),
+        Err(Error::MonitorNotFound(gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"))),
         vec![],
     )]
     // Job not found.
     #[case(
         gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
         gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"),
-        Err(AppError::JobNotFound(
+        Err(Error::JobNotFound(
             gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55")
         )),
@@ -179,7 +179,7 @@ mod tests {
     #[case(
         gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
         gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1"),
-        Err(AppError::JobAlreadyFinished(gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1"))),
+        Err(Error::JobAlreadyFinished(gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1"))),
         vec![TestLogRecord {
             level: TestLogLevel::Error,
             message: "Error finishing Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') Job('47609d30-7184-46c8-b741-0a27e7f51af1'): JobAlreadyFinished(47609d30-7184-46c8-b741-0a27e7f51af1)".to_owned(),
@@ -191,7 +191,7 @@ mod tests {
         mut data: HashMap<Uuid, Monitor>,
         #[case] monitor_id: Uuid,
         #[case] job_id: Uuid,
-        #[case] expected: Result<Job, AppError>,
+        #[case] expected: Result<Job, Error>,
         #[case] expected_logs: Vec<TestLogRecord>,
     ) {
         let mut log_messages = vec![];

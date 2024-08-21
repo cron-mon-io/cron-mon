@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 use crate::infrastructure::repositories::{All, Delete, Get, Save};
 
@@ -31,7 +31,7 @@ impl<'a> TestRepository<'a> {
 
 #[async_trait]
 impl GetWithLateJobs for TestRepository<'_> {
-    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, AppError> {
+    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
         Ok(self
             .data
             .iter()
@@ -48,21 +48,21 @@ impl GetWithLateJobs for TestRepository<'_> {
 
 #[async_trait]
 impl Get<Monitor> for TestRepository<'_> {
-    async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, AppError> {
+    async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, Error> {
         Ok(self.data.get(&monitor_id).cloned())
     }
 }
 
 #[async_trait]
 impl All<Monitor> for TestRepository<'_> {
-    async fn all(&mut self) -> Result<Vec<Monitor>, AppError> {
+    async fn all(&mut self) -> Result<Vec<Monitor>, Error> {
         Ok(self.data.iter().map(|d| d.1.clone()).collect())
     }
 }
 
 #[async_trait]
 impl Save<Monitor> for TestRepository<'_> {
-    async fn save(&mut self, monitor: &Monitor) -> Result<(), AppError> {
+    async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
         self.data.insert(monitor.monitor_id, monitor.clone());
         Ok(())
     }
@@ -70,7 +70,7 @@ impl Save<Monitor> for TestRepository<'_> {
 
 #[async_trait]
 impl Delete<Monitor> for TestRepository<'_> {
-    async fn delete(&mut self, monitor: &Monitor) -> Result<(), AppError> {
+    async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
         self.data.remove(&monitor.monitor_id);
         Ok(())
     }

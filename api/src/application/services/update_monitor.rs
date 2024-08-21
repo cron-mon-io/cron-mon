@@ -2,7 +2,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::{Get, Save};
 
@@ -22,7 +22,7 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> UpdateMonitorService<T, L> {
         new_name: &str,
         new_expected: i32,
         new_grace: i32,
-    ) -> Result<Monitor, AppError> {
+    ) -> Result<Monitor, Error> {
         let monitor_opt = self.repo.get(monitor_id).await?;
 
         match monitor_opt {
@@ -53,7 +53,7 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> UpdateMonitorService<T, L> {
 
                 Ok(monitor)
             }
-            None => Err(AppError::MonitorNotFound(monitor_id)),
+            None => Err(Error::MonitorNotFound(monitor_id)),
         }
     }
 }
@@ -73,7 +73,7 @@ mod tests {
     use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
-    use super::{AppError, Get, Monitor, UpdateMonitorService};
+    use super::{Error, Get, Monitor, UpdateMonitorService};
 
     #[fixture]
     fn data() -> HashMap<Uuid, Monitor> {
@@ -116,7 +116,7 @@ mod tests {
                 .await;
             assert_eq!(
                 should_be_err,
-                Err(AppError::MonitorNotFound(gen_uuid(
+                Err(Error::MonitorNotFound(gen_uuid(
                     "01a92c6c-6803-409d-b675-022fff62575a"
                 )))
             );

@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::{Delete, Get};
 
@@ -15,7 +15,7 @@ impl<T: Get<Monitor> + Delete<Monitor>, L: Logger> DeleteMonitorService<T, L> {
         Self { repo, logger }
     }
 
-    pub async fn delete_by_id(&mut self, monitor_id: Uuid) -> Result<(), AppError> {
+    pub async fn delete_by_id(&mut self, monitor_id: Uuid) -> Result<(), Error> {
         let monitor = self.repo.get(monitor_id).await?;
         if let Some(mon) = monitor {
             self.repo.delete(&mon).await?;
@@ -23,7 +23,7 @@ impl<T: Get<Monitor> + Delete<Monitor>, L: Logger> DeleteMonitorService<T, L> {
                 .info(format!("Deleted Monitor('{}')", &monitor_id));
             Ok(())
         } else {
-            Err(AppError::MonitorNotFound(monitor_id))
+            Err(Error::MonitorNotFound(monitor_id))
         }
     }
 }
@@ -42,7 +42,7 @@ mod tests {
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
     use crate::infrastructure::repositories::All;
 
-    use super::{AppError, DeleteMonitorService, Monitor};
+    use super::{DeleteMonitorService, Error, Monitor};
 
     #[fixture]
     fn data() -> HashMap<Uuid, Monitor> {
@@ -73,10 +73,7 @@ mod tests {
 
             let non_existent_id = gen_uuid("01a92c6c-6803-409d-b675-022fff62575a");
             let mut delete_result = service.delete_by_id(non_existent_id).await;
-            assert_eq!(
-                delete_result,
-                Err(AppError::MonitorNotFound(non_existent_id))
-            );
+            assert_eq!(delete_result, Err(Error::MonitorNotFound(non_existent_id)));
 
             delete_result = service
                 .delete_by_id(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))

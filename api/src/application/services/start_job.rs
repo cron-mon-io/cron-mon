@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::{Get, Save};
 
@@ -16,7 +16,7 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> StartJobService<T, L> {
         Self { repo, logger }
     }
 
-    pub async fn start_job_for_monitor(&mut self, monitor_id: Uuid) -> Result<Job, AppError> {
+    pub async fn start_job_for_monitor(&mut self, monitor_id: Uuid) -> Result<Job, Error> {
         let mut monitor_opt = self.repo.get(monitor_id).await?;
 
         match &mut monitor_opt {
@@ -30,7 +30,7 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> StartJobService<T, L> {
                 ));
                 Ok(job)
             }
-            None => Err(AppError::MonitorNotFound(monitor_id)),
+            None => Err(Error::MonitorNotFound(monitor_id)),
         }
     }
 }
@@ -48,7 +48,7 @@ mod tests {
     use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
-    use super::{AppError, Get, Monitor, StartJobService};
+    use super::{Error, Get, Monitor, StartJobService};
 
     #[fixture]
     fn data() -> HashMap<Uuid, Monitor> {
@@ -125,10 +125,7 @@ mod tests {
 
         let non_existent_id = gen_uuid("01a92c6c-6803-409d-b675-022fff62575a");
         let start_result = service.start_job_for_monitor(non_existent_id).await;
-        assert_eq!(
-            start_result,
-            Err(AppError::MonitorNotFound(non_existent_id))
-        );
+        assert_eq!(start_result, Err(Error::MonitorNotFound(non_existent_id)));
         assert!(log_messages.is_empty());
     }
 }

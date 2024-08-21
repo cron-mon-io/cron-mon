@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::application::services::{
     get_fetch_job_service, get_finish_job_service, get_start_job_service,
 };
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::database::Db;
 
 #[derive(Deserialize)]
@@ -22,7 +22,7 @@ pub async fn get_job(
     mut connection: Connection<Db>,
     monitor_id: Uuid,
     job_id: Uuid,
-) -> Result<Value, AppError> {
+) -> Result<Value, Error> {
     let mut service = get_fetch_job_service(&mut connection);
 
     let job = service.fetch_by_id(monitor_id, job_id).await?;
@@ -31,10 +31,7 @@ pub async fn get_job(
 }
 
 #[rocket::post("/monitors/<monitor_id>/jobs/start")]
-pub async fn start_job(
-    mut connection: Connection<Db>,
-    monitor_id: Uuid,
-) -> Result<Value, AppError> {
+pub async fn start_job(mut connection: Connection<Db>, monitor_id: Uuid) -> Result<Value, Error> {
     let mut service = get_start_job_service(&mut connection);
 
     let job = service.start_job_for_monitor(monitor_id).await?;
@@ -50,7 +47,7 @@ pub async fn finish_job(
     monitor_id: Uuid,
     job_id: Uuid,
     finish_job_info: Json<FinishJobInfo>,
-) -> Result<Value, AppError> {
+) -> Result<Value, Error> {
     let mut service = get_finish_job_service(&mut connection);
 
     let job = service

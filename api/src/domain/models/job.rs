@@ -3,7 +3,7 @@ use chrono::{offset::Utc, Duration};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
-use crate::errors::AppError;
+use crate::errors::Error;
 
 /// The Job struct represents a monitored job, encapsulating the time it started, the time it
 /// finished, the resulting status and any output that it produced.
@@ -32,14 +32,12 @@ impl Job {
         end_time: Option<NaiveDateTime>,
         succeeded: Option<bool>,
         output: Option<String>,
-    ) -> Result<Self, AppError> {
+    ) -> Result<Self, Error> {
         // Job's must either have no end_time or succeeded, or both.
         if (end_time.is_some() || succeeded.is_some())
             && (end_time.is_none() || succeeded.is_none())
         {
-            return Err(AppError::InvalidJob(
-                "Job is in an invalid state".to_owned(),
-            ));
+            return Err(Error::InvalidJob("Job is in an invalid state".to_owned()));
         }
         Ok(Job {
             job_id,
@@ -52,7 +50,7 @@ impl Job {
     }
 
     /// Start a Job.
-    pub fn start(maximum_duration: u64) -> Result<Self, AppError> {
+    pub fn start(maximum_duration: u64) -> Result<Self, Error> {
         let now = Utc::now().naive_utc();
 
         Job::new(
@@ -66,10 +64,10 @@ impl Job {
     }
 
     /// Finish the Job. Note that if the Job isn't currently in progress, this will return an
-    /// `AppError`.
-    pub fn finish(&mut self, succeeded: bool, output: Option<String>) -> Result<(), AppError> {
+    /// `Error`.
+    pub fn finish(&mut self, succeeded: bool, output: Option<String>) -> Result<(), Error> {
         if !self.in_progress() {
-            return Err(AppError::JobAlreadyFinished(self.job_id));
+            return Err(Error::JobAlreadyFinished(self.job_id));
         }
 
         self.succeeded = Some(succeeded);
@@ -149,7 +147,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_relative_datetime};
 
-    use super::{AppError, Job, NaiveDateTime, Uuid};
+    use super::{Error, Job, NaiveDateTime, Uuid};
 
     #[test]
     fn starting_jobs() {
@@ -177,10 +175,7 @@ mod tests {
 
         // Cannot finish a job again once it's been finished.
         let result2 = job.finish(false, Some("It won't wrong".to_owned()));
-        assert_eq!(
-            result2.unwrap_err(),
-            AppError::JobAlreadyFinished(job.job_id)
-        );
+        assert_eq!(result2.unwrap_err(), Error::JobAlreadyFinished(job.job_id));
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);
     }
@@ -253,7 +248,7 @@ mod tests {
         assert!(job.is_err());
         assert_eq!(
             job.unwrap_err(),
-            AppError::InvalidJob("Job is in an invalid state".to_owned())
+            Error::InvalidJob("Job is in an invalid state".to_owned())
         );
     }
 

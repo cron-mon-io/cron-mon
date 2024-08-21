@@ -5,20 +5,20 @@ use rocket::request::Request;
 use rocket::response::{self, Responder, Response};
 use serde_json::json;
 
-use crate::errors::AppError;
+use crate::errors::Error;
 
-impl<'r> Responder<'r, 'static> for AppError {
+impl<'r> Responder<'r, 'static> for Error {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         let (status, reason) = match self {
-            AppError::RepositoryError(_) => (Status::InternalServerError, "Repository Error"),
-            AppError::MonitorNotFound(_) => (Status::NotFound, "Monitor Not Found"),
-            AppError::JobNotFound(_, _) => (Status::NotFound, "Job Not Found"),
-            AppError::JobAlreadyFinished(_) => (Status::BadRequest, "Job Already Finished"),
+            Error::RepositoryError(_) => (Status::InternalServerError, "Repository Error"),
+            Error::MonitorNotFound(_) => (Status::NotFound, "Monitor Not Found"),
+            Error::JobNotFound(_, _) => (Status::NotFound, "Job Not Found"),
+            Error::JobAlreadyFinished(_) => (Status::BadRequest, "Job Already Finished"),
             // Both of these could either be server-side or client-side. For now we'll handle the
             // client providing invalid data outside of where we return these, allowing us to
             // default to server-side errors.
-            AppError::InvalidMonitor(_) => (Status::InternalServerError, "Invalid Monitor"),
-            AppError::InvalidJob(_) => (Status::InternalServerError, "Invalid Job"),
+            Error::InvalidMonitor(_) => (Status::InternalServerError, "Invalid Monitor"),
+            Error::InvalidJob(_) => (Status::InternalServerError, "Invalid Job"),
         };
         let body =
             json!({ "error": {"code": status.code, "reason": reason, "description": self.to_string()} })
@@ -42,45 +42,43 @@ mod tests {
 
     use test_utils::gen_uuid;
 
-    use super::AppError;
+    use super::Error;
 
     #[rocket::get("/repo_error")]
-    fn repo_error() -> Result<(), AppError> {
-        Err(AppError::RepositoryError(
-            "something went wrong".to_string(),
-        ))
+    fn repo_error() -> Result<(), Error> {
+        Err(Error::RepositoryError("something went wrong".to_string()))
     }
 
     #[rocket::get("/monitor_not_found")]
-    fn monitor_not_found() -> Result<(), AppError> {
-        Err(AppError::MonitorNotFound(gen_uuid(
+    fn monitor_not_found() -> Result<(), Error> {
+        Err(Error::MonitorNotFound(gen_uuid(
             "41ebffb4-a188-48e9-8ec1-61380085cde3",
         )))
     }
 
     #[rocket::get("/job_not_found")]
-    fn job_not_found() -> Result<(), AppError> {
-        Err(AppError::JobNotFound(
+    fn job_not_found() -> Result<(), Error> {
+        Err(Error::JobNotFound(
             gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
         ))
     }
 
     #[rocket::get("/job_already_finished")]
-    fn job_already_finished() -> Result<(), AppError> {
-        Err(AppError::JobAlreadyFinished(gen_uuid(
+    fn job_already_finished() -> Result<(), Error> {
+        Err(Error::JobAlreadyFinished(gen_uuid(
             "01a92c6c-6803-409d-b675-022fff62575a",
         )))
     }
 
     #[rocket::get("/invalid_monitor")]
-    fn invalid_monitor() -> Result<(), AppError> {
-        Err(AppError::InvalidMonitor("invalid monitor".to_string()))
+    fn invalid_monitor() -> Result<(), Error> {
+        Err(Error::InvalidMonitor("invalid monitor".to_string()))
     }
 
     #[rocket::get("/invalid_job")]
-    fn invalid_job() -> Result<(), AppError> {
-        Err(AppError::InvalidJob("invalid job".to_string()))
+    fn invalid_job() -> Result<(), Error> {
+        Err(Error::InvalidJob("invalid job".to_string()))
     }
 
     #[fixture]

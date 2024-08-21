@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use uuid::Uuid;
 
 use crate::domain::models::job::Job;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::db_schema::job;
 use crate::infrastructure::models::monitor::MonitorData;
 
@@ -22,7 +22,7 @@ pub struct JobData {
     pub monitor_id: Uuid,
 }
 
-impl From<&JobData> for Result<Job, AppError> {
+impl From<&JobData> for Result<Job, Error> {
     fn from(val: &JobData) -> Self {
         Job::new(
             val.job_id,
@@ -41,7 +41,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_uuid};
 
-    use super::{AppError, Job, JobData};
+    use super::{Error, Job, JobData};
 
     #[test]
     fn test_job_data_into_job() {
@@ -55,7 +55,7 @@ mod tests {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
         };
 
-        let job_result: Result<Job, AppError> = (&job_data).into();
+        let job_result: Result<Job, Error> = (&job_data).into();
         let job = job_result.unwrap();
 
         assert_eq!(job.job_id, gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"));
@@ -78,12 +78,10 @@ mod tests {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
         };
 
-        let job_result: Result<Job, AppError> = (&job_data).into();
+        let job_result: Result<Job, Error> = (&job_data).into();
         assert_eq!(
             job_result,
-            Err(AppError::InvalidJob(
-                "Job is in an invalid state".to_string()
-            ))
+            Err(Error::InvalidJob("Job is in an invalid state".to_string()))
         );
     }
 }

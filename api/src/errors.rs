@@ -2,9 +2,9 @@ use std::fmt::{Display, Formatter, Result};
 
 use uuid::Uuid;
 
-/// An error that might occur when finishing a Job.
+/// Application-level errors.
 #[derive(Clone, Debug, PartialEq)]
-pub enum AppError {
+pub enum Error {
     RepositoryError(String),
     MonitorNotFound(Uuid),
     JobNotFound(Uuid, Uuid),
@@ -13,7 +13,7 @@ pub enum AppError {
     InvalidJob(String),
 }
 
-impl Display for AppError {
+impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
             Self::RepositoryError(reason) => write!(f, "Failed to read or write data: {reason}"),

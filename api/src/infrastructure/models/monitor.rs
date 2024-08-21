@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use uuid::Uuid;
 
 use crate::domain::models::{job::Job, monitor::Monitor};
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 
@@ -18,7 +18,7 @@ pub struct MonitorData {
 }
 
 impl MonitorData {
-    pub fn to_model(&self, job_datas: &[JobData]) -> Result<Monitor, AppError> {
+    pub fn to_model(&self, job_datas: &[JobData]) -> Result<Monitor, Error> {
         Ok(Monitor {
             monitor_id: self.monitor_id,
             name: self.name.clone(),
@@ -27,7 +27,7 @@ impl MonitorData {
             jobs: job_datas
                 .iter()
                 .map(|jd| jd.into())
-                .collect::<Result<Vec<Job>, AppError>>()?,
+                .collect::<Result<Vec<Job>, Error>>()?,
         })
     }
 }

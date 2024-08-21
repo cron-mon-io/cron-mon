@@ -3,13 +3,13 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use diesel::dsl::now;
 use diesel::prelude::*;
-use diesel::result::Error;
+use diesel::result::Error as DieselError;
 use diesel_async::AsyncConnection;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::db_schema::job;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
@@ -34,7 +34,7 @@ impl<'a> MonitorRepository<'a> {
         &mut self,
         monitor_data: MonitorData,
         job_datas: Vec<JobData>,
-    ) -> Result<Monitor, AppError> {
+    ) -> Result<Monitor, Error> {
         let mon: Monitor = monitor_data.to_model(&job_datas)?;
         self.data.insert(mon.monitor_id, (monitor_data, job_datas));
         Ok(mon)
@@ -43,10 +43,10 @@ impl<'a> MonitorRepository<'a> {
 
 #[async_trait]
 impl<'a> GetWithLateJobs for MonitorRepository<'a> {
-    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, AppError> {
+    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
         let result = self
             .db
-            .transaction::<(Vec<MonitorData>, Vec<JobData>), Error, _>(|conn| {
+            .transaction::<(Vec<MonitorData>, Vec<JobData>), DieselError, _>(|conn| {
                 Box::pin(async move {
                     let in_progress_condition =
                         job::end_time.is_null().and(now.gt(job::max_end_time));
@@ -75,23 +75,23 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
             .await;
 
         match result {
-            Err(e) => Err(AppError::RepositoryError(e.to_string())),
+            Err(e) => Err(Error::RepositoryError(e.to_string())),
             Ok((monitor_datas, job_datas)) => Ok(job_datas
                 .grouped_by(&monitor_datas)
                 .into_iter()
                 .zip(monitor_datas)
                 .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
-                .collect::<Result<Vec<Monitor>, AppError>>()?),
+                .collect::<Result<Vec<Monitor>, Error>>()?),
         }
     }
 }
 
 #[async_trait]
 impl<'a> Get<Monitor> for MonitorRepository<'a> {
-    async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, AppError> {
+    async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, Error> {
         let result = self
             .db
-            .transaction::<Option<(MonitorData, Vec<JobData>)>, Error, _>(|conn| {
+            .transaction::<Option<(MonitorData, Vec<JobData>)>, DieselError, _>(|conn| {
                 Box::pin(async move {
                     let monitor_data = monitor::table
                         .select(MonitorData::as_select())
@@ -115,7 +115,7 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
             .await;
 
         match result {
-            Err(e) => Err(AppError::RepositoryError(e.to_string())),
+            Err(e) => Err(Error::RepositoryError(e.to_string())),
             Ok(None) => Ok(None),
             Ok(Some((monitor_data, job_datas))) => {
                 Ok(Some(self.db_to_monitor(monitor_data, job_datas)?))
@@ -126,10 +126,10 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
 
 #[async_trait]
 impl<'a> All<Monitor> for MonitorRepository<'a> {
-    async fn all(&mut self) -> Result<Vec<Monitor>, AppError> {
+    async fn all(&mut self) -> Result<Vec<Monitor>, Error> {
         let result = self
             .db
-            .transaction::<(Vec<MonitorData>, Vec<JobData>), Error, _>(|conn| {
+            .transaction::<(Vec<MonitorData>, Vec<JobData>), DieselError, _>(|conn| {
                 Box::pin(async move {
                     let all_monitor_data = monitor::dsl::monitor
                         .select(MonitorData::as_select())
@@ -148,27 +148,27 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
             .await;
 
         match result {
-            Err(e) => Err(AppError::RepositoryError(e.to_string())),
+            Err(e) => Err(Error::RepositoryError(e.to_string())),
             Ok((monitor_datas, job_datas)) => Ok(job_datas
                 .grouped_by(&monitor_datas)
                 .into_iter()
                 .zip(monitor_datas)
                 .map(|(job_datas, monitor_data)| self.db_to_monitor(monitor_data, job_datas))
-                .collect::<Result<Vec<Monitor>, AppError>>()?),
+                .collect::<Result<Vec<Monitor>, Error>>()?),
         }
     }
 }
 
 #[async_trait]
 impl<'a> Save<Monitor> for MonitorRepository<'a> {
-    async fn save(&mut self, monitor: &Monitor) -> Result<(), AppError> {
+    async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
         let cached_data = self.data.get(&monitor.monitor_id);
 
         // Clone the monitor and job data to avoid borrowing issues.
         // let (monitor_data_clone, job_datas_clone) = (monitor_data.clone(), job_datas.clone());
         let result = self
             .db
-            .transaction::<(MonitorData, Vec<JobData>), Error, _>(|conn| {
+            .transaction::<(MonitorData, Vec<JobData>), DieselError, _>(|conn| {
                 Box::pin(async move {
                     let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
                     if let Some(cached) = cached_data {
@@ -208,7 +208,7 @@ impl<'a> Save<Monitor> for MonitorRepository<'a> {
             .await;
 
         match result {
-            Err(e) => Err(AppError::RepositoryError(e.to_string())),
+            Err(e) => Err(Error::RepositoryError(e.to_string())),
             Ok((monitor_data, job_datas)) => {
                 self.data
                     .insert(monitor.monitor_id, (monitor_data, job_datas));
@@ -220,13 +220,13 @@ impl<'a> Save<Monitor> for MonitorRepository<'a> {
 
 #[async_trait]
 impl<'a> Delete<Monitor> for MonitorRepository<'a> {
-    async fn delete(&mut self, monitor: &Monitor) -> Result<(), AppError> {
+    async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
         let (monitor_data, _) = <(MonitorData, Vec<JobData>)>::from(monitor);
 
         let result = diesel::delete(&monitor_data).execute(self.db).await;
 
         match result {
-            Err(e) => Err(AppError::RepositoryError(e.to_string())),
+            Err(e) => Err(Error::RepositoryError(e.to_string())),
             Ok(_) => {
                 self.data.remove(&monitor.monitor_id);
                 Ok(())

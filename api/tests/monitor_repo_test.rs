@@ -7,7 +7,7 @@ use uuid::Uuid;
 use test_utils::{gen_datetime, gen_uuid};
 
 use cron_mon_api::domain::models::monitor::Monitor;
-use cron_mon_api::errors::AppError;
+use cron_mon_api::errors::Error;
 use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
 use cron_mon_api::infrastructure::repositories::monitor::GetWithLateJobs;
 use cron_mon_api::infrastructure::repositories::monitor_repo::MonitorRepository;
@@ -159,8 +159,6 @@ async fn test_loading_invalid_job() {
     // Ensure that the monitor is not returned.
     assert_eq!(
         monitor_result,
-        Err(AppError::InvalidJob(
-            "Job is in an invalid state".to_string()
-        ))
+        Err(Error::InvalidJob("Job is in an invalid state".to_string()))
     );
 }

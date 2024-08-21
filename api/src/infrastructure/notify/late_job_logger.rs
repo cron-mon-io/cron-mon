@@ -1,7 +1,7 @@
 use serde_json::json;
 
 use crate::domain::models::job::Job;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::logging::Logger;
 use crate::infrastructure::notify::NotifyLateJob;
 
@@ -16,7 +16,7 @@ impl<L: Logger> LateJobNotifer<L> {
 }
 
 impl<L: Logger> NotifyLateJob for LateJobNotifer<L> {
-    fn notify_late_job(&mut self, monitor_name: &str, late_job: &Job) -> Result<(), AppError> {
+    fn notify_late_job(&mut self, monitor_name: &str, late_job: &Job) -> Result<(), Error> {
         self.logger.info_with_context(
             format!("Job('{}') is late", late_job.job_id),
             json!({

@@ -1,5 +1,5 @@
 use crate::domain::models::monitor::Monitor;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::Save;
 
@@ -18,7 +18,7 @@ impl<T: Save<Monitor>, L: Logger> CreateMonitorService<T, L> {
         name: &String,
         expected_duration: i32,
         grace_duration: i32,
-    ) -> Result<Monitor, AppError> {
+    ) -> Result<Monitor, Error> {
         let mon = Monitor::new(name.clone(), expected_duration, grace_duration);
         self.repo.save(&mon).await?;
 

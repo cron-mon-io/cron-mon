@@ -1,5 +1,5 @@
 use crate::domain::models::monitor::Monitor;
-use crate::errors::AppError;
+use crate::errors::Error;
 use crate::infrastructure::repositories::All;
 
 pub struct FetchMonitorsService<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> {
@@ -15,7 +15,7 @@ impl<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a, T, F> 
         }
     }
 
-    pub async fn fetch_all(&mut self) -> Result<Vec<Monitor>, AppError> {
+    pub async fn fetch_all(&mut self) -> Result<Vec<Monitor>, Error> {
         let mut monitors = self.repo.all().await?;
 
         (self.order_monitors)(&mut monitors);
