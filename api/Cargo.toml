@@ -17,13 +17,13 @@ rocket_db_pools = { version = "0.2.0", features = ["diesel_postgres" ]}
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 signal-hook = "0.3.17"
-tokio = { version = "1.39.2", features = ["test-util"] }
+tokio = { version = "1.39.3", features = ["test-util"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["json"] }
 uuid = { version = "1.10.0", features = ["v4", "serde", "fast-rng", "macro-diagnostics"] }
 
 [dev-dependencies]
-rstest = "0.21.0"
+rstest = "0.22.0"
 pretty_assertions = "1.4.0"
 test-utils = { path = "test_utils" }
 tracing-test = "0.2.5"
