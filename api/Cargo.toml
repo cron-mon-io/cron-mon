@@ -31,6 +31,7 @@ pretty_assertions = "1.4.0"
 test-utils = { path = "test_utils" }
 tracing-test = "0.2.5"
 wiremock = "0.6.1"
+mockall = "0.13.0"
 
 [[bin]]
 name = "api"
