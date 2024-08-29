@@ -131,10 +131,10 @@ impl JwtAuthService {
 mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
     use moka::sync::Cache;
     use rstest::rstest;
     use serde_json::json;
+    use test_utils::{encode_jwt, RSA_EXPONENT, RSA_MODULUS};
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -143,59 +143,6 @@ mod tests {
 
     use super::{Jwk, Jwks, JwtAuthService};
 
-    // WARNING: This is a valid private key but it absolutely should not be used in production.
-    const DUMMY_PRIVATE_KEY: &str = "-----BEGIN RSA PRIVATE KEY-----\n\
-         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\n\
-         -----END RSA PRIVATE KEY-----";
-
     #[tokio::test]
     async fn test_decode_jwt_without_cached_jwk() {
         // WARNING: This is a valid JWK but it absolutely should not be used in production.
@@ -203,31 +150,15 @@ mod tests {
             kid: "DgdoxSuZTY1qxPoCQYjNU9sjzNrQN2-vbMDhWX0ZY9M".to_string(),
             kty: "RSA".to_string(),
             alg: "RS256".to_string(),
-            n: "r31yIMCMynfhVFbAu_oZvolDpPbUctgUtbq9pRhybGLHxSfGFYQBVJnJMRRclit_fninHBUeHpyqi_A0TUlJ8gg\
-                n73AaRYUFoMdczJQvCXZX0YS4vYQm0tSjnApg5bRHIpWCElu6oOKxWplYFQdLcv6ntGK9HfJG2eDU4wDAfyqBor\
-                is_0vkKvAtfMVuSwALFAnJhXLDugpmEE8x2SNMLzOkAPtVFEvK3bd8eC-0zEWHYMnd7uhyIshskUglqUDbY8V8h\
-                GLLvgvDlpMkBfUO_xyptabKRnftWNM40ZIVJp3GSkho3RsZILXfB8DS_2wzXR-vyTb4rugd2xDXGwlUb0pcv0_C\
-                TkTbnxT4lfLATzr_ddespiqQ6-BgGBuMPctlkeWSsvLNbB8BbWMkgkYfRnc69vDnaHvtd0eUU8fW8ct-JK2VL6C\
-                -ULh-qg3AWrznKLDmlx9XaFtfUWt-3AgEqPz8u3BnNtGLvDnVSLLqOM0dqmbji-x7ZUjf2pewO67SDkUWLosR6S\
-                WhLVjudA8xhmemFZT2PP97Rn6yo48WGtHDrYjL3uusqGA4CBiQOeJsMRvUrGAWVSWYSfjGHBc1jIARVC335i1jv\
-                BG9BpIryPY19_awFgIEnufAF_U2G1Ad_631nIckg6TUOW8cbQQcYh4uMGJalt6dQu0YOhUoXNE".to_string(),
-            e: "AQAB".to_string(),
+            n: RSA_MODULUS.to_string(),
+            e: RSA_EXPONENT.to_string(),
         };
 
         // We need to create a valid token for this test, because we need a real signature so that
         // jsonwebtoken can decode and verify it, and we need dynamic iat and exp otherwise
         // jsonwebtoken will reject it as expired.
         let original_jwt = setup_jwt();
-        let token = encode(
-            &Header {
-                alg: Algorithm::RS256,
-                kid: Some(jwk.kid.clone()),
-                ..Default::default()
-            },
-            &original_jwt,
-            &EncodingKey::from_rsa_pem(DUMMY_PRIVATE_KEY.as_bytes()).unwrap(),
-        )
-        .unwrap();
+        let token = encode_jwt(&jwk.kid, &original_jwt);
 
         // Mock the JWKS endpoint to return our dummy JWK.
         let mock_server = MockServer::start().await;
@@ -259,31 +190,15 @@ mod tests {
             kid: "DgdoxSuZTY1qxPoCQYjNU9sjzNrQN2-vbMDhWX0ZY9M".to_string(),
             kty: "RSA".to_string(),
             alg: "RS256".to_string(),
-            n: "r31yIMCMynfhVFbAu_oZvolDpPbUctgUtbq9pRhybGLHxSfGFYQBVJnJMRRclit_fninHBUeHpyqi_A0TUlJ8gg\
-                n73AaRYUFoMdczJQvCXZX0YS4vYQm0tSjnApg5bRHIpWCElu6oOKxWplYFQdLcv6ntGK9HfJG2eDU4wDAfyqBor\
-                is_0vkKvAtfMVuSwALFAnJhXLDugpmEE8x2SNMLzOkAPtVFEvK3bd8eC-0zEWHYMnd7uhyIshskUglqUDbY8V8h\
-                GLLvgvDlpMkBfUO_xyptabKRnftWNM40ZIVJp3GSkho3RsZILXfB8DS_2wzXR-vyTb4rugd2xDXGwlUb0pcv0_C\
-                TkTbnxT4lfLATzr_ddespiqQ6-BgGBuMPctlkeWSsvLNbB8BbWMkgkYfRnc69vDnaHvtd0eUU8fW8ct-JK2VL6C\
-                -ULh-qg3AWrznKLDmlx9XaFtfUWt-3AgEqPz8u3BnNtGLvDnVSLLqOM0dqmbji-x7ZUjf2pewO67SDkUWLosR6S\
-                WhLVjudA8xhmemFZT2PP97Rn6yo48WGtHDrYjL3uusqGA4CBiQOeJsMRvUrGAWVSWYSfjGHBc1jIARVC335i1jv\
-                BG9BpIryPY19_awFgIEnufAF_U2G1Ad_631nIckg6TUOW8cbQQcYh4uMGJalt6dQu0YOhUoXNE".to_string(),
-            e: "AQAB".to_string(),
+            n: RSA_MODULUS.to_string(),
+            e: RSA_EXPONENT.to_string(),
         };
 
         // We need to create a valid token for this test, because we need a real signature so that
         // jsonwebtoken can decode and verify it, and we need dynamic iat and exp otherwise
         // jsonwebtoken will reject it as expired.
         let original_jwt = setup_jwt();
-        let token = encode(
-            &Header {
-                alg: Algorithm::RS256,
-                kid: Some(jwk.kid.clone()),
-                ..Default::default()
-            },
-            &original_jwt,
-            &EncodingKey::from_rsa_pem(DUMMY_PRIVATE_KEY.as_bytes()).unwrap(),
-        )
-        .unwrap();
+        let token = encode_jwt(&jwk.kid, &original_jwt);
 
         // Setup a cache with the dummy JWK.
         let cache = Cache::new(10);
@@ -359,31 +274,15 @@ mod tests {
             kid: "DgdoxSuZTY1qxPoCQYjNU9sjzNrQN2-vbMDhWX0ZY9M".to_string(),
             kty: "RSA".to_string(),
             alg: "RS256".to_string(),
-            n: "r31yIMCMynfhVFbAu_oZvolDpPbUctgUtbq9pRhybGLHxSfGFYQBVJnJMRRclit_fninHBUeHpyqi_A0TUlJ8gg\
-                n73AaRYUFoMdczJQvCXZX0YS4vYQm0tSjnApg5bRHIpWCElu6oOKxWplYFQdLcv6ntGK9HfJG2eDU4wDAfyqBor\
-                is_0vkKvAtfMVuSwALFAnJhXLDugpmEE8x2SNMLzOkAPtVFEvK3bd8eC-0zEWHYMnd7uhyIshskUglqUDbY8V8h\
-                GLLvgvDlpMkBfUO_xyptabKRnftWNM40ZIVJp3GSkho3RsZILXfB8DS_2wzXR-vyTb4rugd2xDXGwlUb0pcv0_C\
-                TkTbnxT4lfLATzr_ddespiqQ6-BgGBuMPctlkeWSsvLNbB8BbWMkgkYfRnc69vDnaHvtd0eUU8fW8ct-JK2VL6C\
-                -ULh-qg3AWrznKLDmlx9XaFtfUWt-3AgEqPz8u3BnNtGLvDnVSLLqOM0dqmbji-x7ZUjf2pewO67SDkUWLosR6S\
-                WhLVjudA8xhmemFZT2PP97Rn6yo48WGtHDrYjL3uusqGA4CBiQOeJsMRvUrGAWVSWYSfjGHBc1jIARVC335i1jv\
-                BG9BpIryPY19_awFgIEnufAF_U2G1Ad_631nIckg6TUOW8cbQQcYh4uMGJalt6dQu0YOhUoXNE".to_string(),
-            e: "AQAB".to_string(),
+            n: RSA_MODULUS.to_string(),
+            e: RSA_EXPONENT.to_string(),
         };
 
         // We need to create a valid token for this test, because we need a real signature so that
         // jsonwebtoken can decode and verify it, and we need dynamic iat and exp otherwise
         // jsonwebtoken will reject it as expired.
         let original_jwt = setup_jwt();
-        let token = encode(
-            &Header {
-                alg: Algorithm::RS256,
-                kid: Some(jwk.kid.clone()),
-                ..Default::default()
-            },
-            &original_jwt,
-            &EncodingKey::from_rsa_pem(DUMMY_PRIVATE_KEY.as_bytes()).unwrap(),
-        )
-        .unwrap();
+        let token = encode_jwt(&jwk.kid, &original_jwt);
 
         let auth_service =
             JwtAuthService::new("http://localhost:1234/certs".to_string(), Cache::new(10));
