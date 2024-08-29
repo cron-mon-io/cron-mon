@@ -1,7 +1,6 @@
 use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
-use rocket::local::blocking::Client;
-use tokio;
+use rocket::local::asynchronous::Client;
 
 use test_utils::{gen_datetime, gen_uuid};
 
@@ -16,17 +15,13 @@ pub async fn setup_db() -> AsyncPgConnection {
     seed_db(&monitor_seeds, &job_seeds).await
 }
 
-pub fn get_test_client(seed_db: bool) -> Client {
+pub async fn get_test_client(seed_db: bool) -> Client {
     if seed_db {
-        tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .unwrap()
-            .block_on(async {
-                setup_db().await;
-            })
+        setup_db().await;
     }
-    Client::tracked(rocket()).expect("Invalid rocket instance")
+    Client::tracked(rocket())
+        .await
+        .expect("Invalid rocket instance")
 }
 
 pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>) {

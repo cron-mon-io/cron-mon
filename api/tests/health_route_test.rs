@@ -4,13 +4,13 @@ use rocket::http::{ContentType, Status};
 
 use common::get_test_client;
 
-#[test]
-fn test_get_health() {
-    let client = get_test_client(false);
+#[tokio::test]
+async fn test_get_health() {
+    let client = get_test_client(false).await;
 
-    let response = client.get("/api/v1/health").dispatch();
+    let response = client.get("/api/v1/health").dispatch().await;
 
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(response.content_type(), Some(ContentType::Plain));
-    assert_eq!(response.into_string().unwrap(), "pong");
+    assert_eq!(response.into_string().await.unwrap(), "pong");
 }

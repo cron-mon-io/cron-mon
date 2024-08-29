@@ -2,7 +2,7 @@ pub mod common;
 
 use pretty_assertions::assert_eq;
 use rocket::http::{ContentType, Status};
-use rocket::local::blocking::Client;
+use rocket::local::asynchronous::Client;
 use rstest::*;
 use serde_json::{json, Value};
 
@@ -10,21 +10,22 @@ use test_utils::{is_datetime, is_uuid};
 
 use common::get_test_client;
 
-#[test]
-fn test_get_job_when_job_exists() {
-    let client = get_test_client(true);
+#[tokio::test]
+async fn test_get_job_when_job_exists() {
+    let client = get_test_client(true).await;
 
     let response = client
         .get(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36\
             /jobs/9d4e2d69-af63-4c1e-8639-60cb2683aee5",
         )
-        .dispatch();
+        .dispatch()
+        .await;
 
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(response.content_type(), Some(ContentType::JSON));
 
-    let response_body = response.into_json::<Value>().unwrap();
+    let response_body = response.into_json::<Value>().await.unwrap();
     let job = &response_body["data"];
     assert_eq!(job["job_id"], "9d4e2d69-af63-4c1e-8639-60cb2683aee5");
     assert_eq!(job["start_time"].as_str().unwrap(), "2024-05-01T00:20:00");
@@ -36,20 +37,21 @@ fn test_get_job_when_job_exists() {
     assert_eq!(job["late"], true);
 }
 
-#[test]
-fn test_get_job_when_job_does_not_exist() {
-    let client = get_test_client(true);
+#[tokio::test]
+async fn test_get_job_when_job_does_not_exist() {
+    let client = get_test_client(true).await;
 
     let response = client
         .get(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36\
             /jobs/a74dfbda-5969-4645-ba64-c99f09f8b666",
         )
-        .dispatch();
+        .dispatch()
+        .await;
 
     assert_eq!(response.status(), Status::NotFound);
     assert_eq!(
-        response.into_json::<Value>().unwrap(),
+        response.into_json::<Value>().await.unwrap(),
         json!({
             "error": {
                 "code": 404,
@@ -61,27 +63,28 @@ fn test_get_job_when_job_does_not_exist() {
     );
 }
 
-#[test]
-fn test_start_job() {
-    let client = get_test_client(true);
+#[tokio::test]
+async fn test_start_job() {
+    let client = get_test_client(true).await;
 
     let response = client
         .post("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/start")
-        .dispatch();
+        .dispatch()
+        .await;
 
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(response.content_type(), Some(ContentType::JSON));
 
-    let response_body = response.into_json::<Value>().unwrap();
+    let response_body = response.into_json::<Value>().await.unwrap();
     let job = &response_body["data"];
     assert!(is_uuid(job["job_id"].as_str().unwrap()));
 }
 
-#[test]
-fn test_finish_job() {
-    let client = get_test_client(true);
+#[tokio::test]
+async fn test_finish_job() {
+    let client = get_test_client(true).await;
 
-    let job_finished = get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5");
+    let job_finished = get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5").await;
     assert_eq!(job_finished, false);
 
     let response = client
@@ -90,12 +93,13 @@ fn test_finish_job() {
             /jobs/9d4e2d69-af63-4c1e-8639-60cb2683aee5/finish",
         )
         .json(&json!({"succeeded": true, "output": "Test output"}))
-        .dispatch();
+        .dispatch()
+        .await;
 
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(response.content_type(), Some(ContentType::JSON));
 
-    let response_body = response.into_json::<Value>().unwrap();
+    let response_body = response.into_json::<Value>().await.unwrap();
     let job = &response_body["data"];
     assert_eq!(job["job_id"], "9d4e2d69-af63-4c1e-8639-60cb2683aee5");
     assert_eq!(job["start_time"].as_str().unwrap(), "2024-05-01T00:20:00");
@@ -107,7 +111,7 @@ fn test_finish_job() {
     assert_eq!(job["late"], true);
 
     // Ensure this has persisted.
-    let job_finished = get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5");
+    let job_finished = get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5").await;
     assert_eq!(job_finished, true);
 }
 
@@ -129,13 +133,13 @@ fn test_finish_job() {
                         Monitor('c1bf0515-df39-448b-aa95-686360a33b36')"
     }
 }))]
-#[test]
-fn test_finish_job_errors(
+#[tokio::test]
+async fn test_finish_job_errors(
     #[case] job_id: &str,
     #[case] expected_status: Status,
     #[case] expected_body: Value,
 ) {
-    let client = get_test_client(true);
+    let client = get_test_client(true).await;
 
     let response = client
         .post(format!(
@@ -143,21 +147,23 @@ fn test_finish_job_errors(
             job_id
         ))
         .json(&json!({"succeeded": true, "output": "Test output"}))
-        .dispatch();
+        .dispatch()
+        .await;
 
     assert_eq!(response.status(), expected_status);
-    assert_eq!(response.into_json::<Value>().unwrap(), expected_body);
+    assert_eq!(response.into_json::<Value>().await.unwrap(), expected_body);
 }
 
-pub fn get_job_finished(client: &Client, job_id: &str) -> bool {
+pub async fn get_job_finished(client: &Client, job_id: &str) -> bool {
     let response = client
         .get(format!(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/{}",
             job_id
         ))
-        .dispatch();
+        .dispatch()
+        .await;
 
-    let response_body = response.into_json::<Value>().unwrap();
+    let response_body = response.into_json::<Value>().await.unwrap();
     let in_progress = &response_body["data"]["in_progress"].as_bool().unwrap();
     !in_progress
 }
