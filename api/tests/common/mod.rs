@@ -1,9 +1,16 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
+use rocket::http::Header;
 use rocket::local::asynchronous::Client;
+use serde_json::json;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use test_utils::{gen_datetime, gen_uuid};
+use test_utils::{encode_jwt, gen_datetime, gen_uuid, RSA_EXPONENT, RSA_MODULUS};
 
+use cron_mon_api::infrastructure::auth::Jwt;
 use cron_mon_api::infrastructure::database::establish_connection;
 use cron_mon_api::infrastructure::db_schema::job;
 use cron_mon_api::infrastructure::db_schema::monitor;
@@ -15,13 +22,16 @@ pub async fn setup_db() -> AsyncPgConnection {
     seed_db(&monitor_seeds, &job_seeds).await
 }
 
-pub async fn get_test_client(seed_db: bool) -> Client {
+pub async fn get_test_client(kid: &str, seed_db: bool) -> (MockServer, Client) {
+    let mock_server = setup_mock_jwks_server(kid).await;
     if seed_db {
         setup_db().await;
     }
-    Client::tracked(rocket())
+    let client = Client::tracked(rocket())
         .await
-        .expect("Invalid rocket instance")
+        .expect("Invalid rocket instance");
+
+    (mock_server, client)
 }
 
 pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>) {
@@ -120,4 +130,56 @@ pub async fn seed_db(
         .expect("Failed to seed jobs");
 
     conn
+}
+
+pub fn create_auth_header<'a>(kid: &str, name: &str, tenant: &str) -> Header<'a> {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    Header::new(
+        "Authorization",
+        format!(
+            "Bearer {}",
+            encode_jwt(
+                &kid.to_string(),
+                &Jwt {
+                    acr: "acr".to_string(),
+                    azp: "azp".to_string(),
+                    iss: "iss".to_string(),
+                    jti: "jti".to_string(),
+                    iat: now,
+                    auth_time: now,
+                    exp: now + 3600,
+                    sub: "test-user".to_string(),
+                    name: name.to_string(),
+                    tenant: tenant.to_string(),
+                }
+            )
+        ),
+    )
+}
+
+async fn setup_mock_jwks_server(kid: &str) -> MockServer {
+    let mock_server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/certs"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "keys": [
+                {
+                    "kid": kid.to_string(),
+                    "kty": "RSA".to_string(),
+                    "alg": "RS256".to_string(),
+                    "n": RSA_MODULUS.to_string(),
+                    "e": RSA_EXPONENT.to_string(),
+                }
+            ]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    std::env::set_var("KEYCLOAK_CERTS_URL", format!("{}/certs", mock_server.uri()));
+
+    mock_server
 }

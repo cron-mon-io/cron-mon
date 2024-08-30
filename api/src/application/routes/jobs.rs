@@ -9,6 +9,7 @@ use crate::application::services::{
     get_fetch_job_service, get_finish_job_service, get_start_job_service,
 };
 use crate::errors::Error;
+use crate::infrastructure::auth::Jwt;
 use crate::infrastructure::database::Db;
 
 #[derive(Deserialize)]
@@ -20,6 +21,7 @@ pub struct FinishJobInfo {
 #[rocket::get("/monitors/<monitor_id>/jobs/<job_id>")]
 pub async fn get_job(
     mut connection: Connection<Db>,
+    _jwt: Jwt,
     monitor_id: Uuid,
     job_id: Uuid,
 ) -> Result<Value, Error> {

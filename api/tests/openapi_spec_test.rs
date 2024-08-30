@@ -6,7 +6,7 @@ use common::get_test_client;
 
 #[tokio::test]
 async fn test_get_docs_openapi_yaml() {
-    let client = get_test_client(false).await;
+    let (_, client) = get_test_client("test-kid", false).await;
 
     let response = client.get("/api/v1/docs/openapi.yaml").dispatch().await;
 

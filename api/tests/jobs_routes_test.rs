@@ -8,17 +8,18 @@ use serde_json::{json, Value};
 
 use test_utils::{is_datetime, is_uuid};
 
-use common::get_test_client;
+use common::{create_auth_header, get_test_client};
 
 #[tokio::test]
 async fn test_get_job_when_job_exists() {
-    let client = get_test_client(true).await;
+    let (_mock_server, client) = get_test_client("test-kid", true).await;
 
     let response = client
         .get(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36\
             /jobs/9d4e2d69-af63-4c1e-8639-60cb2683aee5",
         )
+        .header(create_auth_header("test-kid", "test-user", "foo"))
         .dispatch()
         .await;
 
@@ -39,13 +40,14 @@ async fn test_get_job_when_job_exists() {
 
 #[tokio::test]
 async fn test_get_job_when_job_does_not_exist() {
-    let client = get_test_client(true).await;
+    let (_mock_server, client) = get_test_client("test-kid", true).await;
 
     let response = client
         .get(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36\
             /jobs/a74dfbda-5969-4645-ba64-c99f09f8b666",
         )
+        .header(create_auth_header("test-kid", "test-user", "foo"))
         .dispatch()
         .await;
 
@@ -65,7 +67,7 @@ async fn test_get_job_when_job_does_not_exist() {
 
 #[tokio::test]
 async fn test_start_job() {
-    let client = get_test_client(true).await;
+    let (_, client) = get_test_client("test-kid", true).await;
 
     let response = client
         .post("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/start")
@@ -82,7 +84,7 @@ async fn test_start_job() {
 
 #[tokio::test]
 async fn test_finish_job() {
-    let client = get_test_client(true).await;
+    let (_mock_server, client) = get_test_client("test-kid", true).await;
 
     let job_finished = get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5").await;
     assert_eq!(job_finished, false);
@@ -139,7 +141,7 @@ async fn test_finish_job_errors(
     #[case] expected_status: Status,
     #[case] expected_body: Value,
 ) {
-    let client = get_test_client(true).await;
+    let (_, client) = get_test_client("test-kid", true).await;
 
     let response = client
         .post(format!(
@@ -160,6 +162,7 @@ pub async fn get_job_finished(client: &Client, job_id: &str) -> bool {
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/{}",
             job_id
         ))
+        .header(create_auth_header("test-kid", "test-user", "foo"))
         .dispatch()
         .await;
 
