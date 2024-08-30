@@ -21,7 +21,7 @@ unit-test:
 # Note that running this locally will re-seed your local DB so you'll lose
 # everything in there currently.
 integration-tests:
-	cargo test --no-fail-fast --test "*" -- --test-threads=1
+	cargo test --no-fail-fast --jobs=5 --test "*" -- --test-threads=1
 
 # This will also re-seed your local DB, as it effectively runs *all* tests.
 test-coverage:

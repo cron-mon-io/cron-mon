@@ -39,7 +39,7 @@ services:
   integration-tests-rs:
     extends: rust-cargo
     container_name: rust-integration-tests
-    command: cargo test --no-fail-fast --test "*" -- --test-threads=1
+    command: cargo test --no-fail-fast --jobs=5 --test "*" -- --test-threads=1
     networks:
       - default
       - cron-mon-network
