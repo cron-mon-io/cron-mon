@@ -286,7 +286,7 @@ async fn test_delete_monitor_deletes(
 async fn get_num_monitors(kid: &str, tenant: &str, client: &Client) -> i64 {
     let response = client
         .get("/api/v1/monitors")
-        .header(create_auth_header(&kid.to_string(), "test-user", tenant))
+        .header(create_auth_header(kid, "test-user", tenant))
         .dispatch()
         .await;
     let body = response.into_json::<Value>().await.unwrap();
@@ -296,7 +296,7 @@ async fn get_num_monitors(kid: &str, tenant: &str, client: &Client) -> i64 {
 async fn get_monitor(kid: &str, tenant: &str, client: &Client) -> Value {
     let response = client
         .get("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36")
-        .header(create_auth_header(&kid.to_string(), "test-user", tenant))
+        .header(create_auth_header(kid, "test-user", tenant))
         .dispatch()
         .await;
 

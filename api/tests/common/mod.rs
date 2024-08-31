@@ -143,7 +143,7 @@ pub fn create_auth_header<'a>(kid: &str, name: &str, tenant: &str) -> Header<'a>
         format!(
             "Bearer {}",
             encode_jwt(
-                &kid.to_string(),
+                kid,
                 &Jwt {
                     acr: "acr".to_string(),
                     azp: "azp".to_string(),
