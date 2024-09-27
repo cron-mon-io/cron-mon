@@ -34,8 +34,9 @@ impl JwtAuth for JwtAuthService {
         let kid = self.get_kid(token)?;
 
         let decoding_key = self.get_decoding_key(&kid).await?;
-        match jsonwebtoken::decode::<Jwt>(token, &decoding_key, &Validation::new(Algorithm::RS256))
-        {
+        let mut validator = Validation::new(Algorithm::RS256);
+        validator.set_audience(&["cron-mon"]);
+        match jsonwebtoken::decode::<Jwt>(token, &decoding_key, &validator) {
             Ok(token_data) => Ok(token_data.claims),
             Err(e) => match e.kind() {
                 jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
