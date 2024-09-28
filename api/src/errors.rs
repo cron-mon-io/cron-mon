@@ -11,6 +11,8 @@ pub enum Error {
     JobAlreadyFinished(Uuid),
     InvalidMonitor(String),
     InvalidJob(String),
+    Unauthorized(String),
+    AuthenticationError(String),
 }
 
 impl Display for Error {
@@ -31,6 +33,8 @@ impl Display for Error {
             }
             Self::InvalidMonitor(reason) => write!(f, "Invalid Monitor: {reason}"),
             Self::InvalidJob(reason) => write!(f, "Invalid Job: {reason}"),
+            Self::Unauthorized(reason) => write!(f, "Unauthorized: {reason}"),
+            Self::AuthenticationError(reason) => write!(f, "Authentication error: {reason}"),
         }
     }
 }

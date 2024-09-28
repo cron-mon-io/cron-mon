@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"]}
+jsonwebtoken = "9.3.0"
+serde = "1.0"
 uuid = { version = "1.8.0", features = ["v4", "serde", "fast-rng", "macro-diagnostics"] }

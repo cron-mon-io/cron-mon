@@ -4,15 +4,16 @@ use rocket::http::Status;
 
 use common::get_test_client;
 
-#[test]
-fn test_get_docs_openapi_yaml() {
-    let client = get_test_client(false);
+#[tokio::test]
+async fn test_get_docs_openapi_yaml() {
+    let (_, client) = get_test_client("test-kid", false).await;
 
-    let response = client.get("/api/v1/docs/openapi.yaml").dispatch();
+    let response = client.get("/api/v1/docs/openapi.yaml").dispatch().await;
 
     assert_eq!(response.status(), Status::Ok);
     assert!(response
         .into_string()
+        .await
         .unwrap()
         .contains("title: CronMon API"));
 }
