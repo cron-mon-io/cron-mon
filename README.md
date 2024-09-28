@@ -113,7 +113,7 @@ images are available for use on GitHub Container Registry, at `ghcr.io/cron-mon-
 
 If you do what to deploy CronMon, there are a couple of prerequisite requirements:
 
-> [!INFO]
+> [!NOTE]
 > It is a conscious design decision for CronMon not to manage its own infrastructural dependencies.
 > Whilst it's acknowledged that this puts more onus on the user, we believe that the benefits
 > outweigh the drawbacks here, since it gives users far more control over how not just CronMon is
@@ -160,6 +160,6 @@ and custom SPIs to allow for _teams_ or _organisations_ to be setup and members 
 Exactly what users do here is entirely up to them - as is the choice between single and multi
 tenancy.
 
-> [!INFO]
+> [!NOTE]
 > This is a good example of the benefits, that come with CronMon not managing it's own supporting
 infrastructure, that outweigh the drawbacks!
