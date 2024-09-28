@@ -12,7 +12,7 @@ CronMon is a tool for monitoring cronjobs (or _tasks_ of a similar nature), writ
 created for two reasons:
 
 1. Curiosity as to whether or not Rust was a good choice of language for building web services and
-   APIs, and how well Domain Driven Design could be applied in that context.
+   APIs, and how well Domain Driven Design fits with the language.
 2. A need to monitor numerous cronjobs, but nothing to justify spending money on one of the
    pre-existing soloutions.
 
@@ -108,4 +108,58 @@ The following commands are present in both `Makefile`s:
 
 ## Deployment
 
-CronMon currently isn't deployed anywhere, but this may change in the future.
+CronMon currently isn't deployed anywhere, but this may change in the future. However, its container
+images are available for use on GitHub Container Registry, at `ghcr.io/cron-mon-io/cron-mon`.
+
+If you do what to deploy CronMon, there are a couple of prerequisite requirements:
+
+> ![INFO]
+> It is a conscious design decision for CronMon not to manage its own infrastructural dependencies.
+> Whilst it's acknowledged that this puts more onus on the user, we believe that the benefits
+> outweigh the drawbacks here, since it gives users far more control over how not just CronMon is
+> setup and deployed, but also it's supporting infrastructure. It also allows for faster CronMon
+> development in offloading infrastructure concerns outside of CronMon's responsibility.
+
+### Data Persistence
+
+CronMon uses a Postgres database for data persistence, so you'll need to setup a Postgres instance
+and expose the connection string in an environment variables called `DATABASE_URL`. From here,
+CronMon will handle setting up the required tables and performing migrations, but you will have to
+handle database upgrades and general maintenance yourself.
+
+### Authentication
+
+CronMon uses Keycloak for JWT authentication, so you'll also need to setup a Keycloak server, which
+requires a little bit more work than the Postgres database. The only configuration CronMon requires
+itself for this is to expose the OpenID Connect certificate URL in an environment variable called
+`KEYCLOAK_CERTS_URL`. The rest of the configuration lies within Keyclaok itself:
+
+1. Create a token mapper that includes `cron-mon` as an audience via the `aud` claim. This allows
+   you to use client roles from different clients whilst still identifying tokens as intended for
+   CronMon. If you get authentication errors with `AuthenticationError("InvalidAudience")` errors in
+   the logs, then this mapper is missing or setup incorrectly.
+2. Create a token mapper that adds a `tenant` claim. The value that should be contained here depends
+   on if you need multi-tenancy or single-tenancy. More on this in the next section.
+
+#### Multi and Single Tenancy
+
+CronMon supports both single-tenant and multi-tenant authentication. This is controlled via the
+`tenant` claim in the JWT, which is ultimately used to decide who _owns_ Monitors when they are
+created, and which Monitors end-users can see when viewing them.
+
+Single-tenancy is the most simple to setup - simply setup a token mapper in the Keycloak admin
+console that sets the value to something unique about each user, such as their email address or
+username.
+
+Multi-tenancy requires a little bit more work, but still requires a token mapper, only this time the
+value of the `tenant` claim should be set to something that groups users together. Exactly how users
+are grouped is up to the user, and must also be implemented by them. For example, you could simply
+take the domain of the end-user's email address during signup, which would be relatively straight
+forward. On the other end of the spectrum, you could setup custom registration flows within Keycloak
+and custom SPIs to allow for _teams_ or _organisations_ to be setup and members invited to them.
+Exactly what users do here is entirely up to them - as is the choice between single and multi
+tenancy.
+
+> ![INFO]
+> This is a good example of the benefits, that come with CronMon not managing it's own supporting
+infrastructure, that outweigh the drawbacks!
