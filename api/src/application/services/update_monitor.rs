@@ -63,9 +63,7 @@ mod tests {
     use std::collections::HashMap;
 
     use pretty_assertions::assert_eq;
-    use rstest::*;
-    use serde_json::json;
-    use tokio::test;
+    use rstest::{fixture, rstest};
     use uuid::Uuid;
 
     use test_utils::gen_uuid;
@@ -87,7 +85,7 @@ mod tests {
     }
 
     #[rstest]
-    #[test]
+    #[tokio::test]
     async fn test_update_monitor_service(mut data: HashMap<Uuid, Monitor>) {
         let monitor_before: Monitor;
         {

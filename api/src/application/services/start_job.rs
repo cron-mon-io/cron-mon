@@ -39,8 +39,7 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> StartJobService<T, L> {
 mod tests {
     use std::collections::HashMap;
 
-    use rstest::*;
-    use tokio::test;
+    use rstest::{fixture, rstest};
     use uuid::Uuid;
 
     use test_utils::gen_uuid;
@@ -62,7 +61,7 @@ mod tests {
     }
 
     #[rstest]
-    #[test]
+    #[tokio::test]
     async fn test_start_job_service(mut data: HashMap<Uuid, Monitor>) {
         let monitor_before: Monitor;
         {
@@ -115,7 +114,7 @@ mod tests {
     }
 
     #[rstest]
-    #[test]
+    #[tokio::test]
     async fn test_start_job_service_error_handling(mut data: HashMap<Uuid, Monitor>) {
         let mut log_messages = vec![];
         let mut service = StartJobService::new(

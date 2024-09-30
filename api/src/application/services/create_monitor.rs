@@ -36,7 +36,6 @@ mod tests {
     use std::collections::HashMap;
 
     use rstest::{fixture, rstest};
-    use tokio::test;
     use uuid::Uuid;
 
     use crate::domain::models::monitor::Monitor;
@@ -52,7 +51,7 @@ mod tests {
     }
 
     #[rstest]
-    #[test]
+    #[tokio::test]
     async fn test_create_monitor_service(mut data: HashMap<Uuid, Monitor>) {
         {
             let mut repo = TestRepository::new(&mut data);

@@ -42,7 +42,6 @@ mod tests {
     use std::collections::HashMap;
 
     use rstest::{fixture, rstest};
-    use tokio;
     use uuid::Uuid;
 
     use test_utils::{gen_relative_datetime, gen_uuid};

@@ -35,8 +35,7 @@ mod tests {
     use std::collections::HashMap;
 
     use pretty_assertions::assert_eq;
-    use rstest::*;
-    use tokio;
+    use rstest::{fixture, rstest};
     use uuid::Uuid;
 
     use test_utils::{gen_datetime, gen_uuid};

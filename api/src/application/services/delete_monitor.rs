@@ -32,8 +32,7 @@ impl<T: Get<Monitor> + Delete<Monitor>, L: Logger> DeleteMonitorService<T, L> {
 mod tests {
     use std::collections::HashMap;
 
-    use rstest::*;
-    use tokio::test;
+    use rstest::{fixture, rstest};
     use uuid::Uuid;
 
     use test_utils::gen_uuid;
@@ -56,7 +55,7 @@ mod tests {
     }
 
     #[rstest]
-    #[test]
+    #[tokio::test]
     async fn test_delete_monitor_service(mut data: HashMap<Uuid, Monitor>) {
         {
             let mut repo = TestRepository::new(&mut data);
