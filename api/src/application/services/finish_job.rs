@@ -1,19 +1,18 @@
+use tracing::{error, info};
 use uuid::Uuid;
 
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::{Get, Save};
 
-pub struct FinishJobService<T: Get<Monitor> + Save<Monitor>, L: Logger> {
+pub struct FinishJobService<T: Get<Monitor> + Save<Monitor>> {
     repo: T,
-    logger: L,
 }
 
-impl<T: Get<Monitor> + Save<Monitor>, L: Logger> FinishJobService<T, L> {
-    pub fn new(repo: T, logger: L) -> Self {
-        Self { repo, logger }
+impl<T: Get<Monitor> + Save<Monitor>> FinishJobService<T> {
+    pub fn new(repo: T) -> Self {
+        Self { repo }
     }
 
     pub async fn finish_job_for_monitor(
@@ -34,17 +33,14 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> FinishJobService<T, L> {
 
                     self.repo.save(&monitor).await?;
 
-                    self.logger.info(format!(
-                        "Finished Monitor('{}') Job('{}')",
-                        monitor_id, job_id
-                    ));
+                    info!("Finished Monitor('{}') Job('{}')", monitor_id, job_id);
                     Ok(job)
                 }
                 Err(e) => {
-                    self.logger.error(format!(
+                    error!(
                         "Error finishing Monitor('{}') Job('{}'): {:?}",
                         monitor.monitor_id, job_id, e
-                    ));
+                    );
                     Err(e)
                 }
             },
@@ -58,11 +54,12 @@ mod tests {
     use std::collections::HashMap;
 
     use rstest::{fixture, rstest};
+    use tracing_test::traced_test;
     use uuid::Uuid;
 
+    use test_utils::logging::TracingLog;
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{Error, FinishJobService, Get, Job, Monitor};
@@ -98,6 +95,7 @@ mod tests {
     }
 
     #[rstest]
+    #[traced_test]
     #[tokio::test(start_paused = true)]
     async fn test_finish_job_service(mut data: HashMap<Uuid, Monitor>) {
         {
@@ -112,11 +110,7 @@ mod tests {
         }
 
         {
-            let mut log_messages = vec![];
-            let mut service = FinishJobService::new(
-                TestRepository::new(&mut data),
-                TestLogger::new(&mut log_messages),
-            );
+            let mut service = FinishJobService::new(TestRepository::new(&mut data));
             let output = Some("Job complete".to_owned());
             let job = service
                 .finish_job_for_monitor(
@@ -130,14 +124,17 @@ mod tests {
 
             assert!(!job.in_progress());
             assert_eq!(job.duration(), Some(320));
-            assert_eq!(
-                log_messages,
-                vec![TestLogRecord {
-                    level: TestLogLevel::Info,
-                    message: "Finished Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') Job('01a92c6c-6803-409d-b675-022fff62575a')".to_owned(),
-                    context: None
-                }]
-            )
+
+            logs_assert(|logs| {
+                let logs = TracingLog::from_logs(logs);
+                assert_eq!(logs.len(), 1);
+                assert_eq!(logs[0].level, tracing::Level::INFO);
+                assert_eq!(
+                    logs[0].body,
+                    "Finished Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') Job('01a92c6c-6803-409d-b675-022fff62575a')"
+                );
+                Ok(())
+            });
         }
 
         {
@@ -153,57 +150,94 @@ mod tests {
     }
 
     #[rstest]
-    // Monitor not found.
-    #[case(
-        gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"),
-        gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-        Err(Error::MonitorNotFound(gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"))),
-        vec![],
-    )]
-    // Job not found.
-    #[case(
-        gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-        gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"),
-        Err(Error::JobNotFound(
+    #[traced_test]
+    #[tokio::test]
+    async fn test_monitor_not_found(mut data: HashMap<Uuid, Monitor>) {
+        assert_finish_job_result(
+            &mut data,
+            gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"),
+            gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+            Err(Error::MonitorNotFound(gen_uuid(
+                "4bdb6a32-2994-4139-947c-9dc1d7b66f55",
+            ))),
+        )
+        .await;
+
+        logs_assert(|logs| {
+            assert!(logs.is_empty());
+            Ok(())
+        });
+    }
+
+    #[rstest]
+    #[traced_test]
+    #[tokio::test]
+    async fn test_job_not_found(mut data: HashMap<Uuid, Monitor>) {
+        assert_finish_job_result(
+            &mut data,
             gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-            gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55")
-        )),
-        vec![TestLogRecord {
-            level: TestLogLevel::Error,
-            message: "Error finishing Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') Job('4bdb6a32-2994-4139-947c-9dc1d7b66f55'): JobNotFound(41ebffb4-a188-48e9-8ec1-61380085cde3, 4bdb6a32-2994-4139-947c-9dc1d7b66f55)".to_owned(),
-            context: None
-        }]
-    )]
-    // Job already finished.
-    #[case(
-        gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-        gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1"),
-        Err(Error::JobAlreadyFinished(gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1"))),
-        vec![TestLogRecord {
-            level: TestLogLevel::Error,
-            message: "Error finishing Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') Job('47609d30-7184-46c8-b741-0a27e7f51af1'): JobAlreadyFinished(47609d30-7184-46c8-b741-0a27e7f51af1)".to_owned(),
-            context: None
-        }]
-    )]
-    #[tokio::test(start_paused = true)]
-    async fn test_finish_job_service_error_handling(
-        mut data: HashMap<Uuid, Monitor>,
-        #[case] monitor_id: Uuid,
-        #[case] job_id: Uuid,
-        #[case] expected: Result<Job, Error>,
-        #[case] expected_logs: Vec<TestLogRecord>,
+            gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"),
+            Err(Error::JobNotFound(
+                gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                gen_uuid("4bdb6a32-2994-4139-947c-9dc1d7b66f55"),
+            )),
+        )
+        .await;
+
+        logs_assert(|logs| {
+            let logs = TracingLog::from_logs(logs);
+            assert_eq!(logs.len(), 1);
+            assert_eq!(logs[0].level, tracing::Level::ERROR);
+            assert_eq!(
+                logs[0].body,
+                "Error finishing Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') \
+                Job('4bdb6a32-2994-4139-947c-9dc1d7b66f55'): \
+                JobNotFound(41ebffb4-a188-48e9-8ec1-61380085cde3, 4bdb6a32-2994-4139-947c-9dc1d7b66f55)"
+            );
+            Ok(())
+        });
+    }
+
+    #[rstest]
+    #[traced_test]
+    #[tokio::test]
+    async fn test_job_already_finished(mut data: HashMap<Uuid, Monitor>) {
+        assert_finish_job_result(
+            &mut data,
+            gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+            gen_uuid("47609d30-7184-46c8-b741-0a27e7f51af1"),
+            Err(Error::JobAlreadyFinished(gen_uuid(
+                "47609d30-7184-46c8-b741-0a27e7f51af1",
+            ))),
+        )
+        .await;
+
+        logs_assert(|logs| {
+            let logs = TracingLog::from_logs(logs);
+            assert_eq!(logs.len(), 1);
+            assert_eq!(logs[0].level, tracing::Level::ERROR);
+            assert_eq!(
+                logs[0].body,
+                "Error finishing Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') \
+                Job('47609d30-7184-46c8-b741-0a27e7f51af1'): \
+                JobAlreadyFinished(47609d30-7184-46c8-b741-0a27e7f51af1)"
+            );
+            Ok(())
+        });
+    }
+
+    async fn assert_finish_job_result(
+        data: &mut HashMap<Uuid, Monitor>,
+        monitor_id: Uuid,
+        job_id: Uuid,
+        expected: Result<Job, Error>,
     ) {
-        let mut log_messages = vec![];
-        let mut service = FinishJobService::new(
-            TestRepository::new(&mut data),
-            TestLogger::new(&mut log_messages),
-        );
+        let mut service = FinishJobService::new(TestRepository::new(data));
         let output = Some("Job complete".to_owned());
         let result = service
             .finish_job_for_monitor(monitor_id, job_id, true, &output)
             .await;
 
         assert_eq!(result, expected);
-        assert_eq!(log_messages, expected_logs);
     }
 }

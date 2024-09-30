@@ -26,14 +26,14 @@ use update_monitor::UpdateMonitorService;
 
 pub fn get_create_monitor_service(
     connection: &mut AsyncPgConnection,
-) -> CreateMonitorService<MonitorRepository, TracingLogger> {
-    CreateMonitorService::new(MonitorRepository::new(connection), TracingLogger::new())
+) -> CreateMonitorService<MonitorRepository> {
+    CreateMonitorService::new(MonitorRepository::new(connection))
 }
 
 pub fn get_delete_monitor_service(
     connection: &mut AsyncPgConnection,
-) -> DeleteMonitorService<MonitorRepository, TracingLogger> {
-    DeleteMonitorService::new(MonitorRepository::new(connection), TracingLogger::new())
+) -> DeleteMonitorService<MonitorRepository> {
+    DeleteMonitorService::new(MonitorRepository::new(connection))
 }
 
 pub fn get_fetch_job_service(
@@ -53,19 +53,18 @@ pub fn get_fetch_monitors_service(
 
 pub fn get_finish_job_service(
     connection: &mut AsyncPgConnection,
-) -> FinishJobService<MonitorRepository, TracingLogger> {
-    FinishJobService::new(MonitorRepository::new(connection), TracingLogger::new())
+) -> FinishJobService<MonitorRepository> {
+    FinishJobService::new(MonitorRepository::new(connection))
 }
 
 // #[coverage(off)] We need to comment this out for now as this feature isn't stable yet.
 // See https://github.com/rust-lang/rust/issues/84605
 pub fn get_process_late_jobs_service(
     connection: &mut AsyncPgConnection,
-) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer<TracingLogger>, TracingLogger> {
+) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer<TracingLogger>> {
     ProcessLateJobsService::new(
         MonitorRepository::new(connection),
         LateJobNotifer::new(TracingLogger::new()),
-        TracingLogger::new(),
     )
 }
 // #[coverage(on)] We won't need this once the feature is stable, but for now we're using these as
@@ -73,12 +72,12 @@ pub fn get_process_late_jobs_service(
 
 pub fn get_start_job_service(
     connection: &mut AsyncPgConnection,
-) -> StartJobService<MonitorRepository, TracingLogger> {
-    StartJobService::new(MonitorRepository::new(connection), TracingLogger::new())
+) -> StartJobService<MonitorRepository> {
+    StartJobService::new(MonitorRepository::new(connection))
 }
 
 pub fn get_update_monitor_service(
     connection: &mut AsyncPgConnection,
-) -> UpdateMonitorService<MonitorRepository, TracingLogger> {
-    UpdateMonitorService::new(MonitorRepository::new(connection), TracingLogger::new())
+) -> UpdateMonitorService<MonitorRepository> {
+    UpdateMonitorService::new(MonitorRepository::new(connection))
 }

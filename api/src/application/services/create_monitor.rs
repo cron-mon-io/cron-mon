@@ -1,16 +1,16 @@
+use tracing::info;
+
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::Save;
 
-pub struct CreateMonitorService<T: Save<Monitor>, L: Logger> {
+pub struct CreateMonitorService<T: Save<Monitor>> {
     repo: T,
-    logger: L,
 }
 
-impl<T: Save<Monitor>, L: Logger> CreateMonitorService<T, L> {
-    pub fn new(repo: T, logger: L) -> Self {
-        Self { repo, logger }
+impl<T: Save<Monitor>> CreateMonitorService<T> {
+    pub fn new(repo: T) -> Self {
+        Self { repo }
     }
 
     pub async fn create_by_attributes(
@@ -22,10 +22,10 @@ impl<T: Save<Monitor>, L: Logger> CreateMonitorService<T, L> {
         let mon = Monitor::new(name.clone(), expected_duration, grace_duration);
         self.repo.save(&mon).await?;
 
-        self.logger.info(format!(
+        info!(
             "Created new Monitor - name: '{}', expected_duration: {}, grace_duration: {}",
             &name, &expected_duration, &grace_duration
-        ));
+        );
 
         Ok(mon)
     }
@@ -36,10 +36,12 @@ mod tests {
     use std::collections::HashMap;
 
     use rstest::{fixture, rstest};
+    use tracing_test::traced_test;
     use uuid::Uuid;
 
+    use test_utils::logging::TracingLog;
+
     use crate::domain::models::monitor::Monitor;
-    use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::TestRepository;
     use crate::infrastructure::repositories::All;
 
@@ -51,6 +53,7 @@ mod tests {
     }
 
     #[rstest]
+    #[traced_test]
     #[tokio::test]
     async fn test_create_monitor_service(mut data: HashMap<Uuid, Monitor>) {
         {
@@ -61,11 +64,7 @@ mod tests {
 
         let new_monitor: Monitor;
         {
-            let mut log_messages = vec![];
-            let mut service = CreateMonitorService::new(
-                TestRepository::new(&mut data),
-                TestLogger::new(&mut log_messages),
-            );
+            let mut service = CreateMonitorService::new(TestRepository::new(&mut data));
             let new_monitor_result = service
                 .create_by_attributes(&"foo".to_owned(), 3_600, 300)
                 .await;
@@ -73,14 +72,16 @@ mod tests {
             assert!(new_monitor_result.is_ok());
             new_monitor = new_monitor_result.unwrap();
 
-            assert_eq!(
-                log_messages,
-                vec![TestLogRecord {
-                    level: TestLogLevel::Info,
-                    message: "Created new Monitor - name: 'foo', expected_duration: 3600, grace_duration: 300".to_owned(),
-                    context: None
-                }]
-            )
+            logs_assert(|logs| {
+                let logs = TracingLog::from_logs(logs);
+                assert_eq!(logs.len(), 1);
+                assert_eq!(logs[0].level, tracing::Level::INFO);
+                assert_eq!(
+                    logs[0].body,
+                    "Created new Monitor - name: 'foo', expected_duration: 3600, grace_duration: 300"
+                );
+                Ok(())
+            });
         }
 
         {

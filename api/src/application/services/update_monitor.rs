@@ -1,19 +1,17 @@
-use serde_json::json;
+use tracing::info;
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::{Get, Save};
 
-pub struct UpdateMonitorService<T: Get<Monitor> + Save<Monitor>, L: Logger> {
+pub struct UpdateMonitorService<T: Get<Monitor> + Save<Monitor>> {
     repo: T,
-    logger: L,
 }
 
-impl<T: Get<Monitor> + Save<Monitor>, L: Logger> UpdateMonitorService<T, L> {
-    pub fn new(repo: T, logger: L) -> Self {
-        Self { repo, logger }
+impl<T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<T> {
+    pub fn new(repo: T) -> Self {
+        Self { repo }
     }
 
     pub async fn update_by_id(
@@ -35,20 +33,10 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> UpdateMonitorService<T, L> {
                 monitor.edit_details(new_name.to_owned(), new_expected, new_grace);
 
                 self.repo.save(&monitor).await?;
-                self.logger.info_with_context(
-                    format!("Modified Monitor('{}'", &monitor.monitor_id),
-                    json!({
-                        "original_values": {
-                            "name": original_values.0,
-                            "expected_duration": original_values.1,
-                            "grace_duration": original_values.2
-                        },
-                        "new_values": {
-                            "name": monitor.name,
-                            "expected_duration": monitor.expected_duration,
-                            "grace_duration": monitor.grace_duration
-                        }
-                    }),
+                info!(
+                    original_values = ?original_values,
+                    new_values = ?monitor,
+                    "Modified Monitor('{}'", &monitor.monitor_id
                 );
 
                 Ok(monitor)
@@ -64,11 +52,12 @@ mod tests {
 
     use pretty_assertions::assert_eq;
     use rstest::{fixture, rstest};
+    use tracing_test::traced_test;
     use uuid::Uuid;
 
     use test_utils::gen_uuid;
+    use test_utils::logging::TracingLog;
 
-    use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{Error, Get, Monitor, UpdateMonitorService};
@@ -85,6 +74,7 @@ mod tests {
     }
 
     #[rstest]
+    #[traced_test]
     #[tokio::test]
     async fn test_update_monitor_service(mut data: HashMap<Uuid, Monitor>) {
         let monitor_before: Monitor;
@@ -98,11 +88,7 @@ mod tests {
 
         let monitor: Monitor;
         {
-            let mut log_messages = vec![];
-            let mut service = UpdateMonitorService::new(
-                TestRepository::new(&mut data),
-                TestLogger::new(&mut log_messages),
-            );
+            let mut service = UpdateMonitorService::new(TestRepository::new(&mut data));
 
             let should_be_err = service
                 .update_by_id(
@@ -129,25 +115,23 @@ mod tests {
                 .await
                 .unwrap();
 
-            assert_eq!(
-                log_messages,
-                vec![TestLogRecord {
-                    level: TestLogLevel::Info,
-                    message: "Modified Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3'".to_owned(),
-                    context: Some(json!({
-                        "original_values": {
-                            "name": "foo",
-                            "expected_duration": 300,
-                            "grace_duration": 100
-                        },
-                        "new_values": {
-                            "name": "new-name",
-                            "expected_duration": 600,
-                            "grace_duration": 200
-                        }
-                    }))
-                }]
-            );
+            logs_assert(|logs| {
+                let logs = TracingLog::from_logs(logs);
+                assert_eq!(logs.len(), 1);
+                assert_eq!(logs[0].level, tracing::Level::INFO);
+                assert_eq!(
+                    logs[0].body,
+                    "Modified Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3' \
+                    original_values=(\"foo\", 300, 100) \
+                    new_values=Monitor { \
+                    monitor_id: 41ebffb4-a188-48e9-8ec1-61380085cde3, \
+                    name: \"new-name\", \
+                    expected_duration: 600, \
+                    grace_duration: 200, \
+                    jobs: [] }"
+                );
+                Ok(())
+            });
         }
 
         let monitor_after: Monitor;
