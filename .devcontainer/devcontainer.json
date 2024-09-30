@@ -6,7 +6,6 @@
     "target": "builder"
   },
   "containerEnv": {
-    "RUST_BACKTRACE": "full",
     "DATABASE_URL": "postgres://cron-mon-api:itsasecret@host.docker.internal:54320/cron-mon",
     "ROCKET_PROFILE": "vscode",
     "CARGO_HOME": "${containerWorkspaceFolder}/.cargo"
