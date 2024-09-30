@@ -2340,6 +2340,7 @@ dependencies = [
  "chrono",
  "jsonwebtoken",
  "serde",
+ "tracing",
  "uuid",
 ]
 
