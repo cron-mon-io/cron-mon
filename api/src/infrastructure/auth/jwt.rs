@@ -97,7 +97,6 @@ impl JwtAuthService {
     }
 
     async fn fetch_jwks(&self) -> Result<Jwks, Error> {
-        // TODO: Pass logger through.
         info!("Fetching JWKS from: {}", &self.certs_url);
         let response = self
             .client
@@ -137,14 +136,18 @@ mod tests {
     use rstest::rstest;
     use serde_json::json;
     use test_utils::{encode_jwt, RSA_EXPONENT, RSA_MODULUS};
+    use tracing_test::traced_test;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    use test_utils::logging::TracingLog;
 
     use crate::errors::Error;
     use crate::infrastructure::auth::{Jwt, JwtAuth};
 
     use super::{Jwk, Jwks, JwtAuthService};
 
+    #[traced_test]
     #[tokio::test]
     async fn test_decode_jwt_without_cached_jwk() {
         // WARNING: This is a valid JWK but it absolutely should not be used in production.
@@ -180,11 +183,26 @@ mod tests {
         let jwt = auth_service.decode_jwt(&token).await;
         assert_eq!(jwt, Ok(original_jwt));
 
+        // We should have fetched the JWK.
+        let received_requests = mock_server.received_requests().await.unwrap();
+        assert_eq!(received_requests.len(), 1);
+        assert_eq!(received_requests[0].url.path(), "/certs");
+        logs_assert(|logs| {
+            let logs = TracingLog::from_logs(logs);
+            assert_eq!(logs.len(), 1);
+            assert_eq!(
+                logs[0].body,
+                format!("Fetching JWKS from: {}/certs", mock_server.uri())
+            );
+            Ok(())
+        });
+
         // We should have cached the JWK.
         let cached_jwk = cache.get(&jwk.kid);
         assert!(cached_jwk.is_some());
     }
 
+    #[traced_test]
     #[tokio::test]
     async fn test_decode_jwt_with_cached_jwk() {
         // WARNING: This is a valid JWK but it absolutely should not be used in production.
@@ -208,6 +226,12 @@ mod tests {
 
         let auth_service =
             JwtAuthService::new("http://127.0.0.1:1234/certs".to_string(), cache.clone());
+
+        // We should have not fetched the JWK.
+        logs_assert(|logs| {
+            assert!(logs.is_empty());
+            Ok(())
+        });
 
         // Decode the token - we should get the original JWT back.
         let jwt = auth_service.decode_jwt(&token).await;
