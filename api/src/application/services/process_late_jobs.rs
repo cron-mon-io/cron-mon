@@ -1,28 +1,21 @@
+use tracing::info;
+
 use crate::errors::Error;
-use crate::infrastructure::logging::Logger;
 use crate::infrastructure::notify::NotifyLateJob;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
 
-pub struct ProcessLateJobsService<Repo: GetWithLateJobs, Notifier: NotifyLateJob, Log: Logger> {
+pub struct ProcessLateJobsService<Repo: GetWithLateJobs, Notifier: NotifyLateJob> {
     repo: Repo,
     notifier: Notifier,
-    logger: Log,
 }
 
-impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob, Log: Logger>
-    ProcessLateJobsService<Repo, Notifier, Log>
-{
-    pub fn new(repo: Repo, notifier: Notifier, logger: Log) -> Self {
-        Self {
-            repo,
-            notifier,
-            logger,
-        }
+impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo, Notifier> {
+    pub fn new(repo: Repo, notifier: Notifier) -> Self {
+        Self { repo, notifier }
     }
 
     pub async fn process_late_jobs(&mut self) -> Result<(), Error> {
-        self.logger
-            .info("Beginning check for late Jobs...".to_owned());
+        info!("Beginning check for late Jobs...");
         let monitors_with_late_jobs = self.repo.get_with_late_jobs().await?;
 
         for mon in &monitors_with_late_jobs {
@@ -31,8 +24,7 @@ impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob, Log: Logger>
             }
         }
 
-        self.logger
-            .info("Check for late Jobs complete\n".to_owned());
+        info!("Check for late Jobs complete");
         Ok(())
     }
 }
@@ -42,14 +34,14 @@ mod tests {
     use std::collections::HashMap;
 
     use rstest::{fixture, rstest};
-    use tokio;
+    use tracing_test::traced_test;
     use uuid::Uuid;
 
+    use test_utils::logging::TracingLog;
     use test_utils::{gen_relative_datetime, gen_uuid};
 
     use crate::domain::models::{job::Job, monitor::Monitor};
     use crate::errors::Error;
-    use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{NotifyLateJob, ProcessLateJobsService};
@@ -143,15 +135,14 @@ mod tests {
     }
 
     #[rstest]
+    #[traced_test]
     #[tokio::test(start_paused = true)]
     async fn test_process_late_jobs_service(mut data: HashMap<Uuid, Monitor>) {
         let mut lates = vec![];
-        let mut log_messages = vec![];
         {
             let mut service = ProcessLateJobsService::new(
                 TestRepository::new(&mut data),
                 FakeJobNotifier::new(&mut lates),
-                TestLogger::new(&mut log_messages),
             );
 
             let result = service.process_late_jobs().await;
@@ -182,20 +173,14 @@ mod tests {
             ]
         );
 
-        assert_eq!(
-            log_messages,
-            vec![
-                TestLogRecord {
-                    level: TestLogLevel::Info,
-                    message: "Beginning check for late Jobs...".to_owned(),
-                    context: None
-                },
-                TestLogRecord {
-                    level: TestLogLevel::Info,
-                    message: "Check for late Jobs complete\n".to_owned(),
-                    context: None
-                },
-            ]
-        );
+        logs_assert(|logs| {
+            let logs = TracingLog::from_logs(logs);
+            assert_eq!(logs.len(), 2);
+            assert_eq!(logs[0].level, tracing::Level::INFO);
+            assert_eq!(logs[0].body, "Beginning check for late Jobs...");
+            assert_eq!(logs[1].level, tracing::Level::INFO);
+            assert_eq!(logs[1].body, "Check for late Jobs complete");
+            Ok(())
+        });
     }
 }

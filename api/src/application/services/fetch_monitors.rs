@@ -28,8 +28,7 @@ impl<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a, T, F> 
 mod tests {
     use std::collections::HashMap;
 
-    use rstest::*;
-    use tokio::test;
+    use rstest::{fixture, rstest};
     use uuid::Uuid;
 
     use test_utils::gen_uuid;
@@ -70,7 +69,7 @@ mod tests {
     }
 
     #[rstest]
-    #[test]
+    #[tokio::test]
     async fn test_fetch_job_service(mut data: HashMap<Uuid, Monitor>) {
         let mut service =
             FetchMonitorsService::new(TestRepository::new(&mut data), &order_monitors);

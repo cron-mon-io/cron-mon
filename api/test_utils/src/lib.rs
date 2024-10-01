@@ -1,3 +1,5 @@
+pub mod logging;
+
 use std::str::FromStr;
 
 use chrono::{Duration, NaiveDateTime, Utc};

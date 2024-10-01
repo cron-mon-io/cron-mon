@@ -1,19 +1,18 @@
+use tracing::info;
 use uuid::Uuid;
 
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::logging::Logger;
 use crate::infrastructure::repositories::{Get, Save};
 
-pub struct StartJobService<T: Get<Monitor> + Save<Monitor>, L: Logger> {
+pub struct StartJobService<T: Get<Monitor> + Save<Monitor>> {
     repo: T,
-    logger: L,
 }
 
-impl<T: Get<Monitor> + Save<Monitor>, L: Logger> StartJobService<T, L> {
-    pub fn new(repo: T, logger: L) -> Self {
-        Self { repo, logger }
+impl<T: Get<Monitor> + Save<Monitor>> StartJobService<T> {
+    pub fn new(repo: T) -> Self {
+        Self { repo }
     }
 
     pub async fn start_job_for_monitor(&mut self, monitor_id: Uuid) -> Result<Job, Error> {
@@ -24,10 +23,12 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> StartJobService<T, L> {
                 let job = monitor.start_job()?;
                 self.repo.save(monitor).await?;
 
-                self.logger.info(format!(
-                    "Started Monitor('{}') job - job_id: '{}'",
-                    monitor_id, job.job_id
-                ));
+                info!(
+                    monitor_id = monitor_id.to_string(),
+                    job_id = job.job_id.to_string(),
+                    "Started job for Monitor('{}')",
+                    monitor.name,
+                );
                 Ok(job)
             }
             None => Err(Error::MonitorNotFound(monitor_id)),
@@ -39,13 +40,13 @@ impl<T: Get<Monitor> + Save<Monitor>, L: Logger> StartJobService<T, L> {
 mod tests {
     use std::collections::HashMap;
 
-    use rstest::*;
-    use tokio::test;
+    use rstest::{fixture, rstest};
+    use tracing_test::traced_test;
     use uuid::Uuid;
 
     use test_utils::gen_uuid;
+    use test_utils::logging::TracingLog;
 
-    use crate::infrastructure::logging::test_logger::{TestLogLevel, TestLogRecord, TestLogger};
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
     use super::{Error, Get, Monitor, StartJobService};
@@ -62,7 +63,8 @@ mod tests {
     }
 
     #[rstest]
-    #[test]
+    #[traced_test]
+    #[tokio::test]
     async fn test_start_job_service(mut data: HashMap<Uuid, Monitor>) {
         let monitor_before: Monitor;
         {
@@ -77,25 +79,29 @@ mod tests {
         let num_in_progress_jobs_before = monitor_before.jobs_in_progress().len();
 
         {
-            let mut log_messages = vec![];
-            let mut service = StartJobService::new(
-                TestRepository::new(&mut data),
-                TestLogger::new(&mut log_messages),
-            );
+            let mut service = StartJobService::new(TestRepository::new(&mut data));
             let job = service
                 .start_job_for_monitor(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
                 .await
                 .unwrap();
 
             assert!(job.in_progress());
-            assert_eq!(
-                log_messages,
-                vec![TestLogRecord {
-                    level: TestLogLevel::Info,
-                    message: format!("Started Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') job - job_id: '{}'", job.job_id),
-                    context: None
-                }]
-            )
+
+            logs_assert(|logs| {
+                let logs = TracingLog::from_logs(logs);
+                assert_eq!(logs.len(), 1);
+                assert_eq!(logs[0].level, tracing::Level::INFO);
+                assert_eq!(
+                    logs[0].body,
+                    format!(
+                        "Started job for Monitor('foo') \
+                        monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\" \
+                        job_id=\"{}\"",
+                        job.job_id
+                    ),
+                );
+                Ok(())
+            });
         }
 
         let monitor_after: Monitor;
@@ -115,17 +121,18 @@ mod tests {
     }
 
     #[rstest]
-    #[test]
+    #[traced_test]
+    #[tokio::test]
     async fn test_start_job_service_error_handling(mut data: HashMap<Uuid, Monitor>) {
-        let mut log_messages = vec![];
-        let mut service = StartJobService::new(
-            TestRepository::new(&mut data),
-            TestLogger::new(&mut log_messages),
-        );
+        let mut service = StartJobService::new(TestRepository::new(&mut data));
 
         let non_existent_id = gen_uuid("01a92c6c-6803-409d-b675-022fff62575a");
         let start_result = service.start_job_for_monitor(non_existent_id).await;
         assert_eq!(start_result, Err(Error::MonitorNotFound(non_existent_id)));
-        assert!(log_messages.is_empty());
+
+        logs_assert(|logs| {
+            assert!(logs.is_empty());
+            Ok(())
+        });
     }
 }
