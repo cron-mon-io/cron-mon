@@ -24,8 +24,10 @@ impl<T: Get<Monitor> + Save<Monitor>> StartJobService<T> {
                 self.repo.save(monitor).await?;
 
                 info!(
-                    "Started Monitor('{}') job - job_id: '{}'",
-                    monitor_id, job.job_id
+                    monitor_id = monitor_id.to_string(),
+                    job_id = job.job_id.to_string(),
+                    "Started job for Monitor('{}')",
+                    monitor.name,
                 );
                 Ok(job)
             }
@@ -92,9 +94,11 @@ mod tests {
                 assert_eq!(
                     logs[0].body,
                     format!(
-                        "Started Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') job - job_id: '{}'",
+                        "Started job for Monitor('foo') \
+                        monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\" \
+                        job_id=\"{}\"",
                         job.job_id
-                    )
+                    ),
                 );
                 Ok(())
             });

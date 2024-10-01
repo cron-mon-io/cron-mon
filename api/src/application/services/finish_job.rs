@@ -33,13 +33,16 @@ impl<T: Get<Monitor> + Save<Monitor>> FinishJobService<T> {
 
                     self.repo.save(&monitor).await?;
 
-                    info!("Finished Monitor('{}') Job('{}')", monitor_id, job_id);
+                    info!(
+                        monitor_id = monitor_id.to_string(),
+                        "Finished Job('{}')", job_id
+                    );
                     Ok(job)
                 }
                 Err(e) => {
                     error!(
-                        "Error finishing Monitor('{}') Job('{}'): {:?}",
-                        monitor.monitor_id, job_id, e
+                        monitor_id = monitor_id.to_string(),
+                        "Error finishing Job('{}'): {:?}", job_id, e
                     );
                     Err(e)
                 }
@@ -131,7 +134,8 @@ mod tests {
                 assert_eq!(logs[0].level, tracing::Level::INFO);
                 assert_eq!(
                     logs[0].body,
-                    "Finished Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') Job('01a92c6c-6803-409d-b675-022fff62575a')"
+                    "Finished Job('01a92c6c-6803-409d-b675-022fff62575a') \
+                    monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\""
                 );
                 Ok(())
             });
@@ -190,9 +194,10 @@ mod tests {
             assert_eq!(logs[0].level, tracing::Level::ERROR);
             assert_eq!(
                 logs[0].body,
-                "Error finishing Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') \
-                Job('4bdb6a32-2994-4139-947c-9dc1d7b66f55'): \
-                JobNotFound(41ebffb4-a188-48e9-8ec1-61380085cde3, 4bdb6a32-2994-4139-947c-9dc1d7b66f55)"
+                "Error finishing Job('4bdb6a32-2994-4139-947c-9dc1d7b66f55'): \
+                JobNotFound(41ebffb4-a188-48e9-8ec1-61380085cde3, \
+                4bdb6a32-2994-4139-947c-9dc1d7b66f55) \
+                monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\""
             );
             Ok(())
         });
@@ -218,9 +223,9 @@ mod tests {
             assert_eq!(logs[0].level, tracing::Level::ERROR);
             assert_eq!(
                 logs[0].body,
-                "Error finishing Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') \
-                Job('47609d30-7184-46c8-b741-0a27e7f51af1'): \
-                JobAlreadyFinished(47609d30-7184-46c8-b741-0a27e7f51af1)"
+                "Error finishing Job('47609d30-7184-46c8-b741-0a27e7f51af1'): \
+                JobAlreadyFinished(47609d30-7184-46c8-b741-0a27e7f51af1) \
+                monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\""
             );
             Ok(())
         });

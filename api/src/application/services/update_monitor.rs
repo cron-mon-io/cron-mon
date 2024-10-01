@@ -31,12 +31,18 @@ impl<T: Get<Monitor> + Save<Monitor>> UpdateMonitorService<T> {
                     monitor.grace_duration,
                 );
                 monitor.edit_details(new_name.to_owned(), new_expected, new_grace);
+                let new_values = (
+                    monitor.name.clone(),
+                    monitor.expected_duration,
+                    monitor.grace_duration,
+                );
 
                 self.repo.save(&monitor).await?;
                 info!(
+                    monitor_id = monitor.monitor_id.to_string(),
                     original_values = ?original_values,
-                    new_values = ?monitor,
-                    "Modified Monitor('{}'", &monitor.monitor_id
+                    new_values = ?new_values,
+                    "Modified Monitor('{}')", &monitor.name
                 );
 
                 Ok(monitor)
@@ -121,14 +127,10 @@ mod tests {
                 assert_eq!(logs[0].level, tracing::Level::INFO);
                 assert_eq!(
                     logs[0].body,
-                    "Modified Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3' \
+                    "Modified Monitor('new-name') \
+                    monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\" \
                     original_values=(\"foo\", 300, 100) \
-                    new_values=Monitor { \
-                    monitor_id: 41ebffb4-a188-48e9-8ec1-61380085cde3, \
-                    name: \"new-name\", \
-                    expected_duration: 600, \
-                    grace_duration: 200, \
-                    jobs: [] }"
+                    new_values=(\"new-name\", 600, 200)"
                 );
                 Ok(())
             });

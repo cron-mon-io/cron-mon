@@ -23,8 +23,11 @@ impl<T: Save<Monitor>> CreateMonitorService<T> {
         self.repo.save(&mon).await?;
 
         info!(
+            monitor_id = mon.monitor_id.to_string(),
             "Created new Monitor - name: '{}', expected_duration: {}, grace_duration: {}",
-            &name, &expected_duration, &grace_duration
+            &name,
+            &expected_duration,
+            &grace_duration
         );
 
         Ok(mon)
@@ -76,9 +79,14 @@ mod tests {
                 let logs = TracingLog::from_logs(logs);
                 assert_eq!(logs.len(), 1);
                 assert_eq!(logs[0].level, tracing::Level::INFO);
+
                 assert_eq!(
                     logs[0].body,
-                    "Created new Monitor - name: 'foo', expected_duration: 3600, grace_duration: 300"
+                    format!(
+                        "Created new Monitor - name: 'foo', expected_duration: 3600, \
+                        grace_duration: 300 monitor_id=\"{}\"",
+                        new_monitor.monitor_id
+                    )
                 );
                 Ok(())
             });

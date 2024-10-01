@@ -18,7 +18,10 @@ impl<T: Get<Monitor> + Delete<Monitor>> DeleteMonitorService<T> {
         let monitor = self.repo.get(monitor_id).await?;
         if let Some(mon) = monitor {
             self.repo.delete(&mon).await?;
-            info!("Deleted Monitor('{}')", &monitor_id);
+            info!(
+                monitor_id = monitor_id.to_string(),
+                "Deleted Monitor('{}')", &mon.name
+            );
             Ok(())
         } else {
             Err(Error::MonitorNotFound(monitor_id))
@@ -81,7 +84,7 @@ mod tests {
                 assert_eq!(logs[0].level, tracing::Level::INFO);
                 assert_eq!(
                     logs[0].body,
-                    "Deleted Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3')"
+                    "Deleted Monitor('foo') monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\""
                 );
                 Ok(())
             });
