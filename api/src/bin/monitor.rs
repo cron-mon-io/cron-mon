@@ -2,10 +2,11 @@ use std::future::Future;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+use tracing::error;
+
 use cron_mon_api::application::services::get_process_late_jobs_service;
 use cron_mon_api::infrastructure::database::establish_connection;
-use cron_mon_api::infrastructure::logging::tracing_logger::TracingLogger;
-use cron_mon_api::infrastructure::logging::Logger;
+use cron_mon_api::infrastructure::logging::init_logging;
 
 async fn run_periodically<F, Fut>(seconds: u64, func: F)
 where
@@ -26,19 +27,18 @@ where
 
 #[tokio::main]
 async fn main() {
-    TracingLogger::init_subscriber();
+    init_logging();
 
     run_periodically(10, || async move {
-        let mut logger = TracingLogger::new();
         match establish_connection().await {
             Ok(mut db) => {
                 let mut service = get_process_late_jobs_service(&mut db);
 
                 if let Err(error) = service.process_late_jobs().await {
-                    logger.error(format!("Error processing late jobs: {:?}", error));
+                    error!("Error processing late jobs: {:?}", error);
                 }
             }
-            Err(error) => logger.error(format!("Error establishing connection: {:?}", error)),
+            Err(error) => error!("Error establishing connection: {:?}", error),
         }
     })
     .await;

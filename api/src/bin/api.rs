@@ -1,10 +1,10 @@
 #[macro_use]
 extern crate rocket;
 
-use cron_mon_api::infrastructure::logging::tracing_logger::TracingLogger;
+use cron_mon_api::infrastructure::logging::init_logging;
 
 #[launch]
 fn rocket() -> _ {
-    TracingLogger::init_subscriber();
+    init_logging();
     cron_mon_api::rocket()
 }
