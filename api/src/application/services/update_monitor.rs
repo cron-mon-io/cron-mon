@@ -54,102 +54,103 @@ impl<T: Repository<Monitor>> UpdateMonitorService<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
+    use mockall::predicate::*;
     use pretty_assertions::assert_eq;
-    use rstest::{fixture, rstest};
     use tracing_test::traced_test;
-    use uuid::Uuid;
 
     use test_utils::gen_uuid;
     use test_utils::logging::TracingLog;
 
-    use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
+    use crate::infrastructure::repositories::MockRepository;
 
-    use super::{Error, Monitor, Repository, UpdateMonitorService};
+    use super::{Error, Monitor, UpdateMonitorService};
 
-    #[fixture]
-    fn data() -> HashMap<Uuid, Monitor> {
-        to_hashmap(vec![Monitor {
-            monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-            name: "foo".to_owned(),
-            expected_duration: 300,
-            grace_duration: 100,
-            jobs: vec![],
-        }])
-    }
-
-    #[rstest]
     #[traced_test]
     #[tokio::test]
-    async fn test_update_monitor_service(mut data: HashMap<Uuid, Monitor>) {
-        let monitor_before: Monitor;
-        {
-            monitor_before = TestRepository::new(&mut data)
-                .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
-                .await
-                .unwrap()
-                .unwrap();
-        }
-
-        let monitor: Monitor;
-        {
-            let mut service = UpdateMonitorService::new(TestRepository::new(&mut data));
-
-            let should_be_err = service
-                .update_by_id(
-                    gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                    "new-name",
-                    600,
-                    200,
-                )
-                .await;
-            assert_eq!(
-                should_be_err,
-                Err(Error::MonitorNotFound(gen_uuid(
-                    "01a92c6c-6803-409d-b675-022fff62575a"
-                )))
-            );
-
-            monitor = service
-                .update_by_id(
-                    gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-                    "new-name",
-                    600,
-                    200,
-                )
-                .await
-                .unwrap();
-
-            logs_assert(|logs| {
-                let logs = TracingLog::from_logs(logs);
-                assert_eq!(logs.len(), 1);
-                assert_eq!(logs[0].level, tracing::Level::INFO);
-                assert_eq!(
-                    logs[0].body,
-                    "Modified Monitor('new-name') \
-                    monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\" \
-                    original_values=(\"foo\", 300, 100) \
-                    new_values=(\"new-name\", 600, 200)"
-                );
-                Ok(())
+    async fn test_update_monitor_service() {
+        let mut mock = MockRepository::new();
+        mock.expect_get()
+            .once()
+            .with(eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")))
+            .returning(|_| {
+                Ok(Some(Monitor {
+                    monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                    name: "foo".to_owned(),
+                    expected_duration: 300,
+                    grace_duration: 100,
+                    jobs: vec![],
+                }))
             });
-        }
+        mock.expect_save()
+            .once()
+            .withf(|monitor: &Monitor| {
+                monitor.monitor_id == gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
+                    && monitor.name == "new-name"
+                    && monitor.expected_duration == 600
+                    && monitor.grace_duration == 200
+            })
+            .returning(|_| Ok(()));
 
-        let monitor_after: Monitor;
-        {
-            monitor_after = TestRepository::new(&mut data)
-                .get(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
-                .await
-                .unwrap()
-                .unwrap();
-        }
+        let mut service = UpdateMonitorService::new(mock);
 
-        assert_eq!(monitor.name, "new-name".to_owned());
-        assert_eq!(monitor.expected_duration, 600);
-        assert_eq!(monitor.grace_duration, 200);
+        let monitor_result = service
+            .update_by_id(
+                gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                "new-name",
+                600,
+                200,
+            )
+            .await;
 
-        assert_eq!(monitor, monitor_after);
-        assert_ne!(monitor, monitor_before);
+        assert_eq!(
+            monitor_result,
+            Ok(Monitor {
+                monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                name: "new-name".to_owned(),
+                expected_duration: 600,
+                grace_duration: 200,
+                jobs: vec![],
+            })
+        );
+
+        logs_assert(|logs| {
+            let logs = TracingLog::from_logs(logs);
+            assert_eq!(logs.len(), 1);
+            assert_eq!(logs[0].level, tracing::Level::INFO);
+            assert_eq!(
+                logs[0].body,
+                "Modified Monitor('new-name') \
+                monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\" \
+                original_values=(\"foo\", 300, 100) \
+                new_values=(\"new-name\", 600, 200)"
+            );
+            Ok(())
+        });
+    }
+
+    #[tokio::test]
+    async fn test_update_monitor_when_monitor_doesnt_exist() {
+        let mut mock = MockRepository::new();
+        mock.expect_get()
+            .once()
+            .with(eq(gen_uuid("01a92c6c-6803-409d-b675-022fff62575a")))
+            .returning(|_| Ok(None));
+
+        let mut service = UpdateMonitorService::new(mock);
+
+        let should_be_err = service
+            .update_by_id(
+                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                "new-name",
+                600,
+                200,
+            )
+            .await;
+        assert_eq!(
+            should_be_err,
+            Err(Error::MonitorNotFound(gen_uuid(
+                "01a92c6c-6803-409d-b675-022fff62575a"
+            )))
+        );
     }
 }

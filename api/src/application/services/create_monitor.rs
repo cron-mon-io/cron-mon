@@ -36,67 +36,48 @@ impl<T: Repository<Monitor>> CreateMonitorService<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
-    use rstest::{fixture, rstest};
     use tracing_test::traced_test;
-    use uuid::Uuid;
 
     use test_utils::logging::TracingLog;
 
     use crate::domain::models::monitor::Monitor;
-    use crate::infrastructure::repositories::test_repo::TestRepository;
-    use crate::infrastructure::repositories::Repository;
+    use crate::infrastructure::repositories::MockRepository;
 
     use super::CreateMonitorService;
 
-    #[fixture]
-    fn data() -> HashMap<Uuid, Monitor> {
-        HashMap::new()
-    }
-
-    #[rstest]
     #[traced_test]
     #[tokio::test]
-    async fn test_create_monitor_service(mut data: HashMap<Uuid, Monitor>) {
-        {
-            let mut repo = TestRepository::new(&mut data);
-            let monitors_before = repo.all().await.unwrap();
-            assert_eq!(monitors_before.len(), 0);
-        }
+    async fn test_create_monitor_service() {
+        let mut mock = MockRepository::new();
+        mock.expect_save()
+            .once()
+            .withf(|mon: &Monitor| {
+                mon.name == "foo" && mon.expected_duration == 3_600 && mon.grace_duration == 300
+            })
+            .returning(|_| Ok(()));
 
-        let new_monitor: Monitor;
-        {
-            let mut service = CreateMonitorService::new(TestRepository::new(&mut data));
-            let new_monitor_result = service
-                .create_by_attributes(&"foo".to_owned(), 3_600, 300)
-                .await;
+        let mut service = CreateMonitorService::new(mock);
+        let new_monitor_result = service
+            .create_by_attributes(&"foo".to_owned(), 3_600, 300)
+            .await;
 
-            assert!(new_monitor_result.is_ok());
-            new_monitor = new_monitor_result.unwrap();
+        assert!(new_monitor_result.is_ok());
+        let new_monitor = new_monitor_result.unwrap();
 
-            logs_assert(|logs| {
-                let logs = TracingLog::from_logs(logs);
-                assert_eq!(logs.len(), 1);
-                assert_eq!(logs[0].level, tracing::Level::INFO);
+        logs_assert(|logs| {
+            let logs = TracingLog::from_logs(logs);
+            assert_eq!(logs.len(), 1);
+            assert_eq!(logs[0].level, tracing::Level::INFO);
 
-                assert_eq!(
-                    logs[0].body,
-                    format!(
-                        "Created new Monitor - name: 'foo', expected_duration: 3600, \
-                        grace_duration: 300 monitor_id=\"{}\"",
-                        new_monitor.monitor_id
-                    )
-                );
-                Ok(())
-            });
-        }
-
-        {
-            let mut repo = TestRepository::new(&mut data);
-            let monitors_after = repo.all().await.unwrap();
-            assert_eq!(monitors_after.len(), 1);
-            assert_eq!(monitors_after[0], new_monitor);
-        }
+            assert_eq!(
+                logs[0].body,
+                format!(
+                    "Created new Monitor - name: 'foo', expected_duration: 3600, \
+                    grace_duration: 300 monitor_id=\"{}\"",
+                    new_monitor.monitor_id
+                )
+            );
+            Ok(())
+        });
     }
 }

@@ -31,9 +31,6 @@ impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
-    use rstest::{fixture, rstest};
     use tracing_test::traced_test;
     use uuid::Uuid;
 
@@ -42,7 +39,7 @@ mod tests {
 
     use crate::domain::models::{job::Job, monitor::Monitor};
     use crate::errors::Error;
-    use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
+    use crate::infrastructure::repositories::monitor::MockGetWithLateJobs;
 
     use super::{NotifyLateJob, ProcessLateJobsService};
 
@@ -62,86 +59,69 @@ mod tests {
             Ok(())
         }
     }
-
-    #[fixture]
-    fn data() -> HashMap<Uuid, Monitor> {
-        to_hashmap(vec![
-            Monitor {
-                monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-                name: "background-task.sh".to_owned(),
-                expected_duration: 300,
-                grace_duration: 100,
-                jobs: vec![
-                    Job::new(
-                        gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                        gen_relative_datetime(-500),
-                        gen_relative_datetime(-100),
-                        None,
-                        None,
-                        None,
-                    )
-                    .unwrap(),
-                    Job::new(
-                        gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
-                        gen_relative_datetime(-1000),
-                        gen_relative_datetime(-600),
-                        Some(gen_relative_datetime(-550)),
-                        Some(true),
-                        None,
-                    )
-                    .unwrap(),
-                    Job::new(
-                        gen_uuid("051c2f13-20ae-456c-922b-b5799689d4ff"),
-                        gen_relative_datetime(0),
-                        gen_relative_datetime(400),
-                        None,
-                        None,
-                        None,
-                    )
-                    .unwrap(),
-                ],
-            },
-            Monitor {
-                monitor_id: gen_uuid("d01b6b65-8320-4445-9271-304eefa192c0"),
-                name: "python -m generate-orders.py".to_owned(),
-                expected_duration: 1_800,
-                grace_duration: 300,
-                jobs: vec![Job::new(
-                    gen_uuid("ae33a698-dd10-47d7-8d1d-1535686a89c3"),
-                    gen_relative_datetime(-300),
-                    gen_relative_datetime(100),
-                    Some(gen_relative_datetime(0)),
-                    Some(true),
-                    None,
-                )
-                .unwrap()],
-            },
-            Monitor {
-                monitor_id: gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b"),
-                name: "get-pending-orders | generate invoices".to_owned(),
-                expected_duration: 21_600,
-                grace_duration: 1_800,
-                jobs: vec![Job::new(
-                    gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
-                    gen_relative_datetime(-30_000),
-                    gen_relative_datetime(-6_600),
-                    None,
-                    None,
-                    None,
-                )
-                .unwrap()],
-            },
-        ])
-    }
-
-    #[rstest]
     #[traced_test]
     #[tokio::test(start_paused = true)]
-    async fn test_process_late_jobs_service(mut data: HashMap<Uuid, Monitor>) {
+    async fn test_process_late_jobs_service() {
         let mut lates = vec![];
         {
+            let mut mock = MockGetWithLateJobs::new();
+            mock.expect_get_with_late_jobs().once().returning(|| {
+                Ok(vec![
+                    Monitor {
+                        monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                        name: "background-task.sh".to_owned(),
+                        expected_duration: 300,
+                        grace_duration: 100,
+                        jobs: vec![
+                            Job::new(
+                                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                                gen_relative_datetime(-500),
+                                gen_relative_datetime(-100),
+                                None,
+                                None,
+                                None,
+                            )
+                            .unwrap(),
+                            Job::new(
+                                gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
+                                gen_relative_datetime(-1000),
+                                gen_relative_datetime(-600),
+                                Some(gen_relative_datetime(-550)),
+                                Some(true),
+                                None,
+                            )
+                            .unwrap(),
+                            Job::new(
+                                gen_uuid("051c2f13-20ae-456c-922b-b5799689d4ff"),
+                                gen_relative_datetime(0),
+                                gen_relative_datetime(400),
+                                None,
+                                None,
+                                None,
+                            )
+                            .unwrap(),
+                        ],
+                    },
+                    Monitor {
+                        monitor_id: gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b"),
+                        name: "get-pending-orders | generate invoices".to_owned(),
+                        expected_duration: 21_600,
+                        grace_duration: 1_800,
+                        jobs: vec![Job::new(
+                            gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
+                            gen_relative_datetime(-30_000),
+                            gen_relative_datetime(-6_600),
+                            None,
+                            None,
+                            None,
+                        )
+                        .unwrap()],
+                    },
+                ])
+            });
             let mut service = ProcessLateJobsService::new(
-                TestRepository::new(&mut data),
+                mock,
+                // TODO: Mock this?
                 FakeJobNotifier::new(&mut lates),
             );
 
