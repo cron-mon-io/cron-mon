@@ -1,13 +1,13 @@
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::repositories::All;
+use crate::infrastructure::repositories::Repository;
 
-pub struct FetchMonitorsService<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> {
+pub struct FetchMonitorsService<'a, T: Repository<Monitor>, F: Fn(&mut [Monitor])> {
     repo: T,
     order_monitors: &'a F,
 }
 
-impl<'a, T: All<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a, T, F> {
+impl<'a, T: Repository<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a, T, F> {
     pub fn new(repo: T, order_monitors: &'a F) -> Self {
         Self {
             repo,

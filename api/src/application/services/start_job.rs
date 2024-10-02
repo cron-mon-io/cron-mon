@@ -4,13 +4,13 @@ use uuid::Uuid;
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::repositories::{Get, Save};
+use crate::infrastructure::repositories::Repository;
 
-pub struct StartJobService<T: Get<Monitor> + Save<Monitor>> {
+pub struct StartJobService<T: Repository<Monitor>> {
     repo: T,
 }
 
-impl<T: Get<Monitor> + Save<Monitor>> StartJobService<T> {
+impl<T: Repository<Monitor>> StartJobService<T> {
     pub fn new(repo: T) -> Self {
         Self { repo }
     }
@@ -49,7 +49,7 @@ mod tests {
 
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
 
-    use super::{Error, Get, Monitor, StartJobService};
+    use super::{Error, Monitor, Repository, StartJobService};
 
     #[fixture]
     fn data() -> HashMap<Uuid, Monitor> {

@@ -3,13 +3,13 @@ use uuid::Uuid;
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::repositories::Get;
+use crate::infrastructure::repositories::Repository;
 
-pub struct FetchJobService<T: Get<Monitor>> {
+pub struct FetchJobService<T: Repository<Monitor>> {
     repo: T,
 }
 
-impl<T: Get<Monitor>> FetchJobService<T> {
+impl<T: Repository<Monitor>> FetchJobService<T> {
     pub fn new(repo: T) -> Self {
         Self { repo }
     }

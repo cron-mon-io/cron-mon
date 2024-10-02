@@ -11,7 +11,7 @@ use cron_mon_api::errors::Error;
 use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
 use cron_mon_api::infrastructure::repositories::monitor::GetWithLateJobs;
 use cron_mon_api::infrastructure::repositories::monitor_repo::MonitorRepository;
-use cron_mon_api::infrastructure::repositories::{All, Delete, Get, Save};
+use cron_mon_api::infrastructure::repositories::Repository;
 
 use common::{seed_db, setup_db};
 

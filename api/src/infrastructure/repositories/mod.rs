@@ -10,21 +10,12 @@ use uuid::Uuid;
 use crate::errors::Error;
 
 #[async_trait]
-pub trait Get<T> {
+pub trait Repository<T> {
     async fn get(&mut self, entity_id: Uuid) -> Result<Option<T>, Error>;
-}
 
-#[async_trait]
-pub trait All<T> {
     async fn all(&mut self) -> Result<Vec<T>, Error>;
-}
 
-#[async_trait]
-pub trait Save<T> {
     async fn save(&mut self, entity: &T) -> Result<(), Error>;
-}
 
-#[async_trait]
-pub trait Delete<T> {
     async fn delete(&mut self, entity: &T) -> Result<(), Error>;
 }

@@ -3,13 +3,13 @@ use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::repositories::{Delete, Get};
+use crate::infrastructure::repositories::Repository;
 
-pub struct DeleteMonitorService<T: Get<Monitor> + Delete<Monitor>> {
+pub struct DeleteMonitorService<T: Repository<Monitor>> {
     repo: T,
 }
 
-impl<T: Get<Monitor> + Delete<Monitor>> DeleteMonitorService<T> {
+impl<T: Repository<Monitor>> DeleteMonitorService<T> {
     pub fn new(repo: T) -> Self {
         Self { repo }
     }
@@ -41,7 +41,7 @@ mod tests {
     use test_utils::logging::TracingLog;
 
     use crate::infrastructure::repositories::test_repo::{to_hashmap, TestRepository};
-    use crate::infrastructure::repositories::All;
+    use crate::infrastructure::repositories::Repository;
 
     use super::{DeleteMonitorService, Error, Monitor};
 

@@ -2,13 +2,13 @@ use tracing::info;
 
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::repositories::Save;
+use crate::infrastructure::repositories::Repository;
 
-pub struct CreateMonitorService<T: Save<Monitor>> {
+pub struct CreateMonitorService<T: Repository<Monitor>> {
     repo: T,
 }
 
-impl<T: Save<Monitor>> CreateMonitorService<T> {
+impl<T: Repository<Monitor>> CreateMonitorService<T> {
     pub fn new(repo: T) -> Self {
         Self { repo }
     }
@@ -46,7 +46,7 @@ mod tests {
 
     use crate::domain::models::monitor::Monitor;
     use crate::infrastructure::repositories::test_repo::TestRepository;
-    use crate::infrastructure::repositories::All;
+    use crate::infrastructure::repositories::Repository;
 
     use super::CreateMonitorService;
 
