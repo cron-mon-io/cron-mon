@@ -25,7 +25,13 @@ integration-tests:
 
 # This will also re-seed your local DB, as it effectively runs *all* tests.
 test-coverage:
-	./coverage.sh
+	cargo llvm-cov \
+        --no-clean \
+        --show-missing-lines \
+        --ignore-filename-regex="src/infrastructure/db_schema.rs" \
+        --fail-under-lines=100 \
+        --jobs=3 \
+        -- --test-threads=1
 
 migration:
 	diesel migration generate $(name)

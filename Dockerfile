@@ -1,9 +1,9 @@
 FROM public.ecr.aws/docker/library/rust:1.80.0-slim as builder
 
 RUN apt-get update && apt-get install build-essential libpq-dev libssl-dev pkg-config -y
-RUN rustup component add rustfmt clippy llvm-tools-preview
+RUN rustup component add rustfmt clippy
 RUN cargo install diesel_cli --no-default-features --features postgres && \
-    cargo install grcov
+    cargo install cargo-llvm-cov
 
 WORKDIR /usr/cron-mon/api
 
