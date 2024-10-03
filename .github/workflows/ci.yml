@@ -148,6 +148,7 @@ jobs:
         with:
           files: lcov.info
           fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   build-and-push-image:
     name: Build and push container image to ghcr.io
