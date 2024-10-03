@@ -1,30 +1,24 @@
 pub mod monitor;
 pub mod monitor_repo;
 
-#[cfg(test)]
-pub mod test_repo;
+use std::marker::{Send, Sync};
 
 use async_trait::async_trait;
 use uuid::Uuid;
 
+#[cfg(test)]
+use mockall::automock;
+
 use crate::errors::Error;
 
+#[cfg_attr(test, automock)]
 #[async_trait]
-pub trait Get<T> {
+pub trait Repository<T: Send + Sync> {
     async fn get(&mut self, entity_id: Uuid) -> Result<Option<T>, Error>;
-}
 
-#[async_trait]
-pub trait All<T> {
     async fn all(&mut self) -> Result<Vec<T>, Error>;
-}
 
-#[async_trait]
-pub trait Save<T> {
     async fn save(&mut self, entity: &T) -> Result<(), Error>;
-}
 
-#[async_trait]
-pub trait Delete<T> {
     async fn delete(&mut self, entity: &T) -> Result<(), Error>;
 }

@@ -15,7 +15,7 @@ use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 use crate::infrastructure::models::monitor::MonitorData;
 use crate::infrastructure::repositories::monitor::GetWithLateJobs;
-use crate::infrastructure::repositories::{All, Delete, Get, Save};
+use crate::infrastructure::repositories::Repository;
 
 pub struct MonitorRepository<'a> {
     db: &'a mut AsyncPgConnection,
@@ -87,7 +87,7 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
 }
 
 #[async_trait]
-impl<'a> Get<Monitor> for MonitorRepository<'a> {
+impl<'a> Repository<Monitor> for MonitorRepository<'a> {
     async fn get(&mut self, monitor_id: Uuid) -> Result<Option<Monitor>, Error> {
         let result = self
             .db
@@ -122,10 +122,7 @@ impl<'a> Get<Monitor> for MonitorRepository<'a> {
             }
         }
     }
-}
 
-#[async_trait]
-impl<'a> All<Monitor> for MonitorRepository<'a> {
     async fn all(&mut self) -> Result<Vec<Monitor>, Error> {
         let result = self
             .db
@@ -157,10 +154,7 @@ impl<'a> All<Monitor> for MonitorRepository<'a> {
                 .collect::<Result<Vec<Monitor>, Error>>()?),
         }
     }
-}
 
-#[async_trait]
-impl<'a> Save<Monitor> for MonitorRepository<'a> {
     async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
         let cached_data = self.data.get(&monitor.monitor_id);
 
@@ -216,10 +210,7 @@ impl<'a> Save<Monitor> for MonitorRepository<'a> {
             }
         }
     }
-}
 
-#[async_trait]
-impl<'a> Delete<Monitor> for MonitorRepository<'a> {
     async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
         let (monitor_data, _) = <(MonitorData, Vec<JobData>)>::from(monitor);
 

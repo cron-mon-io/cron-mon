@@ -14,7 +14,7 @@ use crate::infrastructure::auth::Jwt;
 use crate::infrastructure::database::Db;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
-use crate::infrastructure::repositories::Get;
+use crate::infrastructure::repositories::Repository;
 
 #[derive(Deserialize)]
 pub struct MonitorData {
