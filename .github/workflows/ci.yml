@@ -122,7 +122,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          apt-get update && apt-get install build-essential libpq-dev libssl-dev pkg-config -y
+          apt-get update && apt-get install build-essential git libpq-dev libssl-dev pkg-config -y
           cargo install diesel_cli --no-default-features --features postgres
 
       - name: Install cargo-llvm-cov
