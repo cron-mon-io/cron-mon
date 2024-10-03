@@ -18,11 +18,10 @@ run-monitor-debug:
 test: lint unit-test
 
 lint:
-	docker compose run --rm --no-deps rust-cargo bash -c '\
-		cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings'
+	docker compose run --rm --no-deps rust-cargo make lint
 
 unit-test:
-	docker compose run --rm --no-deps rust-cargo bash -c 'cargo test --lib --no-fail-fast'
+	docker compose run --rm --no-deps rust-cargo make unit-test
 
 # Note that running this locally will re-seed your local DB so you'll lose
 # everything in there currently.
@@ -31,19 +30,19 @@ integration-tests:
 
 # This will also re-seed your local DB, as it effectively runs *all* tests.
 test-coverage:
-	docker compose run --rm --no-deps rust-cargo bash -c './coverage.sh'
+	docker compose run --rm --no-deps rust-cargo make test-coverage
 
 migration:
-	docker compose run --rm rust-cargo diesel migration generate $(name)
+	docker compose run --rm rust-cargo make migration name=$(name)
 
 migrate:
-	docker compose run --rm rust-cargo diesel migration run
+	docker compose run --rm rust-cargo make migrate
 
 migrate-revert:
-	docker compose run --rm rust-cargo diesel migration revert
+	docker compose run --rm rust-cargo make migrate-revert
 
 migrate-redo:
-	docker compose run --rm rust-cargo diesel migration redo
+	docker compose run --rm rust-cargo make migrate-redo
 
 seed:
 	docker compose run --rm seeder
