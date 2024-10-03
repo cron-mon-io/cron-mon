@@ -109,10 +109,7 @@ impl JwtAuthService {
         if status.is_success() {
             let jwks = response
                 .json::<Jwks>()
-                // #[coverage(off)] code coverage misses awaits in certain scenarios
-                // see https://github.com/rust-lang/rust/issues/98712
                 .await
-                // #[coverage(on)]
                 .map_err(|e| Error::AuthenticationError(format!("Failed to parse JWKS: {}", e)))?;
             Ok(jwks)
         } else {

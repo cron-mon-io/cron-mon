@@ -47,10 +47,7 @@ async fn get_auth_service<'r>(
 ) -> Result<&'r Box<dyn JwtAuth + Send + Sync>, Error> {
     match request
         .guard::<&State<Box<dyn JwtAuth + Send + Sync>>>()
-        // #[coverage(off)] code coverage misses awaits in certain scenarios
-        // see https://github.com/rust-lang/rust/issues/98712
         .await
-        // #[coverage(on)]
     {
         Outcome::Success(auth_service) => {
             Ok(auth_service.inner() as &Box<dyn JwtAuth + Send + Sync>)

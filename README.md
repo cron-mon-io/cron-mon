@@ -3,7 +3,7 @@
 # A simple tool for monitoring cronjobs
 
 [![CI](https://github.com/cron-mon-io/cron-mon/actions/workflows/ci.yml/badge.svg)](https://github.com/cron-mon-io/cron-mon/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/badge/coverage-100%25-green)
+[![codecov](https://codecov.io/github/cron-mon-io/cron-mon/graph/badge.svg?token=8JTTTLG42Y)](https://codecov.io/github/cron-mon-io/cron-mon)
 ![Docker](https://img.shields.io/badge/Docker-2CA5E0?logo=docker&logoColor=white)
 ![Rust](https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=white)
 ![Beta](https://img.shields.io/badge/Status-beta-blue)
