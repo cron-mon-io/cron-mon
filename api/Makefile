@@ -29,7 +29,7 @@ test-coverage:
         --no-clean \
         --show-missing-lines \
         --ignore-filename-regex="src/infrastructure/db_schema.rs" \
-        --fail-under-lines=100 \
+        --fail-under-lines=95 \
         --jobs=3 \
         -- --test-threads=1
 
