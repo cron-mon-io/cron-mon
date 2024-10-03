@@ -31,6 +31,8 @@ test-coverage:
         --ignore-filename-regex="src/infrastructure/db_schema.rs" \
         --fail-under-lines=95 \
         --jobs=3 \
+        --lcov \
+        --output-path lcov.info \
         -- --test-threads=1
 
 migration:
