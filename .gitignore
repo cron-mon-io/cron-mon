@@ -2,8 +2,5 @@
 .cargo
 api/target
 
-# PostgreSQL
-data
-
 # Miscellaneous
 .DS_Store
