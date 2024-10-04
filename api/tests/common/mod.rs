@@ -39,18 +39,21 @@ pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>) {
         vec![
             MonitorData {
                 monitor_id: gen_uuid("a04376e2-0fb5-4949-9744-7c5d0a50b411"),
+                tenant: "foo".to_owned(),
                 name: "init-philanges".to_string(),
                 expected_duration: 900,
                 grace_duration: 300,
             },
             MonitorData {
                 monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
+                tenant: "foo".to_owned(),
                 name: "db-backup.py".to_string(),
                 expected_duration: 1800,
                 grace_duration: 600,
             },
             MonitorData {
                 monitor_id: gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a"),
+                tenant: "foo".to_owned(),
                 name: "generate-orders.sh".to_string(),
                 expected_duration: 5400,
                 grace_duration: 720,

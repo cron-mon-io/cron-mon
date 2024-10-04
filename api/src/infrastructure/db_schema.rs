@@ -22,6 +22,7 @@ diesel::table! {
         name -> Varchar,
         expected_duration -> Int4,
         grace_duration -> Int4,
+        tenant -> Varchar,
     }
 }
 
