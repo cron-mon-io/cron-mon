@@ -4,3 +4,4 @@ api/target
 
 # Miscellaneous
 .DS_Store
+lcov.info
