@@ -58,6 +58,13 @@ pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>) {
                 expected_duration: 5400,
                 grace_duration: 720,
             },
+            MonitorData {
+                monitor_id: gen_uuid("cc6cf74e-b25d-4c8c-94a6-914e3f139c14"),
+                tenant: "bar".to_owned(),
+                name: "data-snapshot.py".to_string(),
+                expected_duration: 3600,
+                grace_duration: 1200,
+            },
         ],
         vec![
             JobData {

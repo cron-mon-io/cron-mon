@@ -14,9 +14,9 @@ use crate::errors::Error;
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Repository<T: Send + Sync> {
-    async fn get(&mut self, entity_id: Uuid) -> Result<Option<T>, Error>;
+    async fn get(&mut self, entity_id: Uuid, tenant: &str) -> Result<Option<T>, Error>;
 
-    async fn all(&mut self) -> Result<Vec<T>, Error>;
+    async fn all(&mut self, tenant: &str) -> Result<Vec<T>, Error>;
 
     async fn save(&mut self, entity: &T) -> Result<(), Error>;
 
