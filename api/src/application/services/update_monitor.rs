@@ -17,11 +17,12 @@ impl<T: Repository<Monitor>> UpdateMonitorService<T> {
     pub async fn update_by_id(
         &mut self,
         monitor_id: Uuid,
+        tenant: &str,
         new_name: &str,
         new_expected: i32,
         new_grace: i32,
     ) -> Result<Monitor, Error> {
-        let monitor_opt = self.repo.get(monitor_id).await?;
+        let monitor_opt = self.repo.get(monitor_id, tenant).await?;
 
         match monitor_opt {
             Some(mut monitor) => {
@@ -71,10 +72,14 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")))
-            .returning(|_| {
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("tenant"),
+            )
+            .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                    tenant: "tenant".to_owned(),
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
@@ -85,6 +90,7 @@ mod tests {
             .once()
             .withf(|monitor: &Monitor| {
                 monitor.monitor_id == gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
+                    && monitor.tenant == "tenant"
                     && monitor.name == "new-name"
                     && monitor.expected_duration == 600
                     && monitor.grace_duration == 200
@@ -96,6 +102,7 @@ mod tests {
         let monitor_result = service
             .update_by_id(
                 gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                "tenant",
                 "new-name",
                 600,
                 200,
@@ -106,6 +113,7 @@ mod tests {
             monitor_result,
             Ok(Monitor {
                 monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                tenant: "tenant".to_owned(),
                 name: "new-name".to_owned(),
                 expected_duration: 600,
                 grace_duration: 200,
@@ -133,14 +141,18 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(gen_uuid("01a92c6c-6803-409d-b675-022fff62575a")))
-            .returning(|_| Ok(None));
+            .with(
+                eq(gen_uuid("01a92c6c-6803-409d-b675-022fff62575a")),
+                eq("tenant"),
+            )
+            .returning(|_, _| Ok(None));
 
         let mut service = UpdateMonitorService::new(mock);
 
         let should_be_err = service
             .update_by_id(
                 gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                "tenant",
                 "new-name",
                 600,
                 200,

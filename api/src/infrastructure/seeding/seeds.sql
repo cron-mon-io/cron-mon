@@ -4,13 +4,13 @@ DELETE FROM monitor;
 
 -- Monitors.
 INSERT INTO monitor
-    (monitor_id, "name", expected_duration, grace_duration)
+    (monitor_id, tenant, "name", expected_duration, grace_duration)
 VALUES
-    ('c1bf0515-df39-448b-aa95-686360a33b36', 'db-backup.py',                  1800,  600),
-    ('f0b291fe-bd41-4787-bc2d-1329903f7a6a', 'generate-orders.sh',            5400,  720),
-    ('a04376e2-0fb5-4949-9744-7c5d0a50b411', 'init-philanges',                900,   300),
-    ('309a68f1-d6a2-4312-8012-49c1b9b9af25', 'gen-manifests | send-manifest', 300,   120),
-    ('0798c530-34a4-4452-b2dc-f8140fd498d5', 'bill-and-invoice',              10800, 1800);
+    ('c1bf0515-df39-448b-aa95-686360a33b36', 'cron-mon', 'db-backup.py',                  1800,  600),
+    ('f0b291fe-bd41-4787-bc2d-1329903f7a6a', 'cron-mon', 'generate-orders.sh',            5400,  720),
+    ('a04376e2-0fb5-4949-9744-7c5d0a50b411', 'cron-mon', 'init-philanges',                900,   300),
+    ('309a68f1-d6a2-4312-8012-49c1b9b9af25', 'cron-mon', 'gen-manifests | send-manifest', 300,   120),
+    ('0798c530-34a4-4452-b2dc-f8140fd498d5', 'cron-mon', 'bill-and-invoice',              10800, 1800);
 
 -- Jobs.
 INSERT INTO job

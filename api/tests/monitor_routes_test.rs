@@ -76,6 +76,31 @@ async fn test_get_monitor_when_monitor_does_not_exist() {
 }
 
 #[tokio::test]
+async fn test_get_monitor_with_wrong_tenant() {
+    let (_mock_server, client) = get_test_client("test-kid", true).await;
+
+    let response = client
+        .get("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36")
+        .header(create_auth_header("test-kid", "test-user", "bar"))
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::NotFound);
+    assert_eq!(
+        response.into_json::<Value>().await.unwrap(),
+        json!({
+            "error": {
+                "code": 404,
+                "reason": "Monitor Not Found",
+                "description": (
+                    "Failed to find monitor with id 'c1bf0515-df39-448b-aa95-686360a33b36'"
+                )
+            }
+        }),
+    )
+}
+
+#[tokio::test]
 async fn test_list_monitors() {
     let (_mock_server, client) = get_test_client("test-kid", true).await;
 

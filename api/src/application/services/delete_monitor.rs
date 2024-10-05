@@ -14,8 +14,8 @@ impl<T: Repository<Monitor>> DeleteMonitorService<T> {
         Self { repo }
     }
 
-    pub async fn delete_by_id(&mut self, monitor_id: Uuid) -> Result<(), Error> {
-        let monitor = self.repo.get(monitor_id).await?;
+    pub async fn delete_by_id(&mut self, monitor_id: Uuid, tenant: &str) -> Result<(), Error> {
+        let monitor = self.repo.get(monitor_id, tenant).await?;
         if let Some(mon) = monitor {
             self.repo.delete(&mon).await?;
             info!(
@@ -49,10 +49,11 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(existent_id))
-            .returning(|_| {
+            .with(eq(existent_id), eq("tenant"))
+            .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                    tenant: "tenant".to_owned(),
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
@@ -63,6 +64,7 @@ mod tests {
             .once()
             .with(eq(Monitor {
                 monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                tenant: "tenant".to_owned(),
                 name: "foo".to_owned(),
                 expected_duration: 300,
                 grace_duration: 100,
@@ -73,7 +75,7 @@ mod tests {
         let mut service = DeleteMonitorService::new(mock);
 
         let delete_result = service
-            .delete_by_id(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
+            .delete_by_id(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"), "tenant")
             .await;
         assert_eq!(delete_result, Ok(()));
 
@@ -95,12 +97,12 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(monitor_id))
-            .returning(|_| Ok(None));
+            .with(eq(monitor_id), eq("tenant"))
+            .returning(|_, _| Ok(None));
 
         let mut service = DeleteMonitorService::new(mock);
 
-        let delete_result = service.delete_by_id(monitor_id).await;
+        let delete_result = service.delete_by_id(monitor_id, "tenant").await;
 
         assert_eq!(delete_result, Err(Error::MonitorNotFound(monitor_id)));
     }

@@ -18,11 +18,12 @@ impl<T: Repository<Monitor>> FinishJobService<T> {
     pub async fn finish_job_for_monitor(
         &mut self,
         monitor_id: Uuid,
+        tenant: &str,
         job_id: Uuid,
         succeeded: bool,
         output: &Option<String>,
     ) -> Result<Job, Error> {
-        let monitor_opt = self.repo.get(monitor_id).await?;
+        let monitor_opt = self.repo.get(monitor_id, tenant).await?;
 
         match monitor_opt {
             Some(mut monitor) => match monitor.finish_job(job_id, succeeded, output.clone()) {
@@ -70,10 +71,14 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")))
-            .returning(|_| {
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("tenant"),
+            )
+            .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                    tenant: "tenant".to_owned(),
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
@@ -93,6 +98,7 @@ mod tests {
             .once()
             .withf(|monitor: &Monitor| {
                 monitor.monitor_id == gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
+                    && monitor.tenant == "tenant"
                     && !monitor.jobs[0].in_progress()
                     && monitor.jobs[0].duration() == Some(320)
             })
@@ -102,6 +108,7 @@ mod tests {
         let job = service
             .finish_job_for_monitor(
                 gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                "tenant",
                 gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
                 true,
                 &Some("Job complete".to_owned()),
@@ -131,13 +138,17 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")))
-            .returning(|_| Ok(None));
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("tenant"),
+            )
+            .returning(|_, _| Ok(None));
 
         let mut service = FinishJobService::new(mock);
         let result = service
             .finish_job_for_monitor(
                 gen_uuid("41ebffb4-A188-48E9-8ec1-61380085cde3"),
+                "tenant",
                 gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
                 true,
                 &Some("Job complete".to_owned()),
@@ -163,10 +174,14 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")))
-            .returning(|_| {
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("tenant"),
+            )
+            .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                    tenant: "tenant".to_owned(),
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
@@ -178,6 +193,7 @@ mod tests {
         let result = service
             .finish_job_for_monitor(
                 gen_uuid("41ebffb4-A188-48E9-8ec1-61380085cde3"),
+                "tenant",
                 gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
                 true,
                 &Some("Job complete".to_owned()),
@@ -213,10 +229,14 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")))
-            .returning(|_| {
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("tenant"),
+            )
+            .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                    tenant: "tenant".to_owned(),
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
@@ -236,6 +256,7 @@ mod tests {
         let job = service
             .finish_job_for_monitor(
                 gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                "tenant",
                 gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
                 true,
                 &Some("Job complete".to_owned()),

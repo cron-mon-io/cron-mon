@@ -21,7 +21,7 @@ async fn test_all() {
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
 
-    let montiors = repo.all().await.unwrap();
+    let montiors = repo.all("foo").await.unwrap();
 
     let names: Vec<String> = montiors
         .iter()
@@ -56,16 +56,21 @@ async fn test_get() {
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
 
-    let should_be_none = repo
-        .get(gen_uuid("4940ede2-72fc-4e0e-838e-f15f35e3594f"))
+    let non_existent_monitor_id = repo
+        .get(gen_uuid("4940ede2-72fc-4e0e-838e-f15f35e3594f"), "foo")
+        .await
+        .unwrap();
+    let wrong_tenant = repo
+        .get(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"), "bar")
         .await
         .unwrap();
     let should_be_some = repo
-        .get(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"))
+        .get(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"), "foo")
         .await
         .unwrap();
 
-    assert!(should_be_none.is_none());
+    assert!(non_existent_monitor_id.is_none());
+    assert!(wrong_tenant.is_none());
     assert!(should_be_some.is_some());
 
     let monitor = should_be_some.unwrap();
@@ -94,12 +99,16 @@ async fn test_save() {
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
 
-    let mut new_monitor = Monitor::new("new-monitor".to_owned(), 100, 5);
+    let mut new_monitor = Monitor::new("foo".to_owned(), "new-monitor".to_owned(), 100, 5);
     let _ = new_monitor.start_job().expect("Failed to start job");
     repo.save(&new_monitor).await.unwrap();
-    assert_eq!(repo.all().await.unwrap().len(), 4);
+    assert_eq!(repo.all("foo").await.unwrap().len(), 4);
 
-    let read_new_monitor = repo.get(new_monitor.monitor_id).await.unwrap().unwrap();
+    let read_new_monitor = repo
+        .get(new_monitor.monitor_id, "foo")
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(new_monitor.monitor_id, read_new_monitor.monitor_id);
     assert_eq!(new_monitor.name, read_new_monitor.name);
     assert_eq!(
@@ -118,14 +127,14 @@ async fn test_delete() {
     let mut repo = MonitorRepository::new(&mut conn);
 
     let monitor = repo
-        .get(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"))
+        .get(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"), "foo")
         .await
         .unwrap()
         .unwrap();
 
     repo.delete(&monitor).await.unwrap();
-    assert!(repo.get(monitor.monitor_id).await.unwrap().is_none());
-    assert_eq!(repo.all().await.unwrap().len(), 2);
+    assert!(repo.get(monitor.monitor_id, "foo").await.unwrap().is_none());
+    assert_eq!(repo.all("foo").await.unwrap().len(), 2);
 }
 
 #[test]
@@ -134,6 +143,7 @@ async fn test_loading_invalid_job() {
     let mut conn = seed_db(
         &vec![MonitorData {
             monitor_id: gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"),
+            tenant: "foo".to_string(),
             name: "init-philanges".to_string(),
             expected_duration: 900,
             grace_duration: 300,
@@ -153,7 +163,7 @@ async fn test_loading_invalid_job() {
     // Attempt to retrieve that monitor.
     let mut repo = MonitorRepository::new(&mut conn);
     let monitor_result = repo
-        .get(gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"))
+        .get(gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"), "foo")
         .await;
 
     // Ensure that the monitor is not returned.

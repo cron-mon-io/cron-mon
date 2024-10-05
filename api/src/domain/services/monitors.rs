@@ -44,6 +44,7 @@ mod tests {
         vec![
             Monitor {
                 monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
+                tenant: "foo-tenant".to_owned(),
                 name: "db-backup.py".to_owned(),
                 expected_duration: 1800,
                 grace_duration: 600,
@@ -51,6 +52,7 @@ mod tests {
             },
             Monitor {
                 monitor_id: gen_uuid("cc6cf74e-b25d-4c8c-94a6-914e3f139c14"),
+                tenant: "bar-tenant".to_owned(),
                 name: "generate-orders.sh".to_owned(),
                 expected_duration: 3600,
                 grace_duration: 1200,
@@ -77,6 +79,7 @@ mod tests {
             },
             Monitor {
                 monitor_id: gen_uuid("d1f3b3b4-0b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+                tenant: "foo-tenant".to_owned(),
                 name: "send-emails.sh".to_owned(),
                 expected_duration: 7200,
                 grace_duration: 1800,

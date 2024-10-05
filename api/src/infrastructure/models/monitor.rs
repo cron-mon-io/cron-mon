@@ -12,6 +12,7 @@ use crate::infrastructure::models::job::JobData;
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct MonitorData {
     pub monitor_id: Uuid,
+    pub tenant: String,
     pub name: String,
     pub expected_duration: i32,
     pub grace_duration: i32,
@@ -21,6 +22,7 @@ impl MonitorData {
     pub fn to_model(&self, job_datas: &[JobData]) -> Result<Monitor, Error> {
         Ok(Monitor {
             monitor_id: self.monitor_id,
+            tenant: self.tenant.clone(),
             name: self.name.clone(),
             expected_duration: self.expected_duration,
             grace_duration: self.grace_duration,
@@ -37,6 +39,7 @@ impl From<&Monitor> for (MonitorData, Vec<JobData>) {
         (
             MonitorData {
                 monitor_id: value.monitor_id,
+                tenant: value.tenant.clone(),
                 name: value.name.clone(),
                 expected_duration: value.expected_duration,
                 grace_duration: value.grace_duration,
@@ -72,6 +75,7 @@ mod tests {
     fn test_monitor_to_db_data() {
         let monitor = Monitor {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+            tenant: "foo-tenant".to_owned(),
             name: "foo".to_owned(),
             expected_duration: 300,
             grace_duration: 100,
@@ -89,6 +93,7 @@ mod tests {
         let (monitor_data, job_data) = <(MonitorData, Vec<JobData>)>::from(&monitor);
 
         assert_eq!(monitor_data.monitor_id, monitor.monitor_id);
+        assert_eq!(monitor_data.tenant, monitor.tenant);
         assert_eq!(monitor_data.name, monitor.name);
         assert_eq!(monitor_data.expected_duration, monitor.expected_duration);
         assert_eq!(monitor_data.grace_duration, monitor.grace_duration);
@@ -114,6 +119,7 @@ mod tests {
     fn test_converting_db_to_monitor() {
         let monitor_data = MonitorData {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+            tenant: "foo-tenant".to_owned(),
             name: "foo".to_owned(),
             expected_duration: 300,
             grace_duration: 100,
@@ -135,6 +141,7 @@ mod tests {
             monitor.monitor_id,
             gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
         );
+        assert_eq!(monitor.tenant, "foo-tenant".to_owned());
         assert_eq!(monitor.name, "foo".to_owned());
         assert_eq!(monitor.expected_duration, 300);
         assert_eq!(monitor.grace_duration, 100);

@@ -14,8 +14,13 @@ impl<T: Repository<Monitor>> FetchJobService<T> {
         Self { repo }
     }
 
-    pub async fn fetch_by_id(&mut self, monitor_id: Uuid, job_id: Uuid) -> Result<Job, Error> {
-        let monitor_opt = self.repo.get(monitor_id).await?;
+    pub async fn fetch_by_id(
+        &mut self,
+        monitor_id: Uuid,
+        tenant: &str,
+        job_id: Uuid,
+    ) -> Result<Job, Error> {
+        let monitor_opt = self.repo.get(monitor_id, tenant).await?;
 
         match monitor_opt {
             Some(mut monitor) => {
@@ -47,10 +52,11 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(monitor_id))
-            .returning(|_| {
+            .with(eq(monitor_id), eq("tenant"))
+            .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("71d1c46c-ef86-4fcb-b8b4-b2fee56a4d2f"),
+                    tenant: "tenant".to_owned(),
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
@@ -69,7 +75,11 @@ mod tests {
         let mut service = FetchJobService::new(mock);
 
         let job_result = service
-            .fetch_by_id(monitor_id, gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"))
+            .fetch_by_id(
+                monitor_id,
+                "tenant",
+                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+            )
             .await;
 
         assert_eq!(
@@ -92,13 +102,17 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(monitor_id))
-            .returning(|_| Ok(None));
+            .with(eq(monitor_id), eq("tenant"))
+            .returning(|_, _| Ok(None));
 
         let mut service = FetchJobService::new(mock);
 
         let job_result = service
-            .fetch_by_id(monitor_id, gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"))
+            .fetch_by_id(
+                monitor_id,
+                "tenant",
+                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+            )
             .await;
 
         assert_eq!(job_result, Err(Error::MonitorNotFound(monitor_id)));
@@ -110,10 +124,11 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(monitor_id))
-            .returning(|_| {
+            .with(eq(monitor_id), eq("tenant"))
+            .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("71d1c46c-ef86-4fcb-b8b4-b2fee56a4d2f"),
+                    tenant: "tenant".to_owned(),
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
@@ -124,7 +139,11 @@ mod tests {
         let mut service = FetchJobService::new(mock);
 
         let job_result = service
-            .fetch_by_id(monitor_id, gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"))
+            .fetch_by_id(
+                monitor_id,
+                "tenant",
+                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+            )
             .await;
 
         assert_eq!(

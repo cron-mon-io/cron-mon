@@ -24,9 +24,9 @@ pub struct MonitorData {
 }
 
 #[rocket::get("/monitors")]
-pub async fn list_monitors(mut connection: Connection<Db>, _jwt: Jwt) -> Result<Value, Error> {
+pub async fn list_monitors(mut connection: Connection<Db>, jwt: Jwt) -> Result<Value, Error> {
     let mut service = get_fetch_monitors_service(&mut connection);
-    let monitors = service.fetch_all().await?;
+    let monitors = service.fetch_all(&jwt.tenant).await?;
 
     Ok(json!({
         "data": monitors
@@ -47,13 +47,14 @@ pub async fn list_monitors(mut connection: Connection<Db>, _jwt: Jwt) -> Result<
 #[rocket::post("/monitors", data = "<new_monitor>")]
 pub async fn create_monitor(
     mut connection: Connection<Db>,
-    _jwt: Jwt,
+    jwt: Jwt,
     new_monitor: Json<MonitorData>,
 ) -> Result<Value, Error> {
     let mut service = get_create_monitor_service(&mut connection);
 
     let mon = service
         .create_by_attributes(
+            &jwt.tenant,
             &new_monitor.name,
             new_monitor.expected_duration,
             new_monitor.grace_duration,
@@ -66,11 +67,11 @@ pub async fn create_monitor(
 #[rocket::get("/monitors/<monitor_id>")]
 pub async fn get_monitor(
     mut connection: Connection<Db>,
-    _jwt: Jwt,
+    jwt: Jwt,
     monitor_id: Uuid,
 ) -> Result<Value, Error> {
     let mut repo = MonitorRepository::new(&mut connection);
-    let monitor = repo.get(monitor_id).await?;
+    let monitor = repo.get(monitor_id, &jwt.tenant).await?;
 
     if let Some(mon) = monitor {
         Ok(json!({"data": mon}))
@@ -82,18 +83,18 @@ pub async fn get_monitor(
 #[rocket::delete("/monitors/<monitor_id>")]
 pub async fn delete_monitor(
     mut connection: Connection<Db>,
-    _jwt: Jwt,
+    jwt: Jwt,
     monitor_id: Uuid,
 ) -> Result<(), Error> {
     let mut service = get_delete_monitor_service(&mut connection);
 
-    service.delete_by_id(monitor_id).await
+    service.delete_by_id(monitor_id, &jwt.tenant).await
 }
 
 #[rocket::patch("/monitors/<monitor_id>", data = "<updated_monitor>")]
 pub async fn update_monitor(
     mut connection: Connection<Db>,
-    _jwt: Jwt,
+    jwt: Jwt,
     monitor_id: Uuid,
     updated_monitor: Json<MonitorData>,
 ) -> Result<Value, Error> {
@@ -102,6 +103,7 @@ pub async fn update_monitor(
     let mon = service
         .update_by_id(
             monitor_id,
+            &jwt.tenant,
             &updated_monitor.name,
             updated_monitor.expected_duration,
             updated_monitor.grace_duration,
