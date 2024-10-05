@@ -15,11 +15,17 @@ impl<T: Repository<Monitor>> CreateMonitorService<T> {
 
     pub async fn create_by_attributes(
         &mut self,
+        tenant: &str,
         name: &String,
         expected_duration: i32,
         grace_duration: i32,
     ) -> Result<Monitor, Error> {
-        let mon = Monitor::new(name.clone(), expected_duration, grace_duration);
+        let mon = Monitor::new(
+            tenant.to_string(),
+            name.clone(),
+            expected_duration,
+            grace_duration,
+        );
         self.repo.save(&mon).await?;
 
         info!(
@@ -52,13 +58,16 @@ mod tests {
         mock.expect_save()
             .once()
             .withf(|mon: &Monitor| {
-                mon.name == "foo" && mon.expected_duration == 3_600 && mon.grace_duration == 300
+                mon.tenant == "tenant"
+                    && mon.name == "foo"
+                    && mon.expected_duration == 3_600
+                    && mon.grace_duration == 300
             })
             .returning(|_| Ok(()));
 
         let mut service = CreateMonitorService::new(mock);
         let new_monitor_result = service
-            .create_by_attributes(&"foo".to_owned(), 3_600, 300)
+            .create_by_attributes("tenant", &"foo".to_owned(), 3_600, 300)
             .await;
 
         assert!(new_monitor_result.is_ok());

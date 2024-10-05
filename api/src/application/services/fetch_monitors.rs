@@ -15,8 +15,8 @@ impl<'a, T: Repository<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a,
         }
     }
 
-    pub async fn fetch_all(&mut self) -> Result<Vec<Monitor>, Error> {
-        let mut monitors = self.repo.all().await?;
+    pub async fn fetch_all(&mut self, tenant: &str) -> Result<Vec<Monitor>, Error> {
+        let mut monitors = self.repo.all(tenant).await?;
 
         (self.order_monitors)(&mut monitors);
 
@@ -26,6 +26,8 @@ impl<'a, T: Repository<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a,
 
 #[cfg(test)]
 mod tests {
+    use mockall::predicate::*;
+
     use test_utils::gen_uuid;
 
     use crate::infrastructure::repositories::MockRepository;
@@ -39,34 +41,40 @@ mod tests {
     #[tokio::test]
     async fn test_fetch_job_service() {
         let mut mock = MockRepository::new();
-        mock.expect_all().once().returning(move || {
-            Ok(vec![
-                Monitor {
-                    monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
-                    name: "foo".to_owned(),
-                    expected_duration: 300,
-                    grace_duration: 100,
-                    jobs: vec![],
-                },
-                Monitor {
-                    monitor_id: gen_uuid("91bf0865-b1b2-447b-93e1-fe047d2bb218"),
-                    name: "bar".to_owned(),
-                    expected_duration: 300,
-                    grace_duration: 100,
-                    jobs: vec![],
-                },
-                Monitor {
-                    monitor_id: gen_uuid("72ab99e7-d179-4d24-b9a3-cb1a65064a4d"),
-                    name: "baz".to_owned(),
-                    expected_duration: 300,
-                    grace_duration: 100,
-                    jobs: vec![],
-                },
-            ])
-        });
+        mock.expect_all()
+            .once()
+            .with(eq("tenant"))
+            .returning(move |_| {
+                Ok(vec![
+                    Monitor {
+                        monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                        tenant: "tenant".to_owned(),
+                        name: "foo".to_owned(),
+                        expected_duration: 300,
+                        grace_duration: 100,
+                        jobs: vec![],
+                    },
+                    Monitor {
+                        monitor_id: gen_uuid("91bf0865-b1b2-447b-93e1-fe047d2bb218"),
+                        tenant: "tenant".to_owned(),
+                        name: "bar".to_owned(),
+                        expected_duration: 300,
+                        grace_duration: 100,
+                        jobs: vec![],
+                    },
+                    Monitor {
+                        monitor_id: gen_uuid("72ab99e7-d179-4d24-b9a3-cb1a65064a4d"),
+                        tenant: "tenant".to_owned(),
+                        name: "baz".to_owned(),
+                        expected_duration: 300,
+                        grace_duration: 100,
+                        jobs: vec![],
+                    },
+                ])
+            });
         let mut service = FetchMonitorsService::new(mock, &order_monitors);
 
-        let monitors = service.fetch_all().await.unwrap();
+        let monitors = service.fetch_all("tenant").await.unwrap();
 
         let names = monitors
             .iter()

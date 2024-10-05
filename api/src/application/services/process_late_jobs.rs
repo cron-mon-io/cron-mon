@@ -50,6 +50,7 @@ mod tests {
             Ok(vec![
                 Monitor {
                     monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                    tenant: "foo-tenant".to_owned(),
                     name: "background-task.sh".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
@@ -85,6 +86,7 @@ mod tests {
                 },
                 Monitor {
                     monitor_id: gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b"),
+                    tenant: "bar-tenant".to_owned(),
                     name: "get-pending-orders | generate invoices".to_owned(),
                     expected_duration: 21_600,
                     grace_duration: 1_800,
