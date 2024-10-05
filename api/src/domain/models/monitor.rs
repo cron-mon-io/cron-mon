@@ -11,6 +11,8 @@ use crate::errors::Error;
 pub struct Monitor {
     /// The unique identifier for the Monitor.
     pub monitor_id: Uuid,
+    /// The tenant that the Monitor belongs to.
+    pub tenant: String,
     /// The Monitor's name (typically the command or filename that the cronjob will invoke).
     pub name: String,
     /// The expected duration of the monitored cronjob, in seconds.
@@ -24,9 +26,10 @@ pub struct Monitor {
 
 impl Monitor {
     /// Instatiate a new Monitor.
-    pub fn new(name: String, expected_duration: i32, grace_duration: i32) -> Self {
+    pub fn new(tenant: String, name: String, expected_duration: i32, grace_duration: i32) -> Self {
         Self {
             monitor_id: Uuid::new_v4(),
+            tenant,
             name,
             expected_duration,
             grace_duration,
@@ -121,8 +124,9 @@ mod tests {
 
     #[test]
     fn creating_new_monitors() {
-        let mon = Monitor::new("new-monitor".to_owned(), 3600, 600);
+        let mon = Monitor::new("foo-tenant".to_owned(), "new-monitor".to_owned(), 3600, 600);
 
+        assert_eq!(mon.tenant, "foo-tenant".to_owned());
         assert_eq!(mon.name, "new-monitor".to_owned());
         assert_eq!(mon.expected_duration, 3600);
         assert_eq!(mon.grace_duration, 600);
@@ -171,7 +175,7 @@ mod tests {
         #[case] input: Vec<(Uuid, NaiveDateTime)>,
         #[case] expected_ids: Vec<Uuid>,
     ) {
-        let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+        let mut mon = Monitor::new("foo-tenant".to_owned(), "new-monitor".to_owned(), 200, 100);
         mon.jobs = input
             .iter()
             .map(|i| Job {
@@ -190,7 +194,7 @@ mod tests {
 
     #[test]
     fn getting_the_last_finished_job() {
-        let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+        let mut mon = Monitor::new("too-tenant".to_owned(), "new-monitor".to_owned(), 200, 100);
         mon.jobs = vec![
             Job {
                 job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
@@ -227,7 +231,7 @@ mod tests {
 
     #[test]
     fn getting_the_last_finished_job_when_no_jobs_have_finished() {
-        let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+        let mut mon = Monitor::new("too-tenant".to_owned(), "new-monitor".to_owned(), 200, 100);
         mon.jobs = vec![
             Job {
                 job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
@@ -261,7 +265,7 @@ mod tests {
 
     #[test]
     fn getting_the_last_started_job() {
-        let mut mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+        let mut mon = Monitor::new("too-tenant".to_owned(), "new-monitor".to_owned(), 200, 100);
         mon.jobs = vec![
             Job {
                 job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
@@ -298,7 +302,7 @@ mod tests {
 
     #[test]
     fn getting_the_last_started_job_when_no_jobs_have_started() {
-        let mon = Monitor::new("new-monitor".to_owned(), 200, 100);
+        let mon = Monitor::new("too-tenant".to_owned(), "new-monitor".to_owned(), 200, 100);
 
         let last_started_job = mon.last_started_job();
         assert!(last_started_job.is_none());
@@ -306,7 +310,7 @@ mod tests {
 
     #[test]
     fn editing_monitors() {
-        let mut mon = Monitor::new("new-monitor".to_owned(), 3600, 600);
+        let mut mon = Monitor::new("too-tenant".to_owned(), "new-monitor".to_owned(), 3600, 600);
 
         mon.edit_details("new-name".to_owned(), 360, 60);
 
@@ -317,7 +321,7 @@ mod tests {
 
     #[test]
     fn starting_jobs() {
-        let mut mon = Monitor::new("new-monitor".to_owned(), 3600, 600);
+        let mut mon = Monitor::new("too-tenant".to_owned(), "new-monitor".to_owned(), 3600, 600);
 
         assert!(mon.jobs_in_progress().is_empty());
 
@@ -335,7 +339,7 @@ mod tests {
 
     #[test]
     fn finishing_jobs() {
-        let mut mon = Monitor::new("new-monitor".to_owned(), 3600, 600);
+        let mut mon = Monitor::new("too-tenant".to_owned(), "new-monitor".to_owned(), 3600, 600);
 
         let job1 = mon.start_job().expect("Failed to start job");
 
