@@ -21,13 +21,13 @@ pub struct FinishJobInfo {
 #[rocket::get("/monitors/<monitor_id>/jobs/<job_id>")]
 pub async fn get_job(
     mut connection: Connection<Db>,
-    _jwt: Jwt,
+    jwt: Jwt,
     monitor_id: Uuid,
     job_id: Uuid,
 ) -> Result<Value, Error> {
     let mut service = get_fetch_job_service(&mut connection);
 
-    let job = service.fetch_by_id(monitor_id, job_id).await?;
+    let job = service.fetch_by_id(monitor_id, &jwt.tenant, job_id).await?;
 
     Ok(json!({"data": job}))
 }
