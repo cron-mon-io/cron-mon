@@ -71,6 +71,7 @@ async fn test_start_job() {
 
     let response = client
         .post("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/start")
+        .json(&json!({"tenant": "foo"}))
         .dispatch()
         .await;
 
@@ -86,7 +87,8 @@ async fn test_start_job() {
 async fn test_finish_job() {
     let (_mock_server, client) = get_test_client("test-kid", true).await;
 
-    let job_finished = get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5").await;
+    let job_finished =
+        get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5", "foo").await;
     assert_eq!(job_finished, false);
 
     let response = client
@@ -94,7 +96,7 @@ async fn test_finish_job() {
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36\
             /jobs/9d4e2d69-af63-4c1e-8639-60cb2683aee5/finish",
         )
-        .json(&json!({"succeeded": true, "output": "Test output"}))
+        .json(&json!({"succeeded": true, "output": "Test output", "tenant": "foo"}))
         .dispatch()
         .await;
 
@@ -113,7 +115,8 @@ async fn test_finish_job() {
     assert_eq!(job["late"], true);
 
     // Ensure this has persisted.
-    let job_finished = get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5").await;
+    let job_finished =
+        get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5", "foo").await;
     assert_eq!(job_finished, true);
 }
 
@@ -148,7 +151,7 @@ async fn test_finish_job_errors(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/{}/finish",
             job_id
         ))
-        .json(&json!({"succeeded": true, "output": "Test output"}))
+        .json(&json!({"succeeded": true, "output": "Test output", "tenant": "foo"}))
         .dispatch()
         .await;
 
@@ -156,13 +159,13 @@ async fn test_finish_job_errors(
     assert_eq!(response.into_json::<Value>().await.unwrap(), expected_body);
 }
 
-pub async fn get_job_finished(client: &Client, job_id: &str) -> bool {
+pub async fn get_job_finished(client: &Client, job_id: &str, tenant: &str) -> bool {
     let response = client
         .get(format!(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/{}",
             job_id
         ))
-        .header(create_auth_header("test-kid", "test-user", "foo"))
+        .header(create_auth_header("test-kid", "test-user", tenant))
         .dispatch()
         .await;
 
