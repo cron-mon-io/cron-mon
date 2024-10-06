@@ -16,7 +16,7 @@ use cron_mon_api::infrastructure::repositories::Repository;
 use common::{seed_db, setup_db};
 
 #[test]
-async fn test_all() {
+async fn test_all_with_tenant() {
     // See data seeds for the expected data (/api/tests/common/mod.rs)
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
@@ -52,6 +52,29 @@ async fn test_all() {
 }
 
 #[test]
+async fn test_all_without_tenant() {
+    // See data seeds for the expected data (/api/tests/common/mod.rs)
+    let mut conn = setup_db().await;
+    let mut repo = MonitorRepository::new(&mut conn);
+
+    let montiors = repo.all(None).await.unwrap();
+
+    let names: Vec<String> = montiors
+        .iter()
+        .map(|monitor| monitor.name.clone())
+        .collect();
+    assert_eq!(
+        names,
+        vec![
+            "init-philanges".to_owned(),
+            "db-backup.py".to_owned(),
+            "generate-orders.sh".to_owned(),
+            "data-snapshot.py".to_owned()
+        ]
+    );
+}
+
+#[test]
 async fn test_get() {
     let mut conn = setup_db().await;
     let mut repo = MonitorRepository::new(&mut conn);
@@ -70,20 +93,28 @@ async fn test_get() {
         )
         .await
         .unwrap();
-    let should_be_some = repo
+    let should_be_some_with_tenant = repo
         .get(
             gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
             Some("foo".to_owned()),
         )
         .await
         .unwrap();
+    let should_be_some_without_tenant = repo
+        .get(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"), None)
+        .await
+        .unwrap();
 
     assert!(non_existent_monitor_id.is_none());
     assert!(wrong_tenant.is_none());
-    assert!(should_be_some.is_some());
+    assert!(should_be_some_with_tenant.is_some());
+    assert!(should_be_some_without_tenant.is_some());
 
-    let monitor = should_be_some.unwrap();
-    assert_eq!(monitor.name, "db-backup.py");
+    let monitor_with_tenant = should_be_some_with_tenant.unwrap();
+    assert_eq!(monitor_with_tenant.name, "db-backup.py");
+
+    let monitor_without_tenant = should_be_some_without_tenant.unwrap();
+    assert_eq!(monitor_without_tenant.name, "init-philanges");
 }
 
 #[test]
