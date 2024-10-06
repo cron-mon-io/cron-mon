@@ -97,13 +97,12 @@ impl<'a> Repository<Monitor> for MonitorRepository<'a> {
             .db
             .transaction::<Option<(MonitorData, Vec<JobData>)>, DieselError, _>(|conn| {
                 Box::pin(async move {
-                    let mut query = monitor::table.select(MonitorData::as_select()).into_boxed();
+                    let mut query = monitor::table
+                        .select(MonitorData::as_select())
+                        .filter(monitor::monitor_id.eq(monitor_id))
+                        .into_boxed();
                     if let Some(tenant) = tenant {
-                        query = query.filter(
-                            monitor::monitor_id
-                                .eq(monitor_id)
-                                .and(monitor::tenant.eq(tenant)),
-                        );
+                        query = query.filter(monitor::tenant.eq(tenant));
                     }
 
                     let monitor_data = query.first(conn).await.optional()?;
@@ -170,8 +169,6 @@ impl<'a> Repository<Monitor> for MonitorRepository<'a> {
     async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
         let cached_data = self.data.get(&monitor.monitor_id);
 
-        // Clone the monitor and job data to avoid borrowing issues.
-        // let (monitor_data_clone, job_datas_clone) = (monitor_data.clone(), job_datas.clone());
         let result = self
             .db
             .transaction::<(MonitorData, Vec<JobData>), DieselError, _>(|conn| {

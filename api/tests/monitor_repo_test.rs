@@ -114,7 +114,7 @@ async fn test_get() {
     assert_eq!(monitor_with_tenant.name, "db-backup.py");
 
     let monitor_without_tenant = should_be_some_without_tenant.unwrap();
-    assert_eq!(monitor_without_tenant.name, "init-philanges");
+    assert_eq!(monitor_without_tenant.name, "db-backup.py");
 }
 
 #[test]
