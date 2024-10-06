@@ -20,7 +20,7 @@ impl<T: Repository<Monitor>> StartJobService<T> {
         monitor_id: Uuid,
         tenant: &str,
     ) -> Result<Job, Error> {
-        let mut monitor_opt = self.repo.get(monitor_id, tenant).await?;
+        let mut monitor_opt = self.repo.get(monitor_id, Some(tenant.to_owned())).await?;
 
         match &mut monitor_opt {
             Some(monitor) => {
@@ -60,7 +60,7 @@ mod tests {
             .once()
             .with(
                 eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
-                eq("tenant"),
+                eq(Some("tenant".to_owned())),
             )
             .returning(|_, _| {
                 Ok(Some(Monitor {
@@ -115,7 +115,7 @@ mod tests {
             .once()
             .with(
                 eq(gen_uuid("01a92c6c-6803-409d-b675-022fff62575a")),
-                eq("tenant"),
+                eq(Some("tenant".to_owned())),
             )
             .returning(|_, _| Ok(None));
 

@@ -15,7 +15,7 @@ impl<T: Repository<Monitor>> DeleteMonitorService<T> {
     }
 
     pub async fn delete_by_id(&mut self, monitor_id: Uuid, tenant: &str) -> Result<(), Error> {
-        let monitor = self.repo.get(monitor_id, tenant).await?;
+        let monitor = self.repo.get(monitor_id, Some(tenant.to_owned())).await?;
         if let Some(mon) = monitor {
             self.repo.delete(&mon).await?;
             info!(
@@ -49,7 +49,7 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(existent_id), eq("tenant"))
+            .with(eq(existent_id), eq(Some("tenant".to_owned())))
             .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
@@ -97,7 +97,7 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(monitor_id), eq("tenant"))
+            .with(eq(monitor_id), eq(Some("tenant".to_owned())))
             .returning(|_, _| Ok(None));
 
         let mut service = DeleteMonitorService::new(mock);

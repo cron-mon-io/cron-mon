@@ -71,7 +71,7 @@ pub async fn get_monitor(
     monitor_id: Uuid,
 ) -> Result<Value, Error> {
     let mut repo = MonitorRepository::new(&mut connection);
-    let monitor = repo.get(monitor_id, &jwt.tenant).await?;
+    let monitor = repo.get(monitor_id, Some(jwt.tenant)).await?;
 
     if let Some(mon) = monitor {
         Ok(json!({"data": mon}))

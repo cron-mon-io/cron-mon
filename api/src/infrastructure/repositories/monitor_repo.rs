@@ -88,21 +88,25 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
 
 #[async_trait]
 impl<'a> Repository<Monitor> for MonitorRepository<'a> {
-    async fn get(&mut self, monitor_id: Uuid, tenant: &str) -> Result<Option<Monitor>, Error> {
+    async fn get(
+        &mut self,
+        monitor_id: Uuid,
+        tenant: Option<String>,
+    ) -> Result<Option<Monitor>, Error> {
         let result = self
             .db
             .transaction::<Option<(MonitorData, Vec<JobData>)>, DieselError, _>(|conn| {
                 Box::pin(async move {
-                    let monitor_data = monitor::table
-                        .select(MonitorData::as_select())
-                        .filter(
+                    let mut query = monitor::table.select(MonitorData::as_select()).into_boxed();
+                    if let Some(tenant) = tenant {
+                        query = query.filter(
                             monitor::monitor_id
                                 .eq(monitor_id)
                                 .and(monitor::tenant.eq(tenant)),
-                        )
-                        .first(conn)
-                        .await
-                        .optional()?;
+                        );
+                    }
+
+                    let monitor_data = query.first(conn).await.optional()?;
 
                     Ok(if let Some(monitor) = monitor_data {
                         let jobs = JobData::belonging_to(&monitor)
@@ -127,16 +131,19 @@ impl<'a> Repository<Monitor> for MonitorRepository<'a> {
         }
     }
 
-    async fn all(&mut self, tenant: &str) -> Result<Vec<Monitor>, Error> {
+    async fn all(&mut self, tenant: Option<String>) -> Result<Vec<Monitor>, Error> {
         let result = self
             .db
             .transaction::<(Vec<MonitorData>, Vec<JobData>), DieselError, _>(|conn| {
                 Box::pin(async move {
-                    let all_monitor_data = monitor::dsl::monitor
+                    let mut query = monitor::dsl::monitor
                         .select(MonitorData::as_select())
-                        .filter(monitor::tenant.eq(tenant))
-                        .load(conn)
-                        .await?;
+                        .into_boxed();
+                    if let Some(tenant) = tenant {
+                        query = query.filter(monitor::tenant.eq(tenant));
+                    }
+
+                    let all_monitor_data = query.load(conn).await?;
 
                     let jobs = JobData::belonging_to(&all_monitor_data)
                         .select(JobData::as_select())

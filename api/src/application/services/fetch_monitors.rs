@@ -16,7 +16,7 @@ impl<'a, T: Repository<Monitor>, F: Fn(&mut [Monitor])> FetchMonitorsService<'a,
     }
 
     pub async fn fetch_all(&mut self, tenant: &str) -> Result<Vec<Monitor>, Error> {
-        let mut monitors = self.repo.all(tenant).await?;
+        let mut monitors = self.repo.all(Some(tenant.to_owned())).await?;
 
         (self.order_monitors)(&mut monitors);
 
@@ -43,7 +43,7 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_all()
             .once()
-            .with(eq("tenant"))
+            .with(eq(Some("tenant".to_owned())))
             .returning(move |_| {
                 Ok(vec![
                     Monitor {

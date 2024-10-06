@@ -23,7 +23,7 @@ impl<T: Repository<Monitor>> FinishJobService<T> {
         succeeded: bool,
         output: &Option<String>,
     ) -> Result<Job, Error> {
-        let monitor_opt = self.repo.get(monitor_id, tenant).await?;
+        let monitor_opt = self.repo.get(monitor_id, Some(tenant.to_owned())).await?;
 
         match monitor_opt {
             Some(mut monitor) => match monitor.finish_job(job_id, succeeded, output.clone()) {
@@ -73,7 +73,7 @@ mod tests {
             .once()
             .with(
                 eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
-                eq("tenant"),
+                eq(Some("tenant".to_owned())),
             )
             .returning(|_, _| {
                 Ok(Some(Monitor {
@@ -140,7 +140,7 @@ mod tests {
             .once()
             .with(
                 eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
-                eq("tenant"),
+                eq(Some("tenant".to_owned())),
             )
             .returning(|_, _| Ok(None));
 
@@ -176,7 +176,7 @@ mod tests {
             .once()
             .with(
                 eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
-                eq("tenant"),
+                eq(Some("tenant".to_owned())),
             )
             .returning(|_, _| {
                 Ok(Some(Monitor {
@@ -231,7 +231,7 @@ mod tests {
             .once()
             .with(
                 eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
-                eq("tenant"),
+                eq(Some("tenant".to_owned())),
             )
             .returning(|_, _| {
                 Ok(Some(Monitor {

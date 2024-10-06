@@ -22,7 +22,7 @@ impl<T: Repository<Monitor>> UpdateMonitorService<T> {
         new_expected: i32,
         new_grace: i32,
     ) -> Result<Monitor, Error> {
-        let monitor_opt = self.repo.get(monitor_id, tenant).await?;
+        let monitor_opt = self.repo.get(monitor_id, Some(tenant.to_owned())).await?;
 
         match monitor_opt {
             Some(mut monitor) => {
@@ -74,7 +74,7 @@ mod tests {
             .once()
             .with(
                 eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
-                eq("tenant"),
+                eq(Some("tenant".to_owned())),
             )
             .returning(|_, _| {
                 Ok(Some(Monitor {
@@ -143,7 +143,7 @@ mod tests {
             .once()
             .with(
                 eq(gen_uuid("01a92c6c-6803-409d-b675-022fff62575a")),
-                eq("tenant"),
+                eq(Some("tenant".to_owned())),
             )
             .returning(|_, _| Ok(None));
 

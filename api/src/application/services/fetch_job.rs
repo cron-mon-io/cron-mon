@@ -20,7 +20,7 @@ impl<T: Repository<Monitor>> FetchJobService<T> {
         tenant: &str,
         job_id: Uuid,
     ) -> Result<Job, Error> {
-        let monitor_opt = self.repo.get(monitor_id, tenant).await?;
+        let monitor_opt = self.repo.get(monitor_id, Some(tenant.to_owned())).await?;
 
         match monitor_opt {
             Some(mut monitor) => {
@@ -52,7 +52,7 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(monitor_id), eq("tenant"))
+            .with(eq(monitor_id), eq(Some("tenant".to_owned())))
             .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("71d1c46c-ef86-4fcb-b8b4-b2fee56a4d2f"),
@@ -102,7 +102,7 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(monitor_id), eq("tenant"))
+            .with(eq(monitor_id), eq(Some("tenant".to_owned())))
             .returning(|_, _| Ok(None));
 
         let mut service = FetchJobService::new(mock);
@@ -124,7 +124,7 @@ mod tests {
         let mut mock = MockRepository::new();
         mock.expect_get()
             .once()
-            .with(eq(monitor_id), eq("tenant"))
+            .with(eq(monitor_id), eq(Some("tenant".to_owned())))
             .returning(|_, _| {
                 Ok(Some(Monitor {
                     monitor_id: gen_uuid("71d1c46c-ef86-4fcb-b8b4-b2fee56a4d2f"),
