@@ -1,6 +1,19 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    api_key (api_key_id) {
+        api_key_id -> Uuid,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        key -> Varchar,
+        tenant -> Varchar,
+        last_used -> Nullable<Timestamp>,
+        last_used_monitor_id -> Nullable<Uuid>,
+        last_used_monitor_name -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
     job (job_id) {
         job_id -> Uuid,
         created_at -> Timestamp,
@@ -28,4 +41,4 @@ diesel::table! {
 
 diesel::joinable!(job -> monitor (monitor_id));
 
-diesel::allow_tables_to_appear_in_same_query!(job, monitor,);
+diesel::allow_tables_to_appear_in_same_query!(api_key, job, monitor);
