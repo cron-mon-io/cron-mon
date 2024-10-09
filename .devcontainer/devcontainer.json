@@ -7,7 +7,6 @@
   },
   "containerEnv": {
     "DATABASE_URL": "postgres://cron-mon-api:itsasecret@host.docker.internal:54320/cron-mon",
-    "ROCKET_PROFILE": "vscode",
     "CARGO_HOME": "${containerWorkspaceFolder}/.cargo"
   },
   "runArgs": [
@@ -16,6 +15,10 @@
     "--add-host",
     "host.docker.internal:host-gateway"
   ],
+  "onCreateCommand": "${containerWorkspaceFolder}/.devcontainer/on-create.sh",
+  "features": {
+    "ghcr.io/devcontainers/features/git": {}
+  },
   "customizations": {
     "vscode": {
       "settings": {
