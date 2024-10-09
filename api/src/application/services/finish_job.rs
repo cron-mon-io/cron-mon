@@ -6,13 +6,13 @@ use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
 use crate::infrastructure::repositories::Repository;
 
-pub struct FinishJobService<T: Repository<Monitor>> {
-    repo: T,
+pub struct FinishJobService<MonitorRepo: Repository<Monitor>> {
+    monitor_repo: MonitorRepo,
 }
 
-impl<T: Repository<Monitor>> FinishJobService<T> {
-    pub fn new(repo: T) -> Self {
-        Self { repo }
+impl<MonitorRepo: Repository<Monitor>> FinishJobService<MonitorRepo> {
+    pub fn new(monitor_repo: MonitorRepo) -> Self {
+        Self { monitor_repo }
     }
 
     pub async fn finish_job_for_monitor(
@@ -23,7 +23,7 @@ impl<T: Repository<Monitor>> FinishJobService<T> {
         succeeded: bool,
         output: &Option<String>,
     ) -> Result<Job, Error> {
-        let monitor_opt = self.repo.get(monitor_id, tenant).await?;
+        let monitor_opt = self.monitor_repo.get(monitor_id, tenant).await?;
 
         match monitor_opt {
             Some(mut monitor) => match monitor.finish_job(job_id, succeeded, output.clone()) {
@@ -32,7 +32,7 @@ impl<T: Repository<Monitor>> FinishJobService<T> {
                     // as mutable above, meaning we can't borrow it immutably when saving it.
                     let job = job.clone();
 
-                    self.repo.save(&monitor).await?;
+                    self.monitor_repo.save(&monitor).await?;
 
                     info!(
                         monitor_id = monitor_id.to_string(),

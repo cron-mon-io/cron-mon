@@ -6,13 +6,13 @@ use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
 use crate::infrastructure::repositories::Repository;
 
-pub struct StartJobService<T: Repository<Monitor>> {
-    repo: T,
+pub struct StartJobService<MonitorRepo: Repository<Monitor>> {
+    monitor_repo: MonitorRepo,
 }
 
-impl<T: Repository<Monitor>> StartJobService<T> {
-    pub fn new(repo: T) -> Self {
-        Self { repo }
+impl<MonitorRepo: Repository<Monitor>> StartJobService<MonitorRepo> {
+    pub fn new(monitor_repo: MonitorRepo) -> Self {
+        Self { monitor_repo }
     }
 
     pub async fn start_job_for_monitor(
@@ -20,12 +20,12 @@ impl<T: Repository<Monitor>> StartJobService<T> {
         monitor_id: Uuid,
         tenant: &str,
     ) -> Result<Job, Error> {
-        let mut monitor_opt = self.repo.get(monitor_id, tenant).await?;
+        let mut monitor_opt = self.monitor_repo.get(monitor_id, tenant).await?;
 
         match &mut monitor_opt {
             Some(monitor) => {
                 let job = monitor.start_job()?;
-                self.repo.save(monitor).await?;
+                self.monitor_repo.save(monitor).await?;
 
                 info!(
                     monitor_id = monitor_id.to_string(),
