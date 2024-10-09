@@ -1,5 +1,4 @@
-use chrono::NaiveDateTime;
-use chrono::{offset::Utc, Duration};
+use chrono::{Duration, NaiveDateTime, Utc};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
 

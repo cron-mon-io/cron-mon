@@ -88,7 +88,7 @@ mod tests {
         Err(Error::Unauthorized("insufficient permissions".to_string()))
     }
 
-    #[rocket::get("/auth_erpr")]
+    #[rocket::get("/auth_error")]
     fn auth_error() -> Result<(), Error> {
         Err(Error::AuthenticationError(
             "something went wrong".to_string(),
@@ -245,7 +245,7 @@ mod tests {
 
     #[rstest]
     fn test_authentication_error(test_client: Client) {
-        let response = test_client.get("/auth_erpr").dispatch();
+        let response = test_client.get("/auth_error").dispatch();
 
         assert_eq!(response.status(), Status::InternalServerError);
         assert_eq!(response.content_type(), Some(ContentType::JSON));
