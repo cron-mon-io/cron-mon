@@ -16,7 +16,7 @@ use rocket_db_pools::Database;
 use crate::application::routes::{health, jobs, monitors};
 use crate::infrastructure::auth::jwt::{Jwk, JwtAuthService};
 use crate::infrastructure::auth::JwtAuth;
-use crate::infrastructure::database::{run_migrations, Db};
+use crate::infrastructure::database::{run_migrations, DbPool};
 use crate::infrastructure::middleware::fairings::{cors::CORS, default_json::DefaultJSON};
 
 #[rocket::launch]
@@ -29,7 +29,7 @@ pub fn rocket() -> Rocket<Build> {
     )));
 
     rocket::custom(figment)
-        .attach(Db::init())
+        .attach(DbPool::init())
         .attach(CORS)
         .attach(DefaultJSON)
         .manage(Box::new(JwtAuthService::new(

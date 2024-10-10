@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use rocket;
 use rocket::serde::json::Json;
 use rocket_db_pools::Connection;
@@ -11,7 +13,7 @@ use crate::application::services::{
 };
 use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
-use crate::infrastructure::database::Db;
+use crate::infrastructure::database::DbPool;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 use crate::infrastructure::repositories::Repository;
@@ -24,7 +26,7 @@ pub struct MonitorData {
 }
 
 #[rocket::get("/monitors")]
-pub async fn list_monitors(mut connection: Connection<Db>, jwt: Jwt) -> Result<Value, Error> {
+pub async fn list_monitors(pool: Connection<DbPool>, jwt: Jwt) -> Result<Value, Error> {
     let mut service = get_fetch_monitors_service(&mut connection);
     let monitors = service.fetch_all(&jwt.tenant).await?;
 
@@ -46,11 +48,11 @@ pub async fn list_monitors(mut connection: Connection<Db>, jwt: Jwt) -> Result<V
 
 #[rocket::post("/monitors", data = "<new_monitor>")]
 pub async fn create_monitor(
-    mut connection: Connection<Db>,
+    pool: &rocket::State<DbPool>,
     jwt: Jwt,
     new_monitor: Json<MonitorData>,
 ) -> Result<Value, Error> {
-    let mut service = get_create_monitor_service(&mut connection);
+    let mut service = get_create_monitor_service(pool);
 
     let mon = service
         .create_by_attributes(
@@ -66,7 +68,7 @@ pub async fn create_monitor(
 
 #[rocket::get("/monitors/<monitor_id>")]
 pub async fn get_monitor(
-    mut connection: Connection<Db>,
+    pool: Connection<DbPool>,
     jwt: Jwt,
     monitor_id: Uuid,
 ) -> Result<Value, Error> {
@@ -82,7 +84,7 @@ pub async fn get_monitor(
 
 #[rocket::delete("/monitors/<monitor_id>")]
 pub async fn delete_monitor(
-    mut connection: Connection<Db>,
+    pool: Connection<DbPool>,
     jwt: Jwt,
     monitor_id: Uuid,
 ) -> Result<(), Error> {
@@ -93,7 +95,7 @@ pub async fn delete_monitor(
 
 #[rocket::patch("/monitors/<monitor_id>", data = "<updated_monitor>")]
 pub async fn update_monitor(
-    mut connection: Connection<Db>,
+    pool: Connection<DbPool>,
     jwt: Jwt,
     monitor_id: Uuid,
     updated_monitor: Json<MonitorData>,

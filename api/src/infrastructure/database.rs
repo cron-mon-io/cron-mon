@@ -8,9 +8,9 @@ use rocket_db_pools::{diesel, Database};
 
 use crate::errors::Error;
 
-#[derive(Database)]
+#[derive(Clone, Database)]
 #[database("monitors")]
-pub struct Db(diesel::PgPool);
+pub struct DbPool(diesel::PgPool);
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("src/infrastructure/migrations");
 
