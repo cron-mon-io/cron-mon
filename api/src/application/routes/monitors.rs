@@ -1,8 +1,6 @@
-use std::ops::Deref;
-
 use rocket;
 use rocket::serde::json::Json;
-use rocket_db_pools::Connection;
+use rocket::State;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
@@ -26,8 +24,8 @@ pub struct MonitorData {
 }
 
 #[rocket::get("/monitors")]
-pub async fn list_monitors(pool: Connection<DbPool>, jwt: Jwt) -> Result<Value, Error> {
-    let mut service = get_fetch_monitors_service(&mut connection);
+pub async fn list_monitors(pool: &State<DbPool>, jwt: Jwt) -> Result<Value, Error> {
+    let mut service = get_fetch_monitors_service(pool);
     let monitors = service.fetch_all(&jwt.tenant).await?;
 
     Ok(json!({
@@ -48,7 +46,7 @@ pub async fn list_monitors(pool: Connection<DbPool>, jwt: Jwt) -> Result<Value, 
 
 #[rocket::post("/monitors", data = "<new_monitor>")]
 pub async fn create_monitor(
-    pool: &rocket::State<DbPool>,
+    pool: &State<DbPool>,
     jwt: Jwt,
     new_monitor: Json<MonitorData>,
 ) -> Result<Value, Error> {
@@ -67,12 +65,8 @@ pub async fn create_monitor(
 }
 
 #[rocket::get("/monitors/<monitor_id>")]
-pub async fn get_monitor(
-    pool: Connection<DbPool>,
-    jwt: Jwt,
-    monitor_id: Uuid,
-) -> Result<Value, Error> {
-    let mut repo = MonitorRepository::new(&mut connection);
+pub async fn get_monitor(pool: &State<DbPool>, jwt: Jwt, monitor_id: Uuid) -> Result<Value, Error> {
+    let mut repo = MonitorRepository::new(pool);
     let monitor = repo.get(monitor_id, &jwt.tenant).await?;
 
     if let Some(mon) = monitor {
@@ -83,24 +77,20 @@ pub async fn get_monitor(
 }
 
 #[rocket::delete("/monitors/<monitor_id>")]
-pub async fn delete_monitor(
-    pool: Connection<DbPool>,
-    jwt: Jwt,
-    monitor_id: Uuid,
-) -> Result<(), Error> {
-    let mut service = get_delete_monitor_service(&mut connection);
+pub async fn delete_monitor(pool: &State<DbPool>, jwt: Jwt, monitor_id: Uuid) -> Result<(), Error> {
+    let mut service = get_delete_monitor_service(pool);
 
     service.delete_by_id(monitor_id, &jwt.tenant).await
 }
 
 #[rocket::patch("/monitors/<monitor_id>", data = "<updated_monitor>")]
 pub async fn update_monitor(
-    pool: Connection<DbPool>,
+    pool: &State<DbPool>,
     jwt: Jwt,
     monitor_id: Uuid,
     updated_monitor: Json<MonitorData>,
 ) -> Result<Value, Error> {
-    let mut service = get_update_monitor_service(&mut connection);
+    let mut service = get_update_monitor_service(pool);
 
     let mon = service
         .update_by_id(

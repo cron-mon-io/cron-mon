@@ -26,16 +26,16 @@ pub fn get_create_monitor_service(pool: &DbPool) -> CreateMonitorService<Monitor
     CreateMonitorService::new(MonitorRepository::new(pool))
 }
 
-pub fn get_delete_monitor_service(pool: DbPool) -> DeleteMonitorService<MonitorRepository> {
+pub fn get_delete_monitor_service(pool: &DbPool) -> DeleteMonitorService<MonitorRepository> {
     DeleteMonitorService::new(MonitorRepository::new(pool))
 }
 
-pub fn get_fetch_job_service(pool: DbPool) -> FetchJobService<MonitorRepository> {
+pub fn get_fetch_job_service(pool: &DbPool) -> FetchJobService<MonitorRepository> {
     FetchJobService::new(MonitorRepository::new(pool))
 }
 
 pub fn get_fetch_monitors_service<'a>(
-    pool: DbPool,
+    pool: &DbPool,
 ) -> FetchMonitorsService<'a, MonitorRepository, impl Fn(&mut [Monitor])> {
     FetchMonitorsService::new(
         MonitorRepository::new(pool),
@@ -43,20 +43,20 @@ pub fn get_fetch_monitors_service<'a>(
     )
 }
 
-pub fn get_finish_job_service(pool: DbPool) -> FinishJobService<MonitorRepository> {
+pub fn get_finish_job_service(pool: &DbPool) -> FinishJobService<MonitorRepository> {
     FinishJobService::new(MonitorRepository::new(pool))
 }
 
 pub fn get_process_late_jobs_service(
-    pool: DbPool,
+    pool: &DbPool,
 ) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer> {
     ProcessLateJobsService::new(MonitorRepository::new(pool), Default::default())
 }
 
-pub fn get_start_job_service(pool: DbPool) -> StartJobService<MonitorRepository> {
+pub fn get_start_job_service(pool: &DbPool) -> StartJobService<MonitorRepository> {
     StartJobService::new(MonitorRepository::new(pool))
 }
 
-pub fn get_update_monitor_service(pool: DbPool) -> UpdateMonitorService<MonitorRepository> {
+pub fn get_update_monitor_service(pool: &DbPool) -> UpdateMonitorService<MonitorRepository> {
     UpdateMonitorService::new(MonitorRepository::new(pool))
 }
