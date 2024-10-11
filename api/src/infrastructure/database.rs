@@ -3,7 +3,7 @@ use std::env;
 use diesel::Connection;
 use diesel::PgConnection;
 use diesel_async::pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager};
-use diesel_async::{AsyncConnection, AsyncPgConnection};
+use diesel_async::AsyncPgConnection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 use crate::errors::Error;
@@ -20,17 +20,6 @@ pub fn create_db_connection_pool() -> Result<DbPool, Error> {
         .expect("Failed to create DB connection pool.");
 
     Ok(pool)
-}
-
-// TODO: Bin this off and just use create_db_connection_pool.
-pub async fn establish_connection() -> Result<AsyncPgConnection, Error> {
-    match AsyncPgConnection::establish(&get_database_url()).await {
-        Ok(conn) => Ok(conn),
-        Err(e) => Err(Error::RepositoryError(format!(
-            "Failed to establish DB connection: {:?}",
-            e
-        ))),
-    }
 }
 
 pub fn run_migrations() {
