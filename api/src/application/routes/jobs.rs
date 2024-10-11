@@ -1,6 +1,6 @@
 use rocket;
 use rocket::serde::json::Json;
-use rocket_db_pools::Connection;
+use rocket::State;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
@@ -10,7 +10,7 @@ use crate::application::services::{
 };
 use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
-use crate::infrastructure::database::Db;
+use crate::infrastructure::database::DbPool;
 
 // TODO: Remove this once we have API keys.
 #[derive(Deserialize)]
@@ -27,12 +27,12 @@ pub struct FinishJobInfo {
 
 #[rocket::get("/monitors/<monitor_id>/jobs/<job_id>")]
 pub async fn get_job(
-    mut connection: Connection<Db>,
+    pool: &State<DbPool>,
     jwt: Jwt,
     monitor_id: Uuid,
     job_id: Uuid,
 ) -> Result<Value, Error> {
-    let mut service = get_fetch_job_service(&mut connection);
+    let mut service = get_fetch_job_service(pool);
 
     let job = service.fetch_by_id(monitor_id, &jwt.tenant, job_id).await?;
 
@@ -41,11 +41,11 @@ pub async fn get_job(
 
 #[rocket::post("/monitors/<monitor_id>/jobs/start", data = "<start_job_info>")]
 pub async fn start_job(
-    mut connection: Connection<Db>,
+    pool: &State<DbPool>,
     monitor_id: Uuid,
     start_job_info: Json<StartJobInfo>,
 ) -> Result<Value, Error> {
-    let mut service = get_start_job_service(&mut connection);
+    let mut service = get_start_job_service(pool);
 
     let job = service
         .start_job_for_monitor(monitor_id, &start_job_info.tenant)
@@ -58,12 +58,12 @@ pub async fn start_job(
     data = "<finish_job_info>"
 )]
 pub async fn finish_job(
-    mut connection: Connection<Db>,
+    pool: &State<DbPool>,
     monitor_id: Uuid,
     job_id: Uuid,
     finish_job_info: Json<FinishJobInfo>,
 ) -> Result<Value, Error> {
-    let mut service = get_finish_job_service(&mut connection);
+    let mut service = get_finish_job_service(pool);
 
     let job = service
         .finish_job_for_monitor(

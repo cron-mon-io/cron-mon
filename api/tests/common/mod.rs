@@ -1,6 +1,5 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
 use rocket::http::Header;
 use rocket::local::asynchronous::Client;
@@ -11,13 +10,13 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 use test_utils::{encode_jwt, gen_datetime, gen_uuid, RSA_EXPONENT, RSA_MODULUS};
 
 use cron_mon_api::infrastructure::auth::Jwt;
-use cron_mon_api::infrastructure::database::establish_connection;
+use cron_mon_api::infrastructure::database::{create_connection_pool, DbPool};
 use cron_mon_api::infrastructure::db_schema::job;
 use cron_mon_api::infrastructure::db_schema::monitor;
 use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
 use cron_mon_api::rocket;
 
-pub async fn setup_db() -> AsyncPgConnection {
+pub async fn setup_db_pool() -> DbPool {
     let (monitor_seeds, job_seeds) = seed_data();
     seed_db(&monitor_seeds, &job_seeds).await
 }
@@ -25,7 +24,7 @@ pub async fn setup_db() -> AsyncPgConnection {
 pub async fn get_test_client(kid: &str, seed_db: bool) -> (MockServer, Client) {
     let mock_server = setup_mock_jwks_server(kid).await;
     if seed_db {
-        setup_db().await;
+        setup_db_pool().await;
     }
     let client = Client::tracked(rocket())
         .await
@@ -116,11 +115,13 @@ pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>) {
     )
 }
 
-pub async fn seed_db(
-    monitor_seeds: &Vec<MonitorData>,
-    job_seeds: &Vec<JobData>,
-) -> AsyncPgConnection {
-    let mut conn = establish_connection().await.unwrap();
+pub async fn seed_db(monitor_seeds: &Vec<MonitorData>, job_seeds: &Vec<JobData>) -> DbPool {
+    let pool = create_connection_pool().expect("Failed to setup DB connection pool");
+
+    let mut conn = pool
+        .get()
+        .await
+        .expect("Failed to retrieve DB connection from the pool");
 
     diesel::delete(monitor::table)
         .execute(&mut conn)
@@ -139,7 +140,7 @@ pub async fn seed_db(
         .await
         .expect("Failed to seed jobs");
 
-    conn
+    pool
 }
 
 pub fn create_auth_header<'a>(kid: &str, name: &str, tenant: &str) -> Header<'a> {
