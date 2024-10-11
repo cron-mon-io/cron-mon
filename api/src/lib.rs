@@ -13,14 +13,14 @@ use rocket::{routes, Build, Rocket};
 use crate::application::routes::{health, jobs, monitors};
 use crate::infrastructure::auth::jwt::{Jwk, JwtAuthService};
 use crate::infrastructure::auth::JwtAuth;
-use crate::infrastructure::database::{create_db_connection_pool, run_migrations};
+use crate::infrastructure::database::{create_connection_pool, run_migrations};
 use crate::infrastructure::middleware::fairings::{cors::CORS, default_json::DefaultJSON};
 
 #[rocket::launch]
 pub fn rocket() -> Rocket<Build> {
     run_migrations();
 
-    let db_pool = create_db_connection_pool().expect("Failed to create DB connection pool.");
+    let db_pool = create_connection_pool().expect("Failed to create DB connection pool.");
 
     rocket::build()
         .attach(CORS)

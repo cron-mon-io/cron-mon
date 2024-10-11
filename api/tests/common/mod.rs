@@ -10,7 +10,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 use test_utils::{encode_jwt, gen_datetime, gen_uuid, RSA_EXPONENT, RSA_MODULUS};
 
 use cron_mon_api::infrastructure::auth::Jwt;
-use cron_mon_api::infrastructure::database::{create_db_connection_pool, DbPool};
+use cron_mon_api::infrastructure::database::{create_connection_pool, DbPool};
 use cron_mon_api::infrastructure::db_schema::job;
 use cron_mon_api::infrastructure::db_schema::monitor;
 use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
@@ -116,7 +116,7 @@ pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>) {
 }
 
 pub async fn seed_db(monitor_seeds: &Vec<MonitorData>, job_seeds: &Vec<JobData>) -> DbPool {
-    let pool = create_db_connection_pool().expect("Failed to setup DB connection pool");
+    let pool = create_connection_pool().expect("Failed to setup DB connection pool");
 
     let mut conn = pool
         .get()

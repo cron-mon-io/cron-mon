@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tracing::error;
 
 use cron_mon_api::application::services::get_process_late_jobs_service;
-use cron_mon_api::infrastructure::database::create_db_connection_pool;
+use cron_mon_api::infrastructure::database::create_connection_pool;
 use cron_mon_api::infrastructure::logging::init_logging;
 
 async fn run_periodically<F, Fut>(seconds: u64, func: F)
@@ -30,7 +30,7 @@ async fn main() {
     init_logging();
 
     run_periodically(10, || async move {
-        match create_db_connection_pool() {
+        match create_connection_pool() {
             Ok(pool) => {
                 let mut service = get_process_late_jobs_service(&pool);
 

@@ -12,7 +12,7 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("src/infrastructure/mig
 
 pub type DbPool = Pool<AsyncPgConnection>;
 
-pub fn create_db_connection_pool() -> Result<DbPool, Error> {
+pub fn create_connection_pool() -> Result<DbPool, Error> {
     let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(get_database_url());
 
     let pool = Pool::builder(manager)
