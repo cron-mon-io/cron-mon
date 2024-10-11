@@ -267,14 +267,12 @@ dependencies = [
  "diesel",
  "diesel-async",
  "diesel_migrations",
- "figment",
  "jsonwebtoken",
  "mockall",
  "moka",
  "pretty_assertions",
  "reqwest",
  "rocket",
- "rocket_db_pools",
  "rstest",
  "serde",
  "serde_json",
@@ -352,9 +350,6 @@ name = "deadpool-runtime"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "092966b41edc516079bdf31ec78a2e0588d1d0c08f78b91d8307215928642b2b"
-dependencies = [
- "tokio",
-]
 
 [[package]]
 name = "deranged"
@@ -1868,30 +1863,6 @@ dependencies = [
  "syn",
  "unicode-xid",
  "version_check",
-]
-
-[[package]]
-name = "rocket_db_pools"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6578b2740ceee3e78bff63fe9299d964b7e68318446cdcb9af3b9cab46e1e9d"
-dependencies = [
- "deadpool 0.9.5",
- "diesel",
- "diesel-async",
- "rocket",
- "rocket_db_pools_codegen",
- "version_check",
-]
-
-[[package]]
-name = "rocket_db_pools_codegen"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "842e859f2e87a23efc0f81e25756c0fb43f18726e62daf99da7ea19fbc56cebd"
-dependencies = [
- "devise",
- "quote",
 ]
 
 [[package]]

@@ -9,14 +9,12 @@ edition = "2021"
 async-trait = "0.1.83"
 chrono = { version = "0.4", features = ["serde"]}
 diesel = { version = "2.1.6", features = ["chrono", "uuid", "postgres"] }
-diesel-async = { version = "0.4.1", features = ["postgres"] }
+diesel-async = { version = "0.4.1", features = ["deadpool", "postgres"] }
 diesel_migrations = { version = "2.1.0", features = ["postgres"] }
-figment = "0.10.19"
 jsonwebtoken = "9.3.0"
 moka = { version = "0.12.8", features = ["sync"] }
 reqwest = { version = "0.12.8", features = ["json"] }
 rocket = { version = "0.5.1", features = ["json", "uuid"] }
-rocket_db_pools = { version = "0.2.0", features = ["diesel_postgres" ]}
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 signal-hook = "0.3.17"

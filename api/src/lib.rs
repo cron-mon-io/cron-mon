@@ -6,11 +6,9 @@ pub mod infrastructure;
 use std::env;
 use std::time::Duration;
 
-use figment::util::map;
-use figment::Figment;
 use moka::sync::Cache;
 use rocket::fs::FileServer;
-use rocket::{routes, Build, Config, Rocket};
+use rocket::{routes, Build, Rocket};
 
 use crate::application::routes::{health, jobs, monitors};
 use crate::infrastructure::auth::jwt::{Jwk, JwtAuthService};
@@ -22,15 +20,9 @@ use crate::infrastructure::middleware::fairings::{cors::CORS, default_json::Defa
 pub fn rocket() -> Rocket<Build> {
     run_migrations();
 
-    // TODO: Remove this - and settings in Rocket.toml that go with it.
-    let figment = Config::figment().merge(Figment::new().join((
-        "databases.monitors",
-        map!["url" => env::var("DATABASE_URL").expect("'DATABASE_URL' missing from environment")],
-    )));
-
     let db_pool = create_db_connection_pool().expect("Failed to create DB connection pool.");
 
-    rocket::custom(figment)
+    rocket::build()
         .attach(CORS)
         .attach(DefaultJSON)
         .manage(db_pool)
