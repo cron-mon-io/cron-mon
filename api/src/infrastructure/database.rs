@@ -2,18 +2,27 @@ use std::env;
 
 use diesel::Connection;
 use diesel::PgConnection;
+use diesel_async::pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager};
 use diesel_async::{AsyncConnection, AsyncPgConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use rocket_db_pools::{diesel, Database};
 
 use crate::errors::Error;
 
-#[derive(Clone, Database)]
-#[database("monitors")]
-pub struct DbPool(diesel::PgPool);
-
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("src/infrastructure/migrations");
 
+pub type DbPool = Pool<AsyncPgConnection>;
+
+pub fn create_db_connection_pool() -> Result<DbPool, Error> {
+    let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(get_database_url());
+
+    let pool = Pool::builder(manager)
+        .build()
+        .expect("Failed to create DB connection pool.");
+
+    Ok(pool)
+}
+
+// TODO: Bin this off and just use create_db_connection_pool.
 pub async fn establish_connection() -> Result<AsyncPgConnection, Error> {
     match AsyncPgConnection::establish(&get_database_url()).await {
         Ok(conn) => Ok(conn),
