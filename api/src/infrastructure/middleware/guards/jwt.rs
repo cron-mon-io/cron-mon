@@ -81,7 +81,7 @@ mod tests {
         // Setup a Rocket client that doesn't have a JwtAuth service at all.
         let test_rocket = rocket::build().mount("/", rocket::routes![protected_index]);
         let client = Client::tracked(test_rocket)
-            .expect("Couldn't create test Rocket app for DefaultJSON fairing test");
+            .expect("Couldn't create test Rocket app for Jwt request guard test");
 
         let response = client
             .get("/")
@@ -225,6 +225,6 @@ mod tests {
             .manage(Box::new(mock) as Box<dyn JwtAuth + Send + Sync>)
             .mount("/", rocket::routes![protected_index]);
         Client::tracked(test_rocket)
-            .expect("Couldn't create test Rocket app for DefaultJSON fairing test")
+            .expect("Couldn't create test Rocket app for Jwt request guard test")
     }
 }
