@@ -1,7 +1,7 @@
 pub mod common;
 
 use pretty_assertions::assert_eq;
-use rocket::http::{ContentType, Status};
+use rocket::http::{ContentType, Header, Status};
 use rocket::local::asynchronous::Client;
 use rstest::*;
 use serde_json::{json, Value};
@@ -71,7 +71,7 @@ async fn test_start_job() {
 
     let response = client
         .post("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/start")
-        .json(&json!({"tenant": "foo"}))
+        .header(Header::new("X-API-Key", "foo-key"))
         .dispatch()
         .await;
 
