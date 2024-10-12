@@ -1,31 +1,48 @@
 use tracing::info;
 use uuid::Uuid;
 
+use crate::domain::models::api_key::ApiKey;
 use crate::domain::models::job::Job;
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
+use crate::infrastructure::repositories::api_keys::GetByKey;
 use crate::infrastructure::repositories::Repository;
 
-pub struct StartJobService<MonitorRepo: Repository<Monitor>> {
+pub struct StartJobService<
+    MonitorRepo: Repository<Monitor>,
+    ApiKeyRepo: Repository<ApiKey> + GetByKey,
+> {
     monitor_repo: MonitorRepo,
+    api_key_repo: ApiKeyRepo,
 }
 
-impl<MonitorRepo: Repository<Monitor>> StartJobService<MonitorRepo> {
-    pub fn new(monitor_repo: MonitorRepo) -> Self {
-        Self { monitor_repo }
+impl<MonitorRepo: Repository<Monitor>, ApiKeyRepo: Repository<ApiKey> + GetByKey>
+    StartJobService<MonitorRepo, ApiKeyRepo>
+{
+    pub fn new(monitor_repo: MonitorRepo, api_key_repo: ApiKeyRepo) -> Self {
+        Self {
+            monitor_repo,
+            api_key_repo,
+        }
     }
 
     pub async fn start_job_for_monitor(
         &mut self,
         monitor_id: Uuid,
-        tenant: &str,
+        api_key: &str,
     ) -> Result<Job, Error> {
-        let mut monitor_opt = self.monitor_repo.get(monitor_id, tenant).await?;
+        let mut key = self.validate_key(api_key).await?;
+
+        let mut monitor_opt = self.monitor_repo.get(monitor_id, &key.tenant).await?;
 
         match &mut monitor_opt {
             Some(monitor) => {
-                let job = monitor.start_job()?;
-                self.monitor_repo.save(monitor).await?;
+                // Evertime an API key is used to access a monitor, we record it's usage. This is
+                // useful for monitoring and auditing purposes, since API keys aren't as secure as
+                // JWTs.
+                self.record_monitor_usage(&mut key, monitor).await?;
+
+                let job = self.start_job(monitor).await?;
 
                 info!(
                     monitor_id = monitor_id.to_string(),
@@ -38,25 +55,89 @@ impl<MonitorRepo: Repository<Monitor>> StartJobService<MonitorRepo> {
             None => Err(Error::MonitorNotFound(monitor_id)),
         }
     }
+
+    async fn validate_key(&mut self, key: &str) -> Result<ApiKey, Error> {
+        let api_key = self.api_key_repo.get_by_key(key).await?;
+        match api_key {
+            Some(key) => Ok(key),
+            None => Err(Error::Unauthorized("Invalid API key".to_owned())),
+        }
+    }
+
+    async fn record_monitor_usage(
+        &mut self,
+        key: &mut ApiKey,
+        monitor: &Monitor,
+    ) -> Result<(), Error> {
+        key.record_usage(monitor)?;
+        self.api_key_repo.save(key).await
+    }
+
+    async fn start_job(&mut self, monitor: &mut Monitor) -> Result<Job, Error> {
+        let job = monitor.start_job()?;
+        self.monitor_repo.save(monitor).await?;
+        Ok(job)
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use mockall::predicate::*;
+    use async_trait::async_trait;
+    use mockall::{mock, predicate::*};
     use tracing_test::traced_test;
 
     use test_utils::gen_uuid;
     use test_utils::logging::TracingLog;
 
-    use crate::infrastructure::repositories::MockRepository;
+    use crate::domain::models::api_key::ApiKey;
+    use crate::infrastructure::repositories::api_keys::GetByKey;
+    use crate::infrastructure::repositories::{MockRepository, Repository};
 
     use super::{Error, Monitor, StartJobService};
+
+    mock! {
+        ApiKeyRepo {}
+
+        #[async_trait]
+        impl GetByKey for ApiKeyRepo {
+            async fn get_by_key(&mut self, key: &str) -> Result<Option<ApiKey>, Error>;
+        }
+
+        #[async_trait]
+        impl Repository<ApiKey> for ApiKeyRepo {
+            async fn get(
+                &mut self, api_key_id: uuid::Uuid, tenant: &str
+            ) -> Result<Option<ApiKey>, Error>;
+            async fn all(&mut self, tenant: &str) -> Result<Vec<ApiKey>, Error>;
+            async fn delete(&mut self, key: &ApiKey) -> Result<(), Error>;
+            async fn save(&mut self, key: &ApiKey) -> Result<(), Error>;
+        }
+    }
 
     #[traced_test]
     #[tokio::test]
     async fn test_start_job_service() {
-        let mut mock = MockRepository::new();
-        mock.expect_get()
+        let mut mock_api_key_repo = MockApiKeyRepo::new();
+        mock_api_key_repo
+            .expect_get_by_key()
+            .once()
+            .with(eq("foo-key"))
+            .returning(|_| Ok(Some(ApiKey::new("foo-key".to_owned(), "tenant".to_owned()))));
+        mock_api_key_repo
+            .expect_save()
+            .once()
+            .withf(|key: &ApiKey| {
+                // We're checking that the key was updated with the last used information.
+                key.last_used.is_some()
+                    && key.last_used_monitor_id
+                        == Some(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"))
+                    && key.last_used_monitor_name == Some("foo".to_owned())
+            })
+            .returning(|_| Ok(()));
+
+        let mut mock_monitor_repo = MockRepository::new();
+        mock_monitor_repo
+            .expect_get()
             .once()
             .with(
                 eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
@@ -72,7 +153,8 @@ mod tests {
                     jobs: vec![],
                 }))
             });
-        mock.expect_save()
+        mock_monitor_repo
+            .expect_save()
             .once()
             .withf(|monitor: &Monitor| {
                 monitor.monitor_id == gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
@@ -82,9 +164,9 @@ mod tests {
             })
             .returning(|_| Ok(()));
 
-        let mut service = StartJobService::new(mock);
+        let mut service = StartJobService::new(mock_monitor_repo, mock_api_key_repo);
         let job = service
-            .start_job_for_monitor(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"), "tenant")
+            .start_job_for_monitor(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"), "foo-key")
             .await
             .unwrap();
 
@@ -109,9 +191,17 @@ mod tests {
 
     #[traced_test]
     #[tokio::test]
-    async fn test_start_job_service_error_handling() {
-        let mut mock = MockRepository::new();
-        mock.expect_get()
+    async fn test_start_job_monitor_not_found() {
+        let mut mock_api_key_repo = MockApiKeyRepo::new();
+        mock_api_key_repo
+            .expect_get_by_key()
+            .once()
+            .with(eq("foo-key"))
+            .returning(|_| Ok(Some(ApiKey::new("foo-key".to_owned(), "tenant".to_owned()))));
+        mock_api_key_repo.expect_save().never();
+        let mut mock_monitor_repo = MockRepository::new();
+        mock_monitor_repo
+            .expect_get()
             .once()
             .with(
                 eq(gen_uuid("01a92c6c-6803-409d-b675-022fff62575a")),
@@ -119,11 +209,11 @@ mod tests {
             )
             .returning(|_, _| Ok(None));
 
-        let mut service = StartJobService::new(mock);
+        let mut service = StartJobService::new(mock_monitor_repo, mock_api_key_repo);
 
         let non_existent_id = gen_uuid("01a92c6c-6803-409d-b675-022fff62575a");
         let start_result = service
-            .start_job_for_monitor(non_existent_id, "tenant")
+            .start_job_for_monitor(non_existent_id, "foo-key")
             .await;
         assert_eq!(start_result, Err(Error::MonitorNotFound(non_existent_id)));
 
