@@ -157,6 +157,7 @@ async fn test_loading_invalid_job() {
             succeeded: Some(true),
             output: Some("Database successfully backed up".to_string()),
         }],
+        &vec![],
     )
     .await;
 

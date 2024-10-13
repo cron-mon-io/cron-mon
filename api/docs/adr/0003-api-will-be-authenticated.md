@@ -1,4 +1,4 @@
-# 2. The API will be authenticated
+# 3. The API will be authenticated
 
 Date: 2024-08-06
 

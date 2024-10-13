@@ -9,3 +9,6 @@ echo "source /etc/bash_completion" >> ~/.bashrc
 # Setup starship prompt
 curl -sS https://starship.rs/install.sh | sh -s -- -y
 echo 'eval "$(starship init bash)"' >> ~/.bashrc
+
+# Set VS Code as default editor
+echo 'export EDITOR="code "' >> ~/.bashrc

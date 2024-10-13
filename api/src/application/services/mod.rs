@@ -11,6 +11,7 @@ use crate::domain::models::monitor::Monitor;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::infrastructure::database::DbPool;
 use crate::infrastructure::notify::late_job_logger::LateJobNotifer;
+use crate::infrastructure::repositories::api_key_repo::ApiKeyRepository;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
 use create_monitor::CreateMonitorService;
@@ -43,8 +44,10 @@ pub fn get_fetch_monitors_service<'a>(
     )
 }
 
-pub fn get_finish_job_service(pool: &DbPool) -> FinishJobService<MonitorRepository> {
-    FinishJobService::new(MonitorRepository::new(pool))
+pub fn get_finish_job_service(
+    pool: &DbPool,
+) -> FinishJobService<MonitorRepository, ApiKeyRepository> {
+    FinishJobService::new(MonitorRepository::new(pool), ApiKeyRepository::new(pool))
 }
 
 pub fn get_process_late_jobs_service(
@@ -53,8 +56,10 @@ pub fn get_process_late_jobs_service(
     ProcessLateJobsService::new(MonitorRepository::new(pool), Default::default())
 }
 
-pub fn get_start_job_service(pool: &DbPool) -> StartJobService<MonitorRepository> {
-    StartJobService::new(MonitorRepository::new(pool))
+pub fn get_start_job_service(
+    pool: &DbPool,
+) -> StartJobService<MonitorRepository, ApiKeyRepository> {
+    StartJobService::new(MonitorRepository::new(pool), ApiKeyRepository::new(pool))
 }
 
 pub fn get_update_monitor_service(pool: &DbPool) -> UpdateMonitorService<MonitorRepository> {

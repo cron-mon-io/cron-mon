@@ -1,4 +1,4 @@
-# 3. Database will be managed by the user
+# 2. Database will be managed by the user
 
 Date: 2024-04-10
 

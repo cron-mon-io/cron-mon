@@ -11,18 +11,12 @@ use crate::application::services::{
 use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
 use crate::infrastructure::database::DbPool;
-
-// TODO: Remove this once we have API keys.
-#[derive(Deserialize)]
-pub struct StartJobInfo {
-    tenant: String,
-}
+use crate::infrastructure::middleware::guards::api_key::ApiKey;
 
 #[derive(Deserialize)]
 pub struct FinishJobInfo {
     succeeded: bool,
     output: Option<String>,
-    tenant: String, // TODO: Remove this once we have API keys.
 }
 
 #[rocket::get("/monitors/<monitor_id>/jobs/<job_id>")]
@@ -39,17 +33,15 @@ pub async fn get_job(
     Ok(json!({"data": job}))
 }
 
-#[rocket::post("/monitors/<monitor_id>/jobs/start", data = "<start_job_info>")]
-pub async fn start_job(
+#[rocket::post("/monitors/<monitor_id>/jobs/start")]
+pub async fn start_job<'r>(
     pool: &State<DbPool>,
+    key: ApiKey,
     monitor_id: Uuid,
-    start_job_info: Json<StartJobInfo>,
 ) -> Result<Value, Error> {
     let mut service = get_start_job_service(pool);
 
-    let job = service
-        .start_job_for_monitor(monitor_id, &start_job_info.tenant)
-        .await?;
+    let job = service.start_job_for_monitor(monitor_id, &key.0).await?;
     Ok(json!({"data": {"job_id": job.job_id}}))
 }
 
@@ -59,6 +51,7 @@ pub async fn start_job(
 )]
 pub async fn finish_job(
     pool: &State<DbPool>,
+    key: ApiKey,
     monitor_id: Uuid,
     job_id: Uuid,
     finish_job_info: Json<FinishJobInfo>,
@@ -68,7 +61,7 @@ pub async fn finish_job(
     let job = service
         .finish_job_for_monitor(
             monitor_id,
-            &finish_job_info.tenant,
+            &key.0,
             job_id,
             finish_job_info.succeeded,
             &finish_job_info.output,

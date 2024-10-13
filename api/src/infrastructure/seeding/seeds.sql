@@ -1,6 +1,7 @@
 -- Remove all existing data to ensure seeding doesn't fail due to unique constraints.
 DELETE FROM job;
 DELETE FROM monitor;
+DELETE FROM api_key;
 
 -- Monitors.
 INSERT INTO monitor
@@ -174,3 +175,9 @@ VALUES
         TRUE,
         '{"bills_processed": 1234, "invoiced_generated": 325}'
     );
+
+-- API keys.
+INSERT INTO api_key
+    (api_key_id, tenant, key)
+VALUES
+    ('270e1d61-baf2-4f29-a04f-eee956da8f9e', 'cron-mon', 'YWI0Y2FkMTAtMmJmZi00MjMyLWE5MTEtNzQyZWU0NjY4ZjI1Cg==');

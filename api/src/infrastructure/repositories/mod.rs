@@ -1,5 +1,10 @@
+pub mod api_key_repo;
+pub mod api_keys;
 pub mod monitor;
 pub mod monitor_repo;
+
+#[cfg(test)]
+pub mod mock_api_key_repo;
 
 use std::marker::{Send, Sync};
 

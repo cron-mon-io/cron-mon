@@ -11,14 +11,15 @@ use test_utils::{encode_jwt, gen_datetime, gen_uuid, RSA_EXPONENT, RSA_MODULUS};
 
 use cron_mon_api::infrastructure::auth::Jwt;
 use cron_mon_api::infrastructure::database::{create_connection_pool, DbPool};
-use cron_mon_api::infrastructure::db_schema::job;
-use cron_mon_api::infrastructure::db_schema::monitor;
-use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
+use cron_mon_api::infrastructure::db_schema::{api_key, job, monitor};
+use cron_mon_api::infrastructure::models::{
+    api_key::ApiKeyData, job::JobData, monitor::MonitorData,
+};
 use cron_mon_api::rocket;
 
 pub async fn setup_db_pool() -> DbPool {
-    let (monitor_seeds, job_seeds) = seed_data();
-    seed_db(&monitor_seeds, &job_seeds).await
+    let (monitor_seeds, job_seeds, api_key_seeds) = seed_data();
+    seed_db(&monitor_seeds, &job_seeds, &api_key_seeds).await
 }
 
 pub async fn get_test_client(kid: &str, seed_db: bool) -> (MockServer, Client) {
@@ -33,7 +34,7 @@ pub async fn get_test_client(kid: &str, seed_db: bool) -> (MockServer, Client) {
     (mock_server, client)
 }
 
-pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>) {
+pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>, Vec<ApiKeyData>) {
     (
         vec![
             MonitorData {
@@ -112,10 +113,40 @@ pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>) {
                 output: None,
             },
         ],
+        vec![
+            ApiKeyData {
+                api_key_id: gen_uuid("bfab6d41-8b00-49ef-86df-f562b701ee4f"),
+                tenant: "foo".to_owned(),
+                key: "foo-key".to_string(),
+                last_used: Some(gen_datetime("2024-05-01T00:00:00.000")),
+                last_used_monitor_id: Some(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36")),
+                last_used_monitor_name: Some("db-backup.py".to_string()),
+            },
+            ApiKeyData {
+                api_key_id: gen_uuid("029d7c3b-00b5-4bb3-8e95-56d3f933e6a4"),
+                tenant: "foo".to_owned(),
+                key: "bar-key".to_string(),
+                last_used: None,
+                last_used_monitor_id: None,
+                last_used_monitor_name: None,
+            },
+            ApiKeyData {
+                api_key_id: gen_uuid("ea137deb-dfe0-4dca-bfd4-019492a522b1"),
+                tenant: "bar".to_owned(),
+                key: "baz-key".to_string(),
+                last_used: None,
+                last_used_monitor_id: None,
+                last_used_monitor_name: None,
+            },
+        ],
     )
 }
 
-pub async fn seed_db(monitor_seeds: &Vec<MonitorData>, job_seeds: &Vec<JobData>) -> DbPool {
+pub async fn seed_db(
+    monitor_seeds: &Vec<MonitorData>,
+    job_seeds: &Vec<JobData>,
+    api_key_seeds: &Vec<ApiKeyData>,
+) -> DbPool {
     let pool = create_connection_pool().expect("Failed to setup DB connection pool");
 
     let mut conn = pool
@@ -126,7 +157,12 @@ pub async fn seed_db(monitor_seeds: &Vec<MonitorData>, job_seeds: &Vec<JobData>)
     diesel::delete(monitor::table)
         .execute(&mut conn)
         .await
-        .expect("Failed to existing data");
+        .expect("Failed to delete existing monitor data");
+
+    diesel::delete(api_key::table)
+        .execute(&mut conn)
+        .await
+        .expect("Failed to delete existing api_key data");
 
     diesel::insert_into(monitor::table)
         .values(monitor_seeds)
@@ -139,6 +175,12 @@ pub async fn seed_db(monitor_seeds: &Vec<MonitorData>, job_seeds: &Vec<JobData>)
         .execute(&mut conn)
         .await
         .expect("Failed to seed jobs");
+
+    diesel::insert_into(api_key::table)
+        .values(api_key_seeds)
+        .execute(&mut conn)
+        .await
+        .expect("Failed to seed api_keys");
 
     pool
 }
