@@ -44,8 +44,10 @@ pub fn get_fetch_monitors_service<'a>(
     )
 }
 
-pub fn get_finish_job_service(pool: &DbPool) -> FinishJobService<MonitorRepository> {
-    FinishJobService::new(MonitorRepository::new(pool))
+pub fn get_finish_job_service(
+    pool: &DbPool,
+) -> FinishJobService<MonitorRepository, ApiKeyRepository> {
+    FinishJobService::new(MonitorRepository::new(pool), ApiKeyRepository::new(pool))
 }
 
 pub fn get_process_late_jobs_service(
