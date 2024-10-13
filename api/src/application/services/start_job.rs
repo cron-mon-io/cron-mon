@@ -82,37 +82,17 @@ impl<MonitorRepo: Repository<Monitor>, ApiKeyRepo: Repository<ApiKey> + GetByKey
 
 #[cfg(test)]
 mod tests {
-    use async_trait::async_trait;
-    use mockall::{mock, predicate::*};
+    use mockall::predicate::*;
     use tracing_test::traced_test;
 
     use test_utils::gen_uuid;
     use test_utils::logging::TracingLog;
 
     use crate::domain::models::api_key::ApiKey;
-    use crate::infrastructure::repositories::api_keys::GetByKey;
-    use crate::infrastructure::repositories::{MockRepository, Repository};
+    use crate::infrastructure::repositories::mock_api_key_repo::MockApiKeyRepo;
+    use crate::infrastructure::repositories::MockRepository;
 
     use super::{Error, Monitor, StartJobService};
-
-    mock! {
-        ApiKeyRepo {}
-
-        #[async_trait]
-        impl GetByKey for ApiKeyRepo {
-            async fn get_by_key(&mut self, key: &str) -> Result<Option<ApiKey>, Error>;
-        }
-
-        #[async_trait]
-        impl Repository<ApiKey> for ApiKeyRepo {
-            async fn get(
-                &mut self, api_key_id: uuid::Uuid, tenant: &str
-            ) -> Result<Option<ApiKey>, Error>;
-            async fn all(&mut self, tenant: &str) -> Result<Vec<ApiKey>, Error>;
-            async fn delete(&mut self, key: &ApiKey) -> Result<(), Error>;
-            async fn save(&mut self, key: &ApiKey) -> Result<(), Error>;
-        }
-    }
 
     #[traced_test]
     #[tokio::test]
