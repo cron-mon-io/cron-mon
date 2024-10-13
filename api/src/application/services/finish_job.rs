@@ -186,6 +186,38 @@ mod tests {
 
     #[traced_test]
     #[tokio::test]
+    async fn test_finish_job_unauthorized() {
+        let mut mock_api_key_repo = MockApiKeyRepo::new();
+        mock_api_key_repo
+            .expect_get_by_key()
+            .once()
+            .with(eq("foo-key"))
+            .returning(|_| Ok(None));
+
+        let mut service = FinishJobService::new(MockRepository::new(), mock_api_key_repo);
+        let result = service
+            .finish_job_for_monitor(
+                gen_uuid("41ebffb4-A188-48E9-8ec1-61380085cde3"),
+                "foo-key",
+                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                true,
+                &Some("Job complete".to_owned()),
+            )
+            .await;
+
+        assert_eq!(
+            result,
+            Err(Error::Unauthorized("Invalid API key".to_owned()))
+        );
+
+        logs_assert(|logs| {
+            assert!(logs.is_empty());
+            Ok(())
+        });
+    }
+
+    #[traced_test]
+    #[tokio::test]
     async fn test_monitor_not_found() {
         let mut mock_api_key_repo = MockApiKeyRepo::new();
         mock_api_key_repo
