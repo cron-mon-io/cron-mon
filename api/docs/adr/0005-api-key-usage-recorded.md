@@ -12,8 +12,11 @@ Accepted
 
 Starting and finishing jobs cannot be authenticated with CronMon's JWT authentication, since these
 JWT's could be short lived (this is ultimately up to the user and how they've setup their Keycloak
-server), so instead we use API keys to authenticate these requests. Since an API key is valid
-indefinitely (unless the end-user deletes it), this means this form of authentication is a lot less secure than JWTs.
+server), which would force end-users' integrations with CronMon to go through the OIDC login flow to
+obtain a JWT. While this is perfectly possible, it does make integrating with CronMon far more
+complex than it needs to be. To mitigate this, API keys will be used instead to authenticate
+starting and finishing jobs. But, since an API key is valid indefinitely (unless the end-user
+deletes it), this means this form of authentication is a lot less secure than JWTs.
 
 ## Decision
 
