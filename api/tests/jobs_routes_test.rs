@@ -96,7 +96,8 @@ async fn test_finish_job() {
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36\
             /jobs/9d4e2d69-af63-4c1e-8639-60cb2683aee5/finish",
         )
-        .json(&json!({"succeeded": true, "output": "Test output", "tenant": "foo"}))
+        .header(Header::new("X-API-Key", "foo-key"))
+        .json(&json!({"succeeded": true, "output": "Test output"}))
         .dispatch()
         .await;
 
@@ -151,7 +152,8 @@ async fn test_finish_job_errors(
             "/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/{}/finish",
             job_id
         ))
-        .json(&json!({"succeeded": true, "output": "Test output", "tenant": "foo"}))
+        .header(Header::new("X-API-Key", "foo-key"))
+        .json(&json!({"succeeded": true, "output": "Test output"}))
         .dispatch()
         .await;
 

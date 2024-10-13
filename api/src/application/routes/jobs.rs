@@ -17,7 +17,6 @@ use crate::infrastructure::middleware::guards::api_key::ApiKey;
 pub struct FinishJobInfo {
     succeeded: bool,
     output: Option<String>,
-    tenant: String, // TODO: Remove this once we have API keys.
 }
 
 #[rocket::get("/monitors/<monitor_id>/jobs/<job_id>")]
@@ -52,6 +51,7 @@ pub async fn start_job<'r>(
 )]
 pub async fn finish_job(
     pool: &State<DbPool>,
+    key: ApiKey,
     monitor_id: Uuid,
     job_id: Uuid,
     finish_job_info: Json<FinishJobInfo>,
@@ -61,7 +61,7 @@ pub async fn finish_job(
     let job = service
         .finish_job_for_monitor(
             monitor_id,
-            &finish_job_info.tenant,
+            &key.0,
             job_id,
             finish_job_info.succeeded,
             &finish_job_info.output,
