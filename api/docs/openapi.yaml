@@ -271,6 +271,8 @@ paths:
       tags:
         - Jobs
       summary: "Start a Job within a Monitor"
+      security:
+        - apiKeyAuth: []
       parameters:
         - in: path
           name: monitor_id
@@ -363,6 +365,8 @@ paths:
       tags:
         - Jobs
       summary: "Finish a Job within a Monitor"
+      security:
+        - apiKeyAuth: []
       parameters:
         - in: path
           name: monitor_id
@@ -701,3 +705,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
