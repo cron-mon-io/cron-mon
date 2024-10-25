@@ -28,6 +28,7 @@
         }
       },
       "extensions": [
+        "42Crunch.vscode-openapi",
         "ms-azuretools.vscode-docker",
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
