@@ -11,6 +11,8 @@ tags:
     description: "Operations on monitors"
   - name: Jobs
     description: "Operations on Jobs"
+  - name: API Keys
+    description: "Operations on API Keys"
 
 paths:
   /api/v1/monitors:
@@ -62,7 +64,7 @@ paths:
                     name: "analyse-bar.py"
                     expected_duration: 21600
                     grace_duration: 1800
-                    last_started_job: 
+                    last_started_job:
                       job_id: "68c71e5a-932f-4443-9b32-dd2e66381499"
                       start_time: "2024-03-31T12:35:00"
                       end_time: "2024-03-31T12:59:00"
@@ -433,6 +435,125 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
+  /api/v1/keys:
+    get:
+      tags:
+        - API Keys
+      summary: List API Keys
+      description: |
+        Returns all API keys.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: |
+            A list of API Keys, ordered by the last time they were used, from most recently to least recently.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - paging
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApiKey"
+                  paging:
+                    $ref: "#/components/schemas/Paging"
+              example:
+                paging:
+                  total: 2
+                data:
+                  - api_key_id: "773cade2-c6bd-4b3b-9974-46e412d54c25"
+                    name: "My API Key"
+                    masked: "crnmn_************tIn0"
+                    last_used:
+                      time: "2024-03-31T20:54:00"
+                      monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
+                      monitor_name: "foo-backup.sh"
+                  - api_key_id: "caf5389d-31ef-424a-bb65-cc3b50b62cee"
+                    name: "My API Key"
+                    masked: "crnmn_************tIn0"
+                    last_used:
+                      time: "2024-03-31T20:54:00"
+                      monitor_id: "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
+                      monitor_name: "analyse-bar.py"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    post:
+      tags:
+        - API Keys
+      summary: "Create a new API Key"
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "The new API Key to create."
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+            example:
+              name: "My API Key"
+      responses:
+        "201":
+          description: The newly created API Key
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - key
+                    properties:
+                      key:
+                        type: string
+              example:
+                data:
+                  key: "crnmn_eyJpYXQiOjE3Mjk4OTI1NzQuMTk1NjUxLCJ1cmwiOiJodHRwczovL3NlbnRyeS5pbyIsInJlZ2lvbl91cmwiOiJodHRwczovL3VzLnNlbnRyeS5pbyIsIm9yZyI6InRhaWxzY29tIn0"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /api/v1/keys/{api_key_id}:
+    delete:
+      tags:
+        - API Keys
+      summary: "Delete/ revoke an API Key"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: api_key_id
+          description: "The ID of the API Key to delete."
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "The API Key was deleted."
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
 components:
   responses:
     BadRequestError:
@@ -506,7 +627,7 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
           example:
-            error: 
+            error:
               code: 500
               reason: "Internal Server Error"
               description: "The server encountered an internal error while processing this request."
@@ -661,6 +782,45 @@ components:
           type: integer
           format: int32
           minimum: 0
+    ApiKey:
+      description: "An API key"
+      type: object
+      required:
+        - api_key_id
+        - name
+        - masked
+        - last_used
+      properties:
+        api_key_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the API key
+        name:
+          type: string
+          description: The name of the API key
+        masked:
+          type: string
+          description: |
+            The API key itself, masked for security purposes (users will only ever
+            get to see the full key once, during its creation).
+        last_used:
+          type: object
+          required:
+            - time
+            - monitor_id
+            - monitor_name
+          properties:
+            time:
+              type: string
+              format: date-time
+              description: The time the API key was last used
+            monitor_id:
+              type: string
+              format: uuid
+              description: The ID of the Monitor that was accessed
+            monitor_name:
+              type: string
+              description: The name of the Monitor that was accessed
     Paging:
       description: "Pagination information"
       type: object
