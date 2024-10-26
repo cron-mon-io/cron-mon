@@ -11,10 +11,15 @@ pub struct ApiKey {
     /// The unique identifier for the API key.
     pub api_key_id: Uuid,
     /// The tenant that the API key belongs to.
+    #[serde(skip_serializing)]
     pub tenant: String,
+    /// The name of the API key.
+    pub name: String,
     /// The API key value.
     #[serde(skip_serializing)]
     pub key: String,
+    /// A masked version of the API key value.
+    pub masked: String,
     /// The last time the API key was used.
     pub last_used: Option<NaiveDateTime>,
     /// The unique identifier of the monitor that last used the API key.
@@ -31,11 +36,22 @@ impl ApiKey {
     }
 
     /// Create a new API key.
-    pub fn new(key: String, tenant: String) -> Self {
+    pub fn new(name: String, key: String, tenant: String) -> Self {
+        // Create a masked version of the key.
+        let key_len = key.len();
+        let mask_len = if key_len < 5 { key_len } else { 5 };
+        let masked = format!(
+            "{}************{}",
+            &key[..mask_len],
+            &key[key_len - mask_len..]
+        );
+
         Self {
+            name,
             api_key_id: Uuid::new_v4(),
             tenant,
             key: Self::hash_key(&key),
+            masked,
             last_used: None,
             last_used_monitor_id: None,
             last_used_monitor_name: None,
@@ -77,6 +93,7 @@ mod tests {
     #[test]
     fn test_new() {
         let api_key = ApiKey::new(
+            "Some key".to_owned(),
             "YWI0Y2FkMTAtMmJmZi00MjMyLWE5MTEtNzQyZWU0NjY4ZjI1Cg==".to_owned(),
             "tenant".to_owned(),
         );
@@ -89,6 +106,7 @@ mod tests {
             &api_key.key,
             "a759f35ec8a03a97f707e7a6094362d971e2ff114b201f0567563fb0a1b972db"
         );
+        assert_eq!(&api_key.masked, "YWI0Y************1Cg==");
         assert_eq!(api_key.last_used, None);
         assert_eq!(api_key.last_used_monitor_id, None);
         assert_eq!(api_key.last_used_monitor_name, None);
@@ -96,7 +114,11 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn test_record_usage() {
-        let mut key = ApiKey::new("test".to_owned(), "tenant".to_owned());
+        let mut key = ApiKey::new(
+            "Some key".to_owned(),
+            "test".to_owned(),
+            "tenant".to_owned(),
+        );
 
         let monitor = Monitor {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),

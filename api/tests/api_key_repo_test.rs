@@ -83,14 +83,11 @@ async fn test_save() {
     let pool = setup_db_pool().await;
     let mut repo = ApiKeyRepository::new(&pool);
 
-    let new_api_key = ApiKey {
-        api_key_id: gen_uuid("d2b291fe-bd41-4787-bc2d-1329903f7a6a"),
-        tenant: "foo".to_string(),
-        key: "new-key".to_string(),
-        last_used: None,
-        last_used_monitor_id: None,
-        last_used_monitor_name: None,
-    };
+    let new_api_key = ApiKey::new(
+        "New key".to_string(),
+        "new-key".to_string(),
+        "foo".to_string(),
+    );
     repo.save(&new_api_key).await.unwrap();
     assert_eq!(repo.all("foo").await.unwrap().len(), 3);
 

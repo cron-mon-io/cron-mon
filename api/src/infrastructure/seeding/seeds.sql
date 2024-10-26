@@ -178,10 +178,12 @@ VALUES
 
 -- API keys.
 INSERT INTO api_key
-    (api_key_id, tenant, key)
+    (api_key_id, tenant, name, key, masked)
 VALUES
     (
         '270e1d61-baf2-4f29-a04f-eee956da8f9e',
         'cron-mon',
-        'a759f35ec8a03a97f707e7a6094362d971e2ff114b201f0567563fb0a1b972db'
+        'Cron Mon API Key',
+        'a759f35ec8a03a97f707e7a6094362d971e2ff114b201f0567563fb0a1b972db',
+        'YWI0Y************I1Cg=='
     );

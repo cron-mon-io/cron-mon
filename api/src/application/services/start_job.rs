@@ -104,7 +104,13 @@ mod tests {
             .with(eq(
                 "104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020",
             ))
-            .returning(|_| Ok(Some(ApiKey::new("foo-key".to_owned(), "tenant".to_owned()))));
+            .returning(|_| {
+                Ok(Some(ApiKey::new(
+                    "Test key".to_owned(),
+                    "foo-key".to_owned(),
+                    "tenant".to_owned(),
+                )))
+            });
         mock_api_key_repo
             .expect_save()
             .once()
@@ -208,7 +214,13 @@ mod tests {
             .with(eq(
                 "104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020",
             ))
-            .returning(|_| Ok(Some(ApiKey::new("foo-key".to_owned(), "tenant".to_owned()))));
+            .returning(|_| {
+                Ok(Some(ApiKey::new(
+                    "Test key".to_owned(),
+                    "foo-key".to_owned(),
+                    "tenant".to_owned(),
+                )))
+            });
         mock_api_key_repo.expect_save().never();
         let mut mock_monitor_repo = MockRepository::new();
         mock_monitor_repo
