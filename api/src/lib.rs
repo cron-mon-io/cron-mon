@@ -10,7 +10,7 @@ use moka::sync::Cache;
 use rocket::fs::FileServer;
 use rocket::{routes, Build, Rocket};
 
-use crate::application::routes::{health, jobs, monitors};
+use crate::application::routes::{api_keys, health, jobs, monitors};
 use crate::infrastructure::auth::jwt::{Jwk, JwtAuthService};
 use crate::infrastructure::auth::JwtAuth;
 use crate::infrastructure::database::{create_connection_pool, run_migrations};
@@ -46,6 +46,7 @@ pub fn rocket() -> Rocket<Build> {
                 jobs::get_job,
                 jobs::start_job,
                 jobs::finish_job,
+                api_keys::list_api_keys,
             ],
         )
         .mount("/api/v1/docs", FileServer::from("./docs"))
