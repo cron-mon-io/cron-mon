@@ -117,7 +117,7 @@ pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>, Vec<ApiKeyData>) {
             ApiKeyData {
                 api_key_id: gen_uuid("bfab6d41-8b00-49ef-86df-f562b701ee4f"),
                 tenant: "foo".to_owned(),
-                key: "foo-key".to_string(),
+                key: "104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020".to_string(),
                 last_used: Some(gen_datetime("2024-05-01T00:00:00.000")),
                 last_used_monitor_id: Some(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36")),
                 last_used_monitor_name: Some("db-backup.py".to_string()),
@@ -125,7 +125,7 @@ pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>, Vec<ApiKeyData>) {
             ApiKeyData {
                 api_key_id: gen_uuid("029d7c3b-00b5-4bb3-8e95-56d3f933e6a4"),
                 tenant: "foo".to_owned(),
-                key: "bar-key".to_string(),
+                key: "a3dd31a59c493fcbb87c1b7acfa1770740de6a712e11337648f42d64420ff4bc".to_string(),
                 last_used: None,
                 last_used_monitor_id: None,
                 last_used_monitor_name: None,
@@ -133,7 +133,7 @@ pub fn seed_data() -> (Vec<MonitorData>, Vec<JobData>, Vec<ApiKeyData>) {
             ApiKeyData {
                 api_key_id: gen_uuid("ea137deb-dfe0-4dca-bfd4-019492a522b1"),
                 tenant: "bar".to_owned(),
-                key: "baz-key".to_string(),
+                key: "03c8d72da14dd44e7a1310dc396a4c36d9bb4cd941500b599285a55803070bb8".to_string(),
                 last_used: None,
                 last_used_monitor_id: None,
                 last_used_monitor_name: None,

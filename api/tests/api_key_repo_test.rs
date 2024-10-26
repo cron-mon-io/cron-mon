@@ -20,7 +20,13 @@ async fn test_all() {
     let keys = repo.all("foo").await.unwrap();
 
     let keys: Vec<String> = keys.iter().map(|key| key.key.clone()).collect();
-    assert_eq!(keys, vec!["foo-key", "bar-key"]);
+    assert_eq!(
+        keys,
+        vec![
+            "104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020",
+            "a3dd31a59c493fcbb87c1b7acfa1770740de6a712e11337648f42d64420ff4bc"
+        ]
+    );
 }
 
 #[tokio::test]
@@ -46,7 +52,10 @@ async fn test_get() {
     assert!(should_be_some.is_some());
 
     let key = should_be_some.unwrap();
-    assert_eq!(key.key, "foo-key");
+    assert_eq!(
+        key.key,
+        "104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020"
+    );
 }
 
 #[tokio::test]
@@ -54,7 +63,10 @@ async fn test_get_by_key() {
     let pool = setup_db_pool().await;
     let mut repo = ApiKeyRepository::new(&pool);
 
-    let existent_key = repo.get_by_key("foo-key").await.unwrap();
+    let existent_key = repo
+        .get_by_key("104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020")
+        .await
+        .unwrap();
     let non_existent_key = repo.get_by_key("non-existent").await.unwrap();
 
     assert!(existent_key.is_some());
