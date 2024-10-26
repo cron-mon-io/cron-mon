@@ -57,7 +57,7 @@ impl<MonitorRepo: Repository<Monitor>, ApiKeyRepo: Repository<ApiKey> + GetByKey
     }
 
     async fn validate_key(&mut self, key: &str) -> Result<ApiKey, Error> {
-        let api_key = self.api_key_repo.get_by_key(key).await?;
+        let api_key = self.api_key_repo.get_by_key(&ApiKey::hash_key(key)).await?;
         match api_key {
             Some(key) => Ok(key),
             None => Err(Error::Unauthorized("Invalid API key".to_owned())),
@@ -101,7 +101,9 @@ mod tests {
         mock_api_key_repo
             .expect_get_by_key()
             .once()
-            .with(eq("foo-key"))
+            .with(eq(
+                "104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020",
+            ))
             .returning(|_| Ok(Some(ApiKey::new("foo-key".to_owned(), "tenant".to_owned()))));
         mock_api_key_repo
             .expect_save()
@@ -176,7 +178,9 @@ mod tests {
         mock_api_key_repo
             .expect_get_by_key()
             .once()
-            .with(eq("foo-key"))
+            .with(eq(
+                "104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020",
+            ))
             .returning(|_| Ok(None));
 
         let mut service = StartJobService::new(MockRepository::new(), mock_api_key_repo);
@@ -201,7 +205,9 @@ mod tests {
         mock_api_key_repo
             .expect_get_by_key()
             .once()
-            .with(eq("foo-key"))
+            .with(eq(
+                "104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020",
+            ))
             .returning(|_| Ok(Some(ApiKey::new("foo-key".to_owned(), "tenant".to_owned()))));
         mock_api_key_repo.expect_save().never();
         let mut mock_monitor_repo = MockRepository::new();
