@@ -6,17 +6,15 @@ use uuid::Uuid;
 use super::monitor::Monitor;
 use crate::errors::Error;
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ApiKey {
     /// The unique identifier for the API key.
     pub api_key_id: Uuid,
     /// The tenant that the API key belongs to.
-    #[serde(skip_serializing)]
     pub tenant: String,
     /// The name of the API key.
     pub name: String,
     /// The API key value.
-    #[serde(skip_serializing)]
     pub key: String,
     /// A masked version of the API key value.
     pub masked: String,
@@ -73,11 +71,45 @@ impl ApiKey {
     }
 }
 
+impl Serialize for ApiKey {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        #[derive(Serialize)]
+        struct LastUsed {
+            time: NaiveDateTime,
+            monitor_id: Uuid,
+            monitor_name: String,
+        }
+
+        #[derive(Serialize)]
+        struct Key {
+            api_key_id: Uuid,
+            name: String,
+            masked: String,
+            last_used: Option<LastUsed>,
+        }
+
+        Key {
+            api_key_id: self.api_key_id,
+            name: self.name.clone(),
+            masked: self.masked.clone(),
+            last_used: self.last_used.map(|time| LastUsed {
+                time,
+                monitor_id: self.last_used_monitor_id.unwrap(),
+                monitor_name: self.last_used_monitor_name.clone().unwrap(),
+            }),
+        }
+        .serialize(serializer)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{Timelike, Utc};
     use pretty_assertions::assert_eq;
-    use test_utils::gen_uuid;
+    use rstest::rstest;
+    use serde_json::{json, Value};
+
+    use test_utils::{gen_datetime, gen_uuid};
 
     use super::ApiKey;
     use crate::domain::models::monitor::Monitor;
@@ -139,5 +171,45 @@ mod tests {
             key.last_used.unwrap().with_nanosecond(0).unwrap(),
             Utc::now().naive_utc().with_nanosecond(0).unwrap()
         );
+    }
+
+    #[rstest]
+    #[case::not_used(ApiKey {
+        api_key_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+        tenant: "tenant".to_owned(),
+        name: "Some key".to_owned(),
+        key: "test".to_owned(),
+        masked: "YWI0Y************1Cg==".to_owned(),
+        last_used: None,
+        last_used_monitor_id: None,
+        last_used_monitor_name: None,
+    }, json!({
+        "api_key_id": "41ebffb4-a188-48e9-8ec1-61380085cde3",
+        "name": "Some key",
+        "masked": "YWI0Y************1Cg==",
+        "last_used": Value::Null,
+    }))]
+    #[case::used(ApiKey {
+        api_key_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+        tenant: "tenant".to_owned(),
+        name: "Some key".to_owned(),
+        key: "test".to_owned(),
+        masked: "YWI0Y************1Cg==".to_owned(),
+        last_used: Some(gen_datetime("2024-10-27T21:28:00")),
+        last_used_monitor_id: Some(gen_uuid("eae3eb0b-350d-4783-bf9a-82ccc6cb0365")),
+        last_used_monitor_name: Some("Foo monitor".to_owned()),
+    }, json!({
+        "api_key_id": "41ebffb4-a188-48e9-8ec1-61380085cde3",
+        "name": "Some key",
+        "masked": "YWI0Y************1Cg==",
+        "last_used": {
+            "time": "2024-10-27T21:28:00",
+            "monitor_id": "eae3eb0b-350d-4783-bf9a-82ccc6cb0365",
+            "monitor_name": "Foo monitor",
+        },
+    }))]
+    fn test_serialize(#[case] api_key: ApiKey, #[case] expected: Value) {
+        let serialized = serde_json::to_value(&api_key).unwrap();
+        assert_eq!(serialized, expected);
     }
 }
