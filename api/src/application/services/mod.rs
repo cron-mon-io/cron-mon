@@ -3,6 +3,7 @@ pub mod delete_monitor;
 pub mod fetch_job;
 pub mod fetch_monitors;
 pub mod finish_job;
+pub mod generate_key;
 pub mod process_late_jobs;
 pub mod start_job;
 pub mod update_monitor;
