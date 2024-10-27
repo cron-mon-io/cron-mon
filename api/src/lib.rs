@@ -47,6 +47,8 @@ pub fn rocket() -> Rocket<Build> {
                 jobs::start_job,
                 jobs::finish_job,
                 api_keys::list_api_keys,
+                api_keys::generate_key,
+                api_keys::revoke_key
             ],
         )
         .mount("/api/v1/docs", FileServer::from("./docs"))
