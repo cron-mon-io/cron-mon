@@ -7,6 +7,7 @@ use uuid::Uuid;
 pub enum Error {
     RepositoryError(String),
     MonitorNotFound(Uuid),
+    ApiKeyNotFound(Uuid),
     JobNotFound(Uuid, Uuid),
     JobAlreadyFinished(Uuid),
     InvalidMonitor(String),
@@ -21,6 +22,9 @@ impl Display for Error {
             Self::RepositoryError(reason) => write!(f, "Failed to read or write data: {reason}"),
             Self::MonitorNotFound(monitor_id) => {
                 write!(f, "Failed to find monitor with id '{monitor_id}'")
+            }
+            Self::ApiKeyNotFound(api_key_id) => {
+                write!(f, "Failed to find API key with id '{api_key_id}'")
             }
             Self::JobNotFound(monitor_id, job_id) => {
                 write!(
