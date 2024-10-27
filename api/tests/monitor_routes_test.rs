@@ -114,7 +114,6 @@ async fn test_list_monitors() {
     assert_eq!(response.content_type(), Some(ContentType::JSON));
 
     let data = response.into_json::<Value>().await.unwrap();
-    println!("{}", serde_json::to_string_pretty(&data).unwrap());
 
     assert_eq!(
         data,
