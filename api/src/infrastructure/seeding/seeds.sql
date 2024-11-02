@@ -178,12 +178,27 @@ VALUES
 
 -- API keys.
 INSERT INTO api_key
-    (api_key_id, tenant, name, key, masked)
+    (api_key_id, tenant, name, key, masked, last_used, last_used_monitor_id, last_used_monitor_name)
 VALUES
     (
         '270e1d61-baf2-4f29-a04f-eee956da8f9e',
         'cron-mon',
         'Cron Mon API Key',
-        'a759f35ec8a03a97f707e7a6094362d971e2ff114b201f0567563fb0a1b972db',
-        'YWI0Y************I1Cg=='
+        -- Real key is 'PVb97yWJEu43OgMnVMC9BOi4CnXlPbww'
+        'd13793a1c8e33f36a6bb6dd3457b41446933f001b9cada8b9c9a222836550ee7',
+        'PVb97************XlPbww',
+        NULL,
+        NULL,
+        NULL
+    ),
+    (
+        '58c8e622-cabc-4799-80ef-5fac91601ce2',
+        'cron-mon',
+        'cron-mon-py API Key',
+        -- Real key is 'FTkM4cTNHRRLAusMrD5r23LFzdi5mVKP'
+        '62594892624f92be9f6753b2255427d1a3e4159bd8b007f6412baa3674d424ad',
+        'FTkM4************di5mVKP',
+        CURRENT_TIMESTAMP - INTERVAL '90 DAYS',
+        'f0b291fe-bd41-4787-bc2d-1329903f7a6a',
+        'generate-orders.sh'
     );
