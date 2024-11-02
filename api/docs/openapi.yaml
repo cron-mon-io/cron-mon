@@ -789,6 +789,7 @@ components:
         - api_key_id
         - name
         - masked
+        - created
         - last_used
       properties:
         api_key_id:
@@ -803,6 +804,10 @@ components:
           description: |
             The API key itself, masked for security purposes (users will only ever
             get to see the full key once, during its creation).
+        created:
+          type: string
+          format: date-time
+          description: The time the API key was created
         last_used:
           type: object
           required:

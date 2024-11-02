@@ -14,6 +14,7 @@ use crate::infrastructure::db_schema::api_key;
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ApiKeyData {
     pub api_key_id: Uuid,
+    pub created_at: NaiveDateTime,
     pub tenant: String,
     pub name: String,
     pub key: String,
@@ -31,6 +32,7 @@ impl From<&ApiKeyData> for ApiKey {
             name: value.name.clone(),
             key: value.key.clone(),
             masked: value.masked.clone(),
+            created: value.created_at,
             last_used: value.last_used,
             last_used_monitor_id: value.last_used_monitor_id,
             last_used_monitor_name: value.last_used_monitor_name.clone(),
@@ -42,6 +44,7 @@ impl From<&ApiKey> for ApiKeyData {
     fn from(value: &ApiKey) -> Self {
         ApiKeyData {
             api_key_id: value.api_key_id,
+            created_at: value.created,
             tenant: value.tenant.clone(),
             name: value.name.clone(),
             key: value.key.clone(),
@@ -73,6 +76,7 @@ mod tests {
 
         let data = ApiKeyData {
             api_key_id,
+            created_at: gen_relative_datetime(0),
             tenant: tenant.clone(),
             name: name.clone(),
             key: key.clone(),
@@ -88,6 +92,7 @@ mod tests {
             name,
             key,
             masked,
+            created: data.created_at,
             last_used,
             last_used_monitor_id,
             last_used_monitor_name,
@@ -113,6 +118,7 @@ mod tests {
             name: name.clone(),
             key: key.clone(),
             masked: masked.clone(),
+            created: gen_relative_datetime(0),
             last_used,
             last_used_monitor_id,
             last_used_monitor_name: last_used_monitor_name.clone(),
@@ -120,6 +126,7 @@ mod tests {
 
         let data = ApiKeyData {
             api_key_id,
+            created_at: model.created,
             tenant,
             name,
             key,

@@ -29,8 +29,9 @@ async fn test_list_api_keys() {
               "api_key_id": "bfab6d41-8b00-49ef-86df-f562b701ee4f",
               "name": "Test foo key",
               "masked": "foo-k************-key",
+              "created": "2024-05-01T00:00:00",
               "last_used": {
-                "time": "2024-05-01T00:00:00",
+                "time": "2024-11-01T00:00:00",
                 "monitor_id": "c1bf0515-df39-448b-aa95-686360a33b36",
                 "monitor_name": "db-backup.py",
               },
@@ -39,6 +40,7 @@ async fn test_list_api_keys() {
                 "api_key_id": "029d7c3b-00b5-4bb3-8e95-56d3f933e6a4",
                 "name": "Test bar key",
                 "masked": "bar-k************-key",
+                "created": "2024-11-02T00:00:00",
                 "last_used": Value::Null,
             }
           ],

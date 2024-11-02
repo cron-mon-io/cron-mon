@@ -14,10 +14,12 @@ pub struct ApiKey {
     pub tenant: String,
     /// The name of the API key.
     pub name: String,
-    /// The API key value.
+    /// The API key value (SHA256 hashed).
     pub key: String,
     /// A masked version of the API key value.
     pub masked: String,
+    /// The time the API key was created.
+    pub created: NaiveDateTime,
     /// The last time the API key was used.
     pub last_used: Option<NaiveDateTime>,
     /// The unique identifier of the monitor that last used the API key.
@@ -50,6 +52,7 @@ impl ApiKey {
             tenant,
             key: Self::hash_key(&key),
             masked,
+            created: Utc::now().naive_utc(),
             last_used: None,
             last_used_monitor_id: None,
             last_used_monitor_name: None,
@@ -86,12 +89,14 @@ impl Serialize for ApiKey {
             name: String,
             masked: String,
             last_used: Option<LastUsed>,
+            created: NaiveDateTime,
         }
 
         Key {
             api_key_id: self.api_key_id,
             name: self.name.clone(),
             masked: self.masked.clone(),
+            created: self.created,
             last_used: self.last_used.map(|time| LastUsed {
                 time,
                 monitor_id: self.last_used_monitor_id.unwrap(),
@@ -180,6 +185,7 @@ mod tests {
         name: "Some key".to_owned(),
         key: "test".to_owned(),
         masked: "YWI0Y************1Cg==".to_owned(),
+        created: gen_datetime("2024-10-27T21:28:00"),
         last_used: None,
         last_used_monitor_id: None,
         last_used_monitor_name: None,
@@ -187,6 +193,7 @@ mod tests {
         "api_key_id": "41ebffb4-a188-48e9-8ec1-61380085cde3",
         "name": "Some key",
         "masked": "YWI0Y************1Cg==",
+        "created": "2024-10-27T21:28:00",
         "last_used": Value::Null,
     }))]
     #[case::used(ApiKey {
@@ -195,6 +202,7 @@ mod tests {
         name: "Some key".to_owned(),
         key: "test".to_owned(),
         masked: "YWI0Y************1Cg==".to_owned(),
+        created: gen_datetime("2024-10-27T21:28:00"),
         last_used: Some(gen_datetime("2024-10-27T21:28:00")),
         last_used_monitor_id: Some(gen_uuid("eae3eb0b-350d-4783-bf9a-82ccc6cb0365")),
         last_used_monitor_name: Some("Foo monitor".to_owned()),
@@ -202,6 +210,7 @@ mod tests {
         "api_key_id": "41ebffb4-a188-48e9-8ec1-61380085cde3",
         "name": "Some key",
         "masked": "YWI0Y************1Cg==",
+        "created": "2024-10-27T21:28:00",
         "last_used": {
             "time": "2024-10-27T21:28:00",
             "monitor_id": "eae3eb0b-350d-4783-bf9a-82ccc6cb0365",
