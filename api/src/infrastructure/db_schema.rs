@@ -10,6 +10,8 @@ diesel::table! {
         last_used -> Nullable<Timestamp>,
         last_used_monitor_id -> Nullable<Uuid>,
         last_used_monitor_name -> Nullable<Varchar>,
+        name -> Varchar,
+        masked -> Varchar,
     }
 }
 
@@ -41,4 +43,4 @@ diesel::table! {
 
 diesel::joinable!(job -> monitor (monitor_id));
 
-diesel::allow_tables_to_appear_in_same_query!(api_key, job, monitor);
+diesel::allow_tables_to_appear_in_same_query!(api_key, job, monitor,);

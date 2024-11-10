@@ -12,3 +12,6 @@ echo 'eval "$(starship init bash)"' >> ~/.bashrc
 
 # Set VS Code as default editor
 echo 'export EDITOR="code "' >> ~/.bashrc
+
+# Start shells in the api/ directory
+echo 'cd /workspaces/cron-mon/api' >> ~/.bashrc

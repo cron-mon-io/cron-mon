@@ -3,7 +3,9 @@ pub mod delete_monitor;
 pub mod fetch_job;
 pub mod fetch_monitors;
 pub mod finish_job;
+pub mod generate_key;
 pub mod process_late_jobs;
+pub mod revoke_key;
 pub mod start_job;
 pub mod update_monitor;
 
@@ -19,7 +21,9 @@ use delete_monitor::DeleteMonitorService;
 use fetch_job::FetchJobService;
 use fetch_monitors::FetchMonitorsService;
 use finish_job::FinishJobService;
+use generate_key::GenerateKeyService;
 use process_late_jobs::ProcessLateJobsService;
+use revoke_key::RevokeKeyService;
 use start_job::StartJobService;
 use update_monitor::UpdateMonitorService;
 
@@ -50,10 +54,18 @@ pub fn get_finish_job_service(
     FinishJobService::new(MonitorRepository::new(pool), ApiKeyRepository::new(pool))
 }
 
+pub fn get_generate_key_service(pool: &DbPool) -> GenerateKeyService<ApiKeyRepository> {
+    GenerateKeyService::new(ApiKeyRepository::new(pool))
+}
+
 pub fn get_process_late_jobs_service(
     pool: &DbPool,
 ) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer> {
     ProcessLateJobsService::new(MonitorRepository::new(pool), Default::default())
+}
+
+pub fn get_revoke_key_service(pool: &DbPool) -> RevokeKeyService<ApiKeyRepository> {
+    RevokeKeyService::new(ApiKeyRepository::new(pool))
 }
 
 pub fn get_start_job_service(

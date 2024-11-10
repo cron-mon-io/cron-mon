@@ -6,15 +6,20 @@ use uuid::Uuid;
 use super::monitor::Monitor;
 use crate::errors::Error;
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ApiKey {
     /// The unique identifier for the API key.
     pub api_key_id: Uuid,
     /// The tenant that the API key belongs to.
     pub tenant: String,
-    /// The API key value.
-    #[serde(skip_serializing)]
+    /// The name of the API key.
+    pub name: String,
+    /// The API key value (SHA256 hashed).
     pub key: String,
+    /// A masked version of the API key value.
+    pub masked: String,
+    /// The time the API key was created.
+    pub created: NaiveDateTime,
     /// The last time the API key was used.
     pub last_used: Option<NaiveDateTime>,
     /// The unique identifier of the monitor that last used the API key.
@@ -31,11 +36,23 @@ impl ApiKey {
     }
 
     /// Create a new API key.
-    pub fn new(key: String, tenant: String) -> Self {
+    pub fn new(name: String, key: String, tenant: String) -> Self {
+        // Create a masked version of the key.
+        let key_len = key.len();
+        let mask_len = if key_len < 5 { key_len } else { 5 };
+        let masked = format!(
+            "{}************{}",
+            &key[..mask_len],
+            &key[key_len - mask_len..]
+        );
+
         Self {
+            name,
             api_key_id: Uuid::new_v4(),
             tenant,
             key: Self::hash_key(&key),
+            masked,
+            created: Utc::now().naive_utc(),
             last_used: None,
             last_used_monitor_id: None,
             last_used_monitor_name: None,
@@ -57,11 +74,47 @@ impl ApiKey {
     }
 }
 
+impl Serialize for ApiKey {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        #[derive(Serialize)]
+        struct LastUsed {
+            time: NaiveDateTime,
+            monitor_id: Uuid,
+            monitor_name: String,
+        }
+
+        #[derive(Serialize)]
+        struct Key {
+            api_key_id: Uuid,
+            name: String,
+            masked: String,
+            last_used: Option<LastUsed>,
+            created: NaiveDateTime,
+        }
+
+        Key {
+            api_key_id: self.api_key_id,
+            name: self.name.clone(),
+            masked: self.masked.clone(),
+            created: self.created,
+            last_used: self.last_used.map(|time| LastUsed {
+                time,
+                monitor_id: self.last_used_monitor_id.unwrap(),
+                monitor_name: self.last_used_monitor_name.clone().unwrap(),
+            }),
+        }
+        .serialize(serializer)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{Timelike, Utc};
     use pretty_assertions::assert_eq;
-    use test_utils::gen_uuid;
+    use rstest::rstest;
+    use serde_json::{json, Value};
+
+    use test_utils::{gen_datetime, gen_uuid};
 
     use super::ApiKey;
     use crate::domain::models::monitor::Monitor;
@@ -77,6 +130,7 @@ mod tests {
     #[test]
     fn test_new() {
         let api_key = ApiKey::new(
+            "Some key".to_owned(),
             "YWI0Y2FkMTAtMmJmZi00MjMyLWE5MTEtNzQyZWU0NjY4ZjI1Cg==".to_owned(),
             "tenant".to_owned(),
         );
@@ -89,6 +143,7 @@ mod tests {
             &api_key.key,
             "a759f35ec8a03a97f707e7a6094362d971e2ff114b201f0567563fb0a1b972db"
         );
+        assert_eq!(&api_key.masked, "YWI0Y************1Cg==");
         assert_eq!(api_key.last_used, None);
         assert_eq!(api_key.last_used_monitor_id, None);
         assert_eq!(api_key.last_used_monitor_name, None);
@@ -96,7 +151,11 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn test_record_usage() {
-        let mut key = ApiKey::new("test".to_owned(), "tenant".to_owned());
+        let mut key = ApiKey::new(
+            "Some key".to_owned(),
+            "test".to_owned(),
+            "tenant".to_owned(),
+        );
 
         let monitor = Monitor {
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
@@ -117,5 +176,49 @@ mod tests {
             key.last_used.unwrap().with_nanosecond(0).unwrap(),
             Utc::now().naive_utc().with_nanosecond(0).unwrap()
         );
+    }
+
+    #[rstest]
+    #[case::not_used(ApiKey {
+        api_key_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+        tenant: "tenant".to_owned(),
+        name: "Some key".to_owned(),
+        key: "test".to_owned(),
+        masked: "YWI0Y************1Cg==".to_owned(),
+        created: gen_datetime("2024-10-27T21:28:00"),
+        last_used: None,
+        last_used_monitor_id: None,
+        last_used_monitor_name: None,
+    }, json!({
+        "api_key_id": "41ebffb4-a188-48e9-8ec1-61380085cde3",
+        "name": "Some key",
+        "masked": "YWI0Y************1Cg==",
+        "created": "2024-10-27T21:28:00",
+        "last_used": Value::Null,
+    }))]
+    #[case::used(ApiKey {
+        api_key_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+        tenant: "tenant".to_owned(),
+        name: "Some key".to_owned(),
+        key: "test".to_owned(),
+        masked: "YWI0Y************1Cg==".to_owned(),
+        created: gen_datetime("2024-10-27T21:28:00"),
+        last_used: Some(gen_datetime("2024-10-27T21:28:00")),
+        last_used_monitor_id: Some(gen_uuid("eae3eb0b-350d-4783-bf9a-82ccc6cb0365")),
+        last_used_monitor_name: Some("Foo monitor".to_owned()),
+    }, json!({
+        "api_key_id": "41ebffb4-a188-48e9-8ec1-61380085cde3",
+        "name": "Some key",
+        "masked": "YWI0Y************1Cg==",
+        "created": "2024-10-27T21:28:00",
+        "last_used": {
+            "time": "2024-10-27T21:28:00",
+            "monitor_id": "eae3eb0b-350d-4783-bf9a-82ccc6cb0365",
+            "monitor_name": "Foo monitor",
+        },
+    }))]
+    fn test_serialize(#[case] api_key: ApiKey, #[case] expected: Value) {
+        let serialized = serde_json::to_value(&api_key).unwrap();
+        assert_eq!(serialized, expected);
     }
 }

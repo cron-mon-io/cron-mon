@@ -12,6 +12,7 @@ impl<'r> Responder<'r, 'static> for Error {
         let (status, reason) = match self {
             Error::RepositoryError(_) => (Status::InternalServerError, "Repository Error"),
             Error::MonitorNotFound(_) => (Status::NotFound, "Monitor Not Found"),
+            Error::ApiKeyNotFound(_) => (Status::NotFound, "API Key Not Found"),
             Error::JobNotFound(_, _) => (Status::NotFound, "Job Not Found"),
             Error::JobAlreadyFinished(_) => (Status::BadRequest, "Job Already Finished"),
             // Both of these could either be server-side or client-side. For now we'll handle the
@@ -55,6 +56,13 @@ mod tests {
     fn monitor_not_found() -> Result<(), Error> {
         Err(Error::MonitorNotFound(gen_uuid(
             "41ebffb4-a188-48e9-8ec1-61380085cde3",
+        )))
+    }
+
+    #[rocket::get("/key_not_found")]
+    fn key_not_found() -> Result<(), Error> {
+        Err(Error::ApiKeyNotFound(gen_uuid(
+            "01a92c6c-6803-409d-b675-022fff62575a",
         )))
     }
 
@@ -102,6 +110,7 @@ mod tests {
             rocket::routes![
                 repo_error,
                 monitor_not_found,
+                key_not_found,
                 job_not_found,
                 job_already_finished,
                 invalid_monitor,
@@ -146,6 +155,25 @@ mod tests {
                     "reason": "Monitor Not Found",
                     "description": "Failed to find monitor with id \
                                     '41ebffb4-a188-48e9-8ec1-61380085cde3'"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_api_key_not_found(test_client: Client) {
+        let response = test_client.get("/key_not_found").dispatch();
+
+        assert_eq!(response.status(), Status::NotFound);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 404,
+                    "reason": "API Key Not Found",
+                    "description": "Failed to find API key with id \
+                                    '01a92c6c-6803-409d-b675-022fff62575a'"
                 }
             })
         );
