@@ -1,3 +1,10 @@
+pub mod infra;
+pub mod postgres;
+pub mod seeds;
+
+pub use infra::{infrastructure, Infrastructure};
+pub use postgres::{postgres_container, PostgresContainer};
+
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use diesel_async::RunQueryDsl;
