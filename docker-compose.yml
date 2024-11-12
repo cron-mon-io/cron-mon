@@ -150,6 +150,7 @@ services:
       CARGO_HOME: /usr/cron-mon/.cargo
     volumes:
       - ./api:/usr/cron-mon/api
+      - /var/run/docker.sock:/var/run/docker.sock
 
 networks:
   cron-mon-network:
