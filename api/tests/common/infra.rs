@@ -63,10 +63,8 @@ impl Infrastructure {
     pub async fn test_api_client(&mut self, kid: &str) -> Client {
         self.mock_server = Some(setup_mock_jwks_server(kid).await);
 
-        let client = Client::tracked(rocket())
+        Client::tracked(rocket())
             .await
-            .expect("Invalid rocket instance");
-
-        client
+            .expect("Invalid rocket instance")
     }
 }
