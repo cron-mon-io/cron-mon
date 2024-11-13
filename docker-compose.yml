@@ -36,14 +36,6 @@ services:
       - default
       - cron-mon-network
 
-  integration-tests-rs:
-    extends: rust-cargo
-    container_name: rust-integration-tests
-    command: cargo test --no-fail-fast --jobs=5 --test "*" -- --test-threads=1
-    networks:
-      - default
-      - cron-mon-network
-
   db:
     container_name: cron-mon-db
     image: public.ecr.aws/docker/library/postgres:16.1
