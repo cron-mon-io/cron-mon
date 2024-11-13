@@ -5,8 +5,9 @@ use cron_mon_api::infrastructure::models::{
     api_key::ApiKeyData, job::JobData, monitor::MonitorData,
 };
 
+use super::postgres::seed_db;
 use super::seeds::{api_key_seeds, job_seeds, monitor_seeds};
-use super::{postgres_container, seed_db, PostgresContainer};
+use super::{postgres_container, PostgresContainer};
 
 #[fixture]
 pub async fn infrastructure() -> Infrastructure {
