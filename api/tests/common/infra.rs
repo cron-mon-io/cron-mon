@@ -19,8 +19,8 @@ pub async fn infrastructure() -> Infrastructure {
 }
 
 pub struct Infrastructure {
-    pub container: PostgresContainer,
     pub pool: DbPool,
+    _container: PostgresContainer,
     mock_server: Option<MockServer>,
 }
 
@@ -53,7 +53,7 @@ impl Infrastructure {
         let pool = seed_db(&monitor_seeds, &job_seeds, &api_key_seeds).await;
 
         Self {
-            container,
+            _container: container,
             pool,
             mock_server: None,
         }
