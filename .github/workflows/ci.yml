@@ -55,21 +55,6 @@ jobs:
     defaults:
       run:
         working-directory: ./api
-    container: public.ecr.aws/docker/library/rust:1.80.0-slim
-    services:
-      cron-mon-db:
-        image: public.ecr.aws/docker/library/postgres:16.1
-        env:
-          POSTGRES_USER: cron-mon-api
-          POSTGRES_PASSWORD: itsasecret
-          POSTGRES_DB: cron-mon
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -84,15 +69,8 @@ jobs:
         with:
           workspaces: "api"
 
-      - name: Run migrations
-        run: make migrate
-        env:
-          DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
-
       - name: Run integration test
         run: make integration-tests
-        env:
-          DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
 
   test-coverage:
     name: Test coverage
@@ -101,21 +79,6 @@ jobs:
     defaults:
       run:
         working-directory: ./api
-    container: public.ecr.aws/docker/library/rust:1.80.0-slim
-    services:
-      cron-mon-db:
-        image: public.ecr.aws/docker/library/postgres:16.1
-        env:
-          POSTGRES_USER: cron-mon-api
-          POSTGRES_PASSWORD: itsasecret
-          POSTGRES_DB: cron-mon
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -133,15 +96,8 @@ jobs:
         with:
           workspaces: "api"
 
-      - name: Run migrations
-        run: make migrate
-        env:
-          DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
-
       - name: Run cargo test
         run: make test-coverage
-        env:
-          DATABASE_URL: postgres://cron-mon-api:itsasecret@cron-mon-db/cron-mon
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
