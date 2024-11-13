@@ -6,24 +6,30 @@ use rocket::local::asynchronous::LocalResponse;
 use rstest::rstest;
 use serde_json::{json, Value};
 
-use common::get_test_client;
+use common::{infrastructure, Infrastructure};
 
 #[rstest]
 #[case::get_monitor("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36")]
 #[case::list_monitors("/api/v1/monitors")]
 #[case::get_job("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/9d4e2d69-af63-4c1e-8639-60cb2683aee5")]
 #[tokio::test]
-async fn test_authed_get_endpoints_with_no_jwt(#[case] endpoint: &str) {
-    let (_mock_server, client) = get_test_client("test-kid", false).await;
+async fn test_authed_get_endpoints_with_no_jwt(
+    #[case] endpoint: &str,
+    #[future] infrastructure: Infrastructure,
+) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client.get(endpoint).dispatch().await;
 
     assert_response_is_unauthorized(response).await;
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_create_monitor_with_no_jwt() {
-    let (_mock_server, client) = get_test_client("test-kid", false).await;
+async fn test_create_monitor_with_no_jwt(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .post("/api/v1/monitors")
@@ -42,9 +48,11 @@ async fn test_create_monitor_with_no_jwt() {
     assert_response_is_unauthorized(response).await;
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_edit_monitor_with_no_jwt() {
-    let (_mock_server, client) = get_test_client("test-kid", false).await;
+async fn test_edit_monitor_with_no_jwt(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .patch("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36")
@@ -63,9 +71,11 @@ async fn test_edit_monitor_with_no_jwt() {
     assert_response_is_unauthorized(response).await;
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_delete_monitor_with_no_jwt() {
-    let (_mock_server, client) = get_test_client("test-kid", false).await;
+async fn test_delete_monitor_with_no_jwt(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .delete("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36")

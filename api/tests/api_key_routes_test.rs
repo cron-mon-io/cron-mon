@@ -2,13 +2,16 @@ pub mod common;
 
 use pretty_assertions::assert_eq;
 use rocket::http::{ContentType, Status};
+use rstest::rstest;
 use serde_json::{json, Value};
 
-use common::{create_auth_header, get_test_client};
+use common::{create_auth_header, infrastructure, Infrastructure};
 
+#[rstest]
 #[tokio::test]
-async fn test_list_api_keys() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_list_api_keys(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .get("/api/v1/keys")
@@ -51,9 +54,11 @@ async fn test_list_api_keys() {
     );
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_generate_api_key() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_generate_api_key(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .post("/api/v1/keys")
@@ -90,9 +95,11 @@ async fn test_generate_api_key() {
     assert_eq!(data["paging"].as_object().unwrap()["total"], 3);
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_delete_api_key() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_delete_api_key(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .delete("/api/v1/keys/bfab6d41-8b00-49ef-86df-f562b701ee4f")

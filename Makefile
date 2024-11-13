@@ -15,7 +15,8 @@ run-monitor:
 run-monitor-debug:
 	docker compose up monitor-debug
 
-test: lint unit-test
+test:
+	docker compose run --rm --no-deps rust-cargo make test
 
 lint:
 	docker compose run --rm --no-deps rust-cargo make lint
@@ -23,12 +24,9 @@ lint:
 unit-test:
 	docker compose run --rm --no-deps rust-cargo make unit-test
 
-# Note that running this locally will re-seed your local DB so you'll lose
-# everything in there currently.
 integration-tests:
-	docker compose up integration-tests-rs
+	docker compose run --rm --no-deps rust-cargo make integration-test
 
-# This will also re-seed your local DB, as it effectively runs *all* tests.
 test-coverage:
 	docker compose run --rm --no-deps rust-cargo make test-coverage
 

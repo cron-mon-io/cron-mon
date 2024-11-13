@@ -1,7 +1,7 @@
 pub mod common;
 
 use pretty_assertions::assert_eq;
-use tokio::test;
+use rstest::rstest;
 use uuid::Uuid;
 
 use test_utils::{gen_datetime, gen_uuid};
@@ -13,13 +13,13 @@ use cron_mon_api::infrastructure::repositories::monitor::GetWithLateJobs;
 use cron_mon_api::infrastructure::repositories::monitor_repo::MonitorRepository;
 use cron_mon_api::infrastructure::repositories::Repository;
 
-use common::{seed_db, setup_db_pool};
+use common::{infrastructure, Infrastructure};
 
-#[test]
-async fn test_all() {
-    // See data seeds for the expected data (/api/tests/common/mod.rs)
-    let pool = setup_db_pool().await;
-    let mut repo = MonitorRepository::new(&pool);
+#[rstest]
+#[tokio::test]
+async fn test_all(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = MonitorRepository::new(&infra.pool);
 
     let montiors = repo.all("foo").await.unwrap();
 
@@ -51,10 +51,11 @@ async fn test_all() {
     );
 }
 
-#[test]
-async fn test_get() {
-    let pool = setup_db_pool().await;
-    let mut repo = MonitorRepository::new(&pool);
+#[rstest]
+#[tokio::test]
+async fn test_get(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = MonitorRepository::new(&infra.pool);
 
     let non_existent_monitor_id = repo
         .get(gen_uuid("4940ede2-72fc-4e0e-838e-f15f35e3594f"), "foo")
@@ -77,10 +78,11 @@ async fn test_get() {
     assert_eq!(monitor.name, "db-backup.py");
 }
 
-#[test]
-async fn test_get_with_late_jobs() {
-    let pool = setup_db_pool().await;
-    let mut repo = MonitorRepository::new(&pool);
+#[rstest]
+#[tokio::test]
+async fn test_get_with_late_jobs(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = MonitorRepository::new(&infra.pool);
 
     let monitors_with_late_jobs = repo.get_with_late_jobs().await.unwrap();
     let mut names: Vec<String> = monitors_with_late_jobs
@@ -94,10 +96,11 @@ async fn test_get_with_late_jobs() {
     );
 }
 
-#[test]
-async fn test_save() {
-    let pool = setup_db_pool().await;
-    let mut repo = MonitorRepository::new(&pool);
+#[rstest]
+#[tokio::test]
+async fn test_save(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = MonitorRepository::new(&infra.pool);
 
     let mut new_monitor = Monitor::new("foo".to_owned(), "new-monitor".to_owned(), 100, 5);
     let _ = new_monitor.start_job().expect("Failed to start job");
@@ -121,10 +124,11 @@ async fn test_save() {
     assert_eq!(new_monitor.jobs[0].job_id, read_new_monitor.jobs[0].job_id);
 }
 
-#[test]
-async fn test_delete() {
-    let pool = setup_db_pool().await;
-    let mut repo = MonitorRepository::new(&pool);
+#[rstest]
+#[tokio::test]
+async fn test_delete(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = MonitorRepository::new(&infra.pool);
 
     let monitor = repo
         .get(gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"), "foo")
@@ -137,18 +141,17 @@ async fn test_delete() {
     assert_eq!(repo.all("foo").await.unwrap().len(), 2);
 }
 
-#[test]
+#[tokio::test]
 async fn test_loading_invalid_job() {
-    // Seed the database with a monitor that has an invalid job.
-    let pool = seed_db(
-        &vec![MonitorData {
+    let infra = Infrastructure::from_seeds(
+        vec![MonitorData {
             monitor_id: gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"),
             tenant: "foo".to_string(),
             name: "init-philanges".to_string(),
             expected_duration: 900,
             grace_duration: 300,
         }],
-        &vec![JobData {
+        vec![JobData {
             job_id: gen_uuid("73f01432-bf9b-4dc0-8d68-aa7289725bf4"),
             monitor_id: gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"),
             start_time: gen_datetime("2024-05-01T00:10:00.000"),
@@ -157,12 +160,12 @@ async fn test_loading_invalid_job() {
             succeeded: Some(true),
             output: Some("Database successfully backed up".to_string()),
         }],
-        &vec![],
+        vec![],
     )
     .await;
 
     // Attempt to retrieve that monitor.
-    let mut repo = MonitorRepository::new(&pool);
+    let mut repo = MonitorRepository::new(&infra.pool);
     let monitor_result = repo
         .get(gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"), "foo")
         .await;
