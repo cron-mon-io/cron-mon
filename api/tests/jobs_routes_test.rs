@@ -3,16 +3,18 @@ pub mod common;
 use pretty_assertions::assert_eq;
 use rocket::http::{ContentType, Header, Status};
 use rocket::local::asynchronous::Client;
-use rstest::*;
+use rstest::rstest;
 use serde_json::{json, Value};
 
 use test_utils::{is_datetime, is_uuid};
 
-use common::{create_auth_header, get_test_client};
+use common::{create_auth_header, infrastructure, Infrastructure};
 
+#[rstest]
 #[tokio::test]
-async fn test_get_job_when_job_exists() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_get_job_when_job_exists(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .get(
@@ -38,9 +40,11 @@ async fn test_get_job_when_job_exists() {
     assert_eq!(job["late"], true);
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_get_job_when_job_does_not_exist() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_get_job_when_job_does_not_exist(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .get(
@@ -65,9 +69,11 @@ async fn test_get_job_when_job_does_not_exist() {
     );
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_start_job() {
-    let (_, client) = get_test_client("test-kid", true).await;
+async fn test_start_job(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .post("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36/jobs/start")
@@ -83,9 +89,11 @@ async fn test_start_job() {
     assert!(is_uuid(job["job_id"].as_str().unwrap()));
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_finish_job() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_finish_job(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let job_finished =
         get_job_finished(&client, "9d4e2d69-af63-4c1e-8639-60cb2683aee5", "foo").await;
@@ -144,8 +152,10 @@ async fn test_finish_job_errors(
     #[case] job_id: &str,
     #[case] expected_status: Status,
     #[case] expected_body: Value,
+    #[future] infrastructure: Infrastructure,
 ) {
-    let (_, client) = get_test_client("test-kid", true).await;
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .post(format!(

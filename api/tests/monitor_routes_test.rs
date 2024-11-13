@@ -8,11 +8,13 @@ use serde_json::{json, Value};
 
 use test_utils::{gen_uuid, is_uuid};
 
-use common::{create_auth_header, get_test_client};
+use common::{create_auth_header, infrastructure, Infrastructure};
 
+#[rstest]
 #[tokio::test]
-async fn test_get_monitor_when_monitor_exists() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_get_monitor_when_monitor_exists(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .get("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36")
@@ -50,9 +52,11 @@ async fn test_get_monitor_when_monitor_exists() {
     assert_eq!(job["late"], true);
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_get_monitor_when_monitor_does_not_exist() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_get_monitor_when_monitor_does_not_exist(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .get("/api/v1/monitors/cc6cf74e-b25d-4c8c-94a6-914e3f139c14")
@@ -75,9 +79,11 @@ async fn test_get_monitor_when_monitor_does_not_exist() {
     )
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_get_monitor_with_wrong_tenant() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_get_monitor_with_wrong_tenant(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .get("/api/v1/monitors/c1bf0515-df39-448b-aa95-686360a33b36")
@@ -100,9 +106,11 @@ async fn test_get_monitor_with_wrong_tenant() {
     )
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_list_monitors() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_list_monitors(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .get("/api/v1/monitors")
@@ -178,9 +186,11 @@ async fn test_list_monitors() {
     );
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_add_monitor() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_add_monitor(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     // Get starting number of monitors.
     let num_monitors = get_num_monitors("test-kid", "foo", &client).await;
@@ -212,9 +222,11 @@ async fn test_add_monitor() {
     );
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_modify_monitor_when_monitor_exists() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_modify_monitor_when_monitor_exists(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let original_monitor = get_monitor("test-kid", "foo", &client).await;
 
@@ -252,9 +264,11 @@ async fn test_modify_monitor_when_monitor_exists() {
     assert_eq!(monitor["grace_duration"], 10);
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_modify_monitor_when_monitor_does_not_exist() {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+async fn test_modify_monitor_when_monitor_does_not_exist(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client
         .patch("/api/v1/monitors/cc6cf74e-b25d-4c8c-94a6-914e3f139c14")
@@ -286,8 +300,10 @@ async fn test_delete_monitor_deletes(
     #[case] monitor_id: &str,
     #[case] status: Status,
     #[case] adjustment: i64,
+    #[future] infrastructure: Infrastructure,
 ) {
-    let (_mock_server, client) = get_test_client("test-kid", true).await;
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     // Get starting number of monitors.
     let num_monitors = get_num_monitors("test-kid", "foo", &client).await;

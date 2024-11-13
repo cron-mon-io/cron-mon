@@ -1,6 +1,7 @@
 pub mod common;
 
 use pretty_assertions::assert_eq;
+use rstest::rstest;
 
 use test_utils::gen_uuid;
 
@@ -9,13 +10,13 @@ use cron_mon_api::infrastructure::repositories::api_key_repo::ApiKeyRepository;
 use cron_mon_api::infrastructure::repositories::api_keys::GetByKey;
 use cron_mon_api::infrastructure::repositories::Repository;
 
-use common::setup_db_pool;
+use common::{infrastructure, Infrastructure};
 
+#[rstest]
 #[tokio::test]
-async fn test_all() {
-    // See data seeds for the expected data (/api/tests/common/mod.rs)
-    let pool = setup_db_pool().await;
-    let mut repo = ApiKeyRepository::new(&pool);
+async fn test_all(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = ApiKeyRepository::new(&infra.pool);
 
     let keys = repo.all("foo").await.unwrap();
 
@@ -29,10 +30,11 @@ async fn test_all() {
     );
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_get() {
-    let pool = setup_db_pool().await;
-    let mut repo = ApiKeyRepository::new(&pool);
+async fn test_get(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = ApiKeyRepository::new(&infra.pool);
 
     let non_existent_api_key_id = repo
         .get(gen_uuid("4940ede2-72fc-4e0e-838e-f15f35e3594f"), "foo")
@@ -58,10 +60,11 @@ async fn test_get() {
     );
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_get_by_key() {
-    let pool = setup_db_pool().await;
-    let mut repo = ApiKeyRepository::new(&pool);
+async fn test_get_by_key(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = ApiKeyRepository::new(&infra.pool);
 
     let existent_key = repo
         .get_by_key("104e4587f5340bd9264ea0fee2075627c74420bd5c48aa9e8a463f03a2675020")
@@ -78,10 +81,11 @@ async fn test_get_by_key() {
     assert!(non_existent_key.is_none());
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_save() {
-    let pool = setup_db_pool().await;
-    let mut repo = ApiKeyRepository::new(&pool);
+async fn test_save(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = ApiKeyRepository::new(&infra.pool);
 
     let new_api_key = ApiKey::new(
         "New key".to_string(),
@@ -109,10 +113,11 @@ async fn test_save() {
     );
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_delete() {
-    let pool = setup_db_pool().await;
-    let mut repo = ApiKeyRepository::new(&pool);
+async fn test_delete(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = ApiKeyRepository::new(&infra.pool);
 
     let key = repo
         .get(gen_uuid("bfab6d41-8b00-49ef-86df-f562b701ee4f"), "foo")

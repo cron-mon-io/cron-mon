@@ -1,12 +1,15 @@
 pub mod common;
 
 use rocket::http::Status;
+use rstest::rstest;
 
-use common::get_test_client;
+use common::{infrastructure, Infrastructure};
 
+#[rstest]
 #[tokio::test]
-async fn test_get_docs_openapi_yaml() {
-    let (_, client) = get_test_client("test-kid", false).await;
+async fn test_get_docs_openapi_yaml(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
 
     let response = client.get("/api/v1/docs/openapi.yaml").dispatch().await;
 
