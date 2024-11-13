@@ -15,7 +15,8 @@ run-monitor:
 run-monitor-debug:
 	docker compose up monitor-debug
 
-test: lint unit-test
+test:
+	docker compose run --rm --no-deps rust-cargo make test
 
 lint:
 	docker compose run --rm --no-deps rust-cargo make lint
