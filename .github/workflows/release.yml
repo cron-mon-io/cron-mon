@@ -8,27 +8,12 @@ on:
 
 jobs:
   retag:
-    runs-on: ubuntu-latest
+    name: Retag image
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Retag image
-        run: |
-          sha=$(git rev-list -n 1 ${{ github.event.release.tag_name }})
-          docker pull ghcr.io/${{ github.repository }}:"${sha}"
-          tag=$(echo "${{ github.event.release.tag_name }}" | tr -d 'v')
-          docker image tag ghcr.io/${{ github.repository }}:"${sha}" ghcr.io/${{ github.repository }}:"${tag}"
-          docker push ghcr.io/${{ github.repository }}:"${tag}"
+    uses: cron-mon-io/ghcr-actions/.github/workflows/retag.yml@main
+    with:
+      tag: ${{ github.event.release.tag_name }}
