@@ -43,3 +43,7 @@ path = "src/bin/api.rs"
 [[bin]]
 name = "monitor"
 path = "src/bin/monitor.rs"
+
+[[bin]]
+name = "cron-mon"
+path = "src/bin/cron_mon.rs"

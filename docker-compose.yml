@@ -5,7 +5,7 @@ services:
     container_name: cron-mon-api
     ports:
       - 8000:8000
-    command: ./api
+    command: ./cron-mon api
     networks:
       - default
       - cron-mon-network
@@ -15,7 +15,7 @@ services:
     container_name: cron-mon-api-debug
     ports:
       - 8000:8000
-    command: cargo run --bin api
+    command: cargo run --bin cron-mon -- api
     networks:
       - default
       - cron-mon-network
@@ -23,7 +23,7 @@ services:
   monitor:
     extends: rust-release
     container_name: cron-mon-monitor
-    command: ./monitor
+    command: ./cron-mon monitor
     networks:
       - default
       - cron-mon-network
@@ -31,7 +31,7 @@ services:
   monitor-debug:
     extends: rust-cargo
     container_name: cron-mon-monitor-debug
-    command: cargo run --bin monitor
+    command: cargo run --bin cron-mon -- monitor
     networks:
       - default
       - cron-mon-network
