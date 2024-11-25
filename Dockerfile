@@ -35,9 +35,6 @@ COPY --from=builder \
 
 COPY --from=builder \
     --chown=cron-mon:cron-mon \
-    /usr/cron-mon/api/target/release/api /usr/bin/cron-mon/api
-COPY --from=builder \
-    --chown=cron-mon:cron-mon \
-    /usr/cron-mon/api/target/release/monitor /usr/bin/cron-mon/monitor
+    /usr/cron-mon/api/target/release/cron-mon /usr/bin/cron-mon/cron-mon
 
 USER 1000
