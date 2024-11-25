@@ -12,14 +12,14 @@ use cron_mon_api::infrastructure::database::create_connection_pool;
 use cron_mon_api::infrastructure::logging::init_logging;
 
 /// The cron-mon CLI.
-#[derive(Debug, Parser)]
+#[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Subcommand)]
 enum Command {
     /// Run the API.
     Api,
@@ -28,7 +28,7 @@ enum Command {
     Monitor(MonitorArgs),
 }
 
-#[derive(Debug, Args)]
+#[derive(Args)]
 struct MonitorArgs {
     /// The interval, in seconds, to run the monitor at.
     #[arg(short, long, default_value = "10")]
