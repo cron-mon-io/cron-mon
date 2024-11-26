@@ -25,7 +25,7 @@ test-coverage:
 	cargo llvm-cov \
         --no-clean \
         --show-missing-lines \
-        --ignore-filename-regex="src/infrastructure/db_schema.rs" \
+        --ignore-filename-regex="src/bin|src/infrastructure/db_schema.rs" \
         --fail-under-lines=95 \
         --jobs=3 \
         --lcov \

@@ -7,7 +7,9 @@ use std::sync::Arc;
 
 use clap::{Args, Parser, Subcommand};
 
-use cron_mon_api::application::services::get_process_late_jobs_service;
+use cron_mon_api::application::services::{
+    get_create_monitor_service, get_process_late_jobs_service,
+};
 use cron_mon_api::infrastructure::database::create_connection_pool;
 use cron_mon_api::infrastructure::logging::init_logging;
 
@@ -26,6 +28,9 @@ enum Command {
 
     /// Run the monitor.
     Monitor(MonitorArgs),
+
+    /// Create a new monitor.
+    CreateMonitor(CreateMonitorArgs),
 }
 
 #[derive(Args)]
@@ -33,6 +38,25 @@ struct MonitorArgs {
     /// The interval, in seconds, to run the monitor at.
     #[arg(short, long, default_value = "10")]
     interval: u64,
+}
+
+#[derive(Args)]
+struct CreateMonitorArgs {
+    /// The name of the monitor.
+    #[arg(short, long)]
+    name: String,
+
+    /// The expected duration of jobs monitored by this monitor, in seconds.
+    #[arg(short, long)]
+    expected: i32,
+
+    /// The grace duration for jobs monitored by this monitor, in seconds.
+    #[arg(short, long)]
+    grace: i32,
+
+    /// The tenant that the monitor is to belong to.
+    #[arg(short, long)]
+    tenant: String,
 }
 
 #[tokio::main]
@@ -58,6 +82,14 @@ async fn main() {
                 }
             })
             .await;
+        }
+        Command::CreateMonitor(args) => {
+            let pool = create_connection_pool().expect("Failed to create DB connection pool.");
+            let mut service = get_create_monitor_service(&pool);
+            service
+                .create_by_attributes(&args.tenant, &args.name, args.expected, args.grace)
+                .await
+                .expect("Failed to create monitor.");
         }
     }
 }
