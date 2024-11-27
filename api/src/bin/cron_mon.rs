@@ -10,7 +10,7 @@ use clap::{Args, Parser, Subcommand};
 use cron_mon_api::application::services::{
     get_create_monitor_service, get_process_late_jobs_service,
 };
-use cron_mon_api::infrastructure::database::create_connection_pool;
+use cron_mon_api::infrastructure::database::{create_connection_pool, run_migrations};
 use cron_mon_api::infrastructure::logging::init_logging;
 
 /// The cron-mon CLI.
@@ -62,6 +62,7 @@ struct CreateMonitorArgs {
 #[tokio::main]
 async fn main() {
     init_logging();
+    run_migrations();
 
     let cli = Cli::parse();
     match cli.command {
