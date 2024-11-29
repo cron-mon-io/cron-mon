@@ -1,4 +1,6 @@
+use async_trait::async_trait;
 use tracing::info;
+use uuid::Uuid;
 
 use crate::domain::models::Job;
 use crate::errors::Error;
@@ -7,8 +9,14 @@ use crate::infrastructure::notify::NotifyLateJob;
 #[derive(Default)]
 pub struct LateJobNotifer {}
 
+#[async_trait]
 impl NotifyLateJob for LateJobNotifer {
-    fn notify_late_job(&mut self, monitor_name: &str, late_job: &Job) -> Result<(), Error> {
+    async fn notify_late_job(
+        &mut self,
+        _uuid: &Uuid,
+        monitor_name: &str,
+        late_job: &Job,
+    ) -> Result<(), Error> {
         info!(
             monitor_name = monitor_name,
             job_id = late_job.job_id.to_string(),
