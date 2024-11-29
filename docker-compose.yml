@@ -24,6 +24,8 @@ services:
     extends: rust-release
     container_name: cron-mon-monitor
     command: ./cron-mon monitor
+    env_file:
+      - .env
     networks:
       - default
       - cron-mon-network
@@ -32,6 +34,8 @@ services:
     extends: rust-cargo
     container_name: cron-mon-monitor-debug
     command: cargo run --bin cron-mon -- monitor
+    env_file:
+      - .env
     networks:
       - default
       - cron-mon-network
