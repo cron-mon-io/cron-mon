@@ -20,7 +20,9 @@ impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo
 
         for mon in &monitors_with_late_jobs {
             for late_job in mon.late_jobs() {
-                self.notifier.notify_late_job(&mon.name, late_job)?;
+                self.notifier
+                    .notify_late_job(&mon.monitor_id, &mon.name, late_job)
+                    .await?;
             }
         }
 
@@ -107,27 +109,30 @@ mod tests {
         mock_notifier
             .expect_notify_late_job()
             .once()
-            .withf(|name, job| {
-                name == "background-task.sh"
+            .withf(|mon_id, name, job| {
+                mon_id == &gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
+                    && name == "background-task.sh"
                     && job.job_id == gen_uuid("01a92c6c-6803-409d-b675-022fff62575a")
             })
-            .returning(|_, _| Ok(()));
+            .returning(|_, _, _| Ok(()));
         mock_notifier
             .expect_notify_late_job()
             .once()
-            .withf(|name, job| {
-                name == "background-task.sh"
+            .withf(|mon_id, name, job| {
+                mon_id == &gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
+                    && name == "background-task.sh"
                     && job.job_id == gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0")
             })
-            .returning(|_, _| Ok(()));
+            .returning(|_, _, _| Ok(()));
         mock_notifier
             .expect_notify_late_job()
             .once()
-            .withf(|name, job| {
-                name == "get-pending-orders | generate invoices"
+            .withf(|mon_id, name, job| {
+                mon_id == &gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
+                    && name == "get-pending-orders | generate invoices"
                     && job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
             })
-            .returning(|_, _| Ok(()));
+            .returning(|_, _, _| Ok(()));
 
         let mut service = ProcessLateJobsService::new(mock_repo, mock_notifier);
 
