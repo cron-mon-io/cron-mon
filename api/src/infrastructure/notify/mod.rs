@@ -1,4 +1,5 @@
 pub mod late_job_logger;
+pub mod slack;
 
 use async_trait::async_trait;
 use uuid::Uuid;

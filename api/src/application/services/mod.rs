@@ -5,7 +5,7 @@ pub mod monitors;
 use crate::domain::models::Monitor;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::infrastructure::database::DbPool;
-use crate::infrastructure::notify::late_job_logger::LateJobNotifer;
+use crate::infrastructure::notify::slack::SlackNotifier;
 use crate::infrastructure::repositories::alert_config::AlertConfigRepository;
 use crate::infrastructure::repositories::api_key::ApiKeyRepository;
 use crate::infrastructure::repositories::monitor::MonitorRepository;
@@ -73,8 +73,11 @@ pub fn get_generate_key_service(pool: &DbPool) -> GenerateKeyService<ApiKeyRepos
 
 pub fn get_process_late_jobs_service(
     pool: &DbPool,
-) -> ProcessLateJobsService<MonitorRepository, LateJobNotifer> {
-    ProcessLateJobsService::new(MonitorRepository::new(pool), Default::default())
+) -> ProcessLateJobsService<MonitorRepository, SlackNotifier> {
+    ProcessLateJobsService::new(
+        MonitorRepository::new(pool),
+        SlackNotifier::new(&std::env::var("SLACK_TOKEN").unwrap(), "#all-cron-mon"),
+    )
 }
 
 pub fn get_revoke_key_service(pool: &DbPool) -> RevokeKeyService<ApiKeyRepository> {
