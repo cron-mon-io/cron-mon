@@ -15,7 +15,7 @@ VALUES
 
 -- Jobs.
 INSERT INTO job
-    (job_id, monitor_id, start_time, max_end_time, end_time, succeeded, "output")
+    (job_id, monitor_id, start_time, max_end_time, end_time, succeeded, "output", late_alert_sent, error_alert_sent)
 VALUES
     -- db-backup.py (job in flight, failed a few days ago, otherwise all OK)
     (
@@ -25,7 +25,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS',
         null,
         null,
-        null
+        null,
+        FALSE,
+        FALSE
     ),
     (
         'c1893113-66d7-4707-9a51-c8be46287b2c',
@@ -34,7 +36,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '1 DAY',
         CURRENT_TIMESTAMP - INTERVAL '23 HOURS 29 MINUTES',
         TRUE,
-        'Database successfully backed up'
+        'Database successfully backed up',
+        FALSE,
+        FALSE
     ),
     (
         '9d4e2d69-af63-4c1e-8639-60cb2683aee5',
@@ -43,7 +47,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '2 DAY',
         CURRENT_TIMESTAMP - INTERVAL '1 DAY 23 HOURS 1 MINUTE',
         FALSE,
-        'Could not connect to database'
+        'Could not connect to database',
+        FALSE,
+        TRUE
     ),
     (
         '0d66d5ec-d5b7-4f35-ab06-5e82ec17da66',
@@ -52,7 +58,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '3 DAY',
         CURRENT_TIMESTAMP - INTERVAL '2 DAYS 23 HOURS 28 MINUTES',
         TRUE,
-        'Database successfully backed up'
+        'Database successfully backed up',
+        FALSE,
+        FALSE
     ),
     (
         '28c7c0ce-c78c-4bd4-98c4-33c8d5362e3e',
@@ -61,7 +69,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '4 DAY',
         CURRENT_TIMESTAMP - INTERVAL '3 DAYS 23 HOURS 32 MINUTES',
         TRUE,
-        'Database successfully backed up'
+        'Database successfully backed up',
+        FALSE,
+        FALSE
     ),
     (
         '6c9f7a93-9418-40de-a2c3-94ed46c22161',
@@ -70,7 +80,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '2400 SECONDS' - INTERVAL '5 DAY',
         CURRENT_TIMESTAMP - INTERVAL '4 DAYS 23 HOURS 22 MINUTES',
         TRUE,
-        'Database successfully backed up'
+        'Database successfully backed up',
+        FALSE,
+        FALSE
     ),
     -- generate-orders.sh (never managed to finish)
     (
@@ -80,7 +92,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '6120 SECONDS' - INTERVAL '1 DAY',
         null,
         null,
-        null
+        null,
+        TRUE,
+        FALSE
     ),
     (
         'db610603-5094-49a4-8838-204103cd5b78',
@@ -89,7 +103,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '6120 SECONDS' - INTERVAL '2 DAY',
         null,
         null,
-        null
+        null,
+        TRUE,
+        FALSE
     ),
     (
         '7122b6cb-4910-40e6-abb8-c7558c0aae99',
@@ -98,7 +114,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '6120 SECONDS' - INTERVAL '3 DAY',
         null,
         null,
-        null
+        null,
+        TRUE,
+        FALSE
     ),
     (
         '4f4c6846-9fb7-45fa-bedd-84a381426fb0',
@@ -107,7 +125,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '6120 SECONDS' - INTERVAL '4 DAY',
         null,
         null,
-        null
+        null,
+        TRUE,
+        FALSE
     ),
     -- init-philanges (setup but never run)
     -- gen-manifests | send-manifest (never run successfully)
@@ -118,7 +138,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '420 SECONDS' - INTERVAL '1 DAY',
         CURRENT_TIMESTAMP - INTERVAL '23 HOURS 2 MINUTES',
         FALSE,
-        'Corrupted manifest detected'
+        'Corrupted manifest detected',
+        FALSE,
+        TRUE
     ),
     (
         '8f438139-6251-466b-99a3-ce30690660aa',
@@ -127,7 +149,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '420 SECONDS' - INTERVAL '2 DAYS',
         CURRENT_TIMESTAMP - INTERVAL '1 DAY 23 HOURS 43 MINUTES',
         FALSE,
-        'Received SIGKILL -9'
+        'Received SIGKILL -9',
+        FALSE,
+        TRUE
     ),
     (
         'b1f446a4-c3a2-4840-af49-55d54ed1989c',
@@ -136,7 +160,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '420 SECONDS' - INTERVAL '3 DAYS',
         CURRENT_TIMESTAMP - INTERVAL '2 DAYS 23 HOURS 13 MINUTES',
         FALSE,
-        'Timed out waiting for manifest API connection'
+        'Timed out waiting for manifest API connection',
+        FALSE,
+        TRUE
     ),
     -- bill-and-invoice (multiple jobs in flight)
     (
@@ -146,7 +172,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '12600 SECONDS' - INTERVAL '24 MINUTES',
         NULL,
         NULL,
-        NULL
+        NULL,
+        FALSE,
+        FALSE
     ),
     (
         '4428ff3c-516a-41c9-bd62-78512b305d62',
@@ -155,7 +183,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '12600 SECONDS' - INTERVAL '1 HOUR 30 MINUTES',
         NULL,
         NULL,
-        NULL
+        NULL,
+        FALSE,
+        FALSE
     ),
     (
         '3814c0f3-a9e6-47b6-b387-a61ddb4d9c2d',
@@ -164,7 +194,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '12600 SECONDS' - INTERVAL '2 HOURS 58 MINUTES',
         NULL,
         NULL,
-        NULL
+        NULL,
+        FALSE,
+        FALSE
     ),
     (
         'c9576731-7650-4957-9cc7-aace50506402',
@@ -173,7 +205,9 @@ VALUES
         CURRENT_TIMESTAMP + INTERVAL '12600 SECONDS' - INTERVAL '3 HOURS 55 MINUTES',
         CURRENT_TIMESTAMP - INTERVAL '6 HOURS 25 MINUTES',
         TRUE,
-        '{"bills_processed": 1234, "invoiced_generated": 325}'
+        '{"bills_processed": 1234, "invoiced_generated": 325}',
+        FALSE,
+        FALSE
     );
 
 -- API keys.
