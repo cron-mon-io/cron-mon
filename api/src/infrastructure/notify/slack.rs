@@ -28,7 +28,7 @@ impl SlackNotifier {
         }
     }
 
-    async fn send_message(&self, message: LateJobMessage<'_>) -> Result<(), Error> {
+    async fn send_message(&self, message: impl SlackMessageTemplate) -> Result<(), Error> {
         let client = SlackClient::new(SlackClientHyperConnector::new().unwrap());
         let session = client.open_session(&self.token);
 
@@ -61,7 +61,6 @@ impl NotifyLateJob for SlackNotifier {
     }
 }
 
-// Our welcome message params as a struct
 #[derive(Debug, Clone)]
 pub struct LateJobMessage<'a> {
     pub monitor_id: &'a Uuid,
@@ -69,17 +68,20 @@ pub struct LateJobMessage<'a> {
     pub job: &'a Job,
 }
 
-// Define our welcome message template using block macros, a trait and models from the library
 impl<'a> SlackMessageTemplate for LateJobMessage<'a> {
     fn render_template(&self) -> SlackMessageContent {
         SlackMessageContent::new()
             .with_text(format!("Late '{}' job detected", self.monitor_name))
             .with_blocks(slack_blocks![
-                some_into(SlackHeaderBlock::new(pt!("Late job detected"))),
+                some_into(SlackHeaderBlock::new(pt!(
+                    "Late '{}' job detected",
+                    self.monitor_name
+                ))),
                 some_into(SlackSectionBlock::new().with_text(pt!(
-                    "Job started at {} was expected to finish by {} at the latest",
-                    self.job.start_time,
-                    self.job.max_end_time
+                    "The job started at {}, and was expected to finish by {} at the latest, but \
+                    it hasn't reported that it's finished yet.",
+                    self.job.start_time.format("%Y-%m-%d %H:%M:%S"),
+                    self.job.max_end_time.format("%Y-%m-%d %H:%M:%S")
                 ))),
                 some_into(SlackSectionBlock::new().with_text(md!(
                     "`monitor_id: {}`\n`job_id: {}`",
