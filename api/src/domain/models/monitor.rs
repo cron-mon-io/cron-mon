@@ -54,8 +54,8 @@ impl Monitor {
     /// Jobs are considered late once they have been running for more than
     /// `expected_duration + grace_duration`. Note that late Jobs can still finish, either
     /// successfully or in error.
-    pub fn late_jobs(&self) -> Vec<&Job> {
-        self.jobs.iter().filter(|job| job.late()).collect()
+    pub fn late_jobs(&mut self) -> Vec<&mut Job> {
+        self.jobs.iter_mut().filter(|job| job.late()).collect()
     }
 
     /// Retrieve the most recently finished job.

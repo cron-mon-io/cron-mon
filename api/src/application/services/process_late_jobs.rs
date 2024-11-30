@@ -16,11 +16,15 @@ impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo
 
     pub async fn process_late_jobs(&mut self) -> Result<(), Error> {
         info!("Beginning check for late Jobs...");
-        let monitors_with_late_jobs = self.repo.get_with_late_jobs().await?;
+        let mut monitors_with_late_jobs = self.repo.get_with_late_jobs().await?;
 
-        for mon in &monitors_with_late_jobs {
+        for mon in monitors_with_late_jobs.as_mut_slice() {
+            let monitor_name = mon.name.clone();
             for late_job in mon.late_jobs() {
-                self.notifier.notify_late_job(&mon.name, late_job)?;
+                if !late_job.late_alert_sent {
+                    self.notifier.notify_late_job(&monitor_name, late_job)?;
+                    late_job.late_alert_sent = true;
+                }
             }
         }
 
