@@ -20,6 +20,10 @@ pub struct Job {
     pub succeeded: Option<bool>,
     /// Any output from the Job, if it isn't currently in progress.
     pub output: Option<String>,
+    /// Whether or not a late alert has been sent for this Job.
+    pub late_alert_sent: bool,
+    /// Whether or not an error alert has been sent for this Job.
+    pub error_alert_sent: bool,
 }
 
 impl Job {
@@ -45,6 +49,8 @@ impl Job {
             end_time,
             succeeded,
             output,
+            late_alert_sent: false,
+            error_alert_sent: false,
         })
     }
 
@@ -156,6 +162,8 @@ mod tests {
         assert_eq!(job.end_time, None);
         assert_eq!(job.succeeded, None);
         assert_eq!(job.output, None);
+        assert!(!job.late_alert_sent);
+        assert!(!job.error_alert_sent);
 
         // New jobs should always be in progress.
         assert!(job.in_progress());
@@ -171,6 +179,8 @@ mod tests {
         assert!(job.end_time.is_some());
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, None);
+        assert!(!job.late_alert_sent);
+        assert!(!job.error_alert_sent);
 
         // Cannot finish a job again once it's been finished.
         let result2 = job.finish(false, Some("It won't wrong".to_owned()));

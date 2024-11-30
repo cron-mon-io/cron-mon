@@ -185,6 +185,8 @@ mod tests {
                 end_time: None,
                 succeeded: None,
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             })
             .collect();
 
@@ -203,6 +205,8 @@ mod tests {
                 end_time: None,
                 succeeded: None,
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
@@ -211,6 +215,8 @@ mod tests {
                 end_time: Some(gen_relative_datetime(0)),
                 succeeded: Some(true),
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
@@ -219,6 +225,8 @@ mod tests {
                 end_time: Some(gen_relative_datetime(-50)),
                 succeeded: Some(false),
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
         ];
 
@@ -240,6 +248,8 @@ mod tests {
                 end_time: None,
                 succeeded: None,
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
@@ -248,6 +258,8 @@ mod tests {
                 end_time: None,
                 succeeded: None,
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
@@ -256,6 +268,8 @@ mod tests {
                 end_time: None,
                 succeeded: None,
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
         ];
 
@@ -274,6 +288,8 @@ mod tests {
                 end_time: None,
                 succeeded: None,
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
@@ -282,6 +298,8 @@ mod tests {
                 end_time: None,
                 succeeded: None,
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
@@ -290,6 +308,8 @@ mod tests {
                 end_time: None,
                 succeeded: None,
                 output: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
         ];
 
