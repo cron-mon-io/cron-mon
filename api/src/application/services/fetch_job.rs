@@ -67,6 +67,8 @@ mod tests {
                         Some(gen_datetime("2024-04-22T22:49:00")),
                         Some(true),
                         None,
+                        false,
+                        false,
                     )
                     .unwrap()],
                 }))
@@ -91,6 +93,8 @@ mod tests {
                 Some(gen_datetime("2024-04-22T22:49:00")),
                 Some(true),
                 None,
+                false,
+                false,
             )
             .unwrap())
         );

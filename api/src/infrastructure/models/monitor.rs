@@ -55,6 +55,8 @@ impl From<&Monitor> for (MonitorData, Vec<JobData>) {
                     end_time: job.end_time,
                     succeeded: job.succeeded,
                     output: job.output.clone(),
+                    late_alert_sent: job.late_alert_sent,
+                    error_alert_sent: job.error_alert_sent,
                 })
                 .collect(),
         )
@@ -86,6 +88,8 @@ mod tests {
                 None,
                 None,
                 None,
+                false,
+                false,
             )
             .unwrap()],
         };
@@ -133,6 +137,8 @@ mod tests {
             end_time: None,
             succeeded: None,
             output: None,
+            late_alert_sent: true,
+            error_alert_sent: false,
         }];
 
         let monitor = monitor_data.to_model(&job_data).unwrap();
@@ -154,5 +160,7 @@ mod tests {
         assert_eq!(job.end_time, None);
         assert_eq!(job.succeeded, None);
         assert_eq!(job.output, None);
+        assert!(job.late_alert_sent);
+        assert!(!job.error_alert_sent);
     }
 }

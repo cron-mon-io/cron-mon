@@ -64,6 +64,8 @@ mod tests {
                         Some(gen_datetime("2024-05-01T00:49:00")),
                         Some(true),
                         Some("Orders generated successfully".to_owned()),
+                        false,
+                        false,
                     )
                     .unwrap(),
                     Job::new(
@@ -73,6 +75,8 @@ mod tests {
                         Some(gen_datetime("2024-05-01T00:39:00")),
                         Some(false),
                         Some("Failed to generate orders".to_owned()),
+                        false,
+                        false,
                     )
                     .unwrap(),
                 ],
@@ -90,6 +94,8 @@ mod tests {
                     None,
                     None,
                     None,
+                    false,
+                    false,
                 )
                 .unwrap()],
             },

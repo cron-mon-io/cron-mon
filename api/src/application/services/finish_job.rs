@@ -141,6 +141,8 @@ mod tests {
                         None,
                         None,
                         None,
+                        false,
+                        false,
                     )
                     .unwrap()],
                 }))
@@ -354,6 +356,8 @@ mod tests {
                         Some(gen_relative_datetime(-100)),
                         Some(true),
                         None,
+                        false,
+                        false,
                     )
                     .unwrap()],
                 }))

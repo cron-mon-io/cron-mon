@@ -159,6 +159,8 @@ async fn test_loading_invalid_job() {
             end_time: None, // Missing end_time
             succeeded: Some(true),
             output: Some("Database successfully backed up".to_string()),
+            late_alert_sent: false,
+            error_alert_sent: false,
         }],
         vec![],
     )

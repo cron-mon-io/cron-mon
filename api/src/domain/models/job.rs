@@ -35,6 +35,8 @@ impl Job {
         end_time: Option<NaiveDateTime>,
         succeeded: Option<bool>,
         output: Option<String>,
+        late_alert_sent: bool,
+        error_alert_sent: bool,
     ) -> Result<Self, Error> {
         // Job's must either have no end_time or succeeded, or both.
         if (end_time.is_some() || succeeded.is_some())
@@ -49,8 +51,8 @@ impl Job {
             end_time,
             succeeded,
             output,
-            late_alert_sent: false,
-            error_alert_sent: false,
+            late_alert_sent,
+            error_alert_sent,
         })
     }
 
@@ -65,6 +67,8 @@ impl Job {
             None,
             None,
             None,
+            false,
+            false,
         )
     }
 
@@ -204,6 +208,8 @@ mod tests {
             end_time,
             succeeded,
             None,
+            false,
+            false,
         )
         .expect("Failed to create job");
 
@@ -237,6 +243,8 @@ mod tests {
             result.0,
             result.1,
             None,
+            false,
+            false,
         )
         .expect("Failed to create job");
 
@@ -252,6 +260,8 @@ mod tests {
             Some(gen_datetime("2024-04-20T20:35:30")),
             None,
             None,
+            false,
+            false,
         );
 
         assert!(job.is_err());
@@ -270,6 +280,8 @@ mod tests {
             Some(gen_datetime("2024-04-20T20:40:30")),
             Some(true),
             None,
+            false,
+            false,
         )
         .unwrap();
 

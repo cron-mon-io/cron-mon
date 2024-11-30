@@ -20,6 +20,8 @@ pub struct JobData {
     pub succeeded: Option<bool>,
     pub output: Option<String>,
     pub monitor_id: Uuid,
+    pub late_alert_sent: bool,
+    pub error_alert_sent: bool,
 }
 
 impl From<&JobData> for Result<Job, Error> {
@@ -31,6 +33,8 @@ impl From<&JobData> for Result<Job, Error> {
             val.end_time,
             val.succeeded,
             val.output.clone(),
+            val.late_alert_sent,
+            val.error_alert_sent,
         )
     }
 }
@@ -53,6 +57,8 @@ mod tests {
             succeeded: Some(true),
             output: Some(String::from("Job completed successfully")),
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+            late_alert_sent: true,
+            error_alert_sent: false,
         };
 
         let job_result: Result<Job, Error> = (&job_data).into();
@@ -64,6 +70,8 @@ mod tests {
         assert_eq!(job.end_time, Some(gen_datetime("2024-04-22T22:50:00")));
         assert_eq!(job.succeeded, Some(true));
         assert_eq!(job.output, Some(String::from("Job completed successfully")));
+        assert!(job.late_alert_sent);
+        assert!(!job.error_alert_sent);
     }
 
     #[test]
@@ -76,6 +84,8 @@ mod tests {
             succeeded: Some(true),
             output: None,
             monitor_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+            late_alert_sent: true,
+            error_alert_sent: false,
         };
 
         let job_result: Result<Job, Error> = (&job_data).into();
