@@ -14,62 +14,40 @@ pub struct Job {
     pub start_time: NaiveDateTime,
     /// The maximum possible end time for the Job before it is considered late.
     pub max_end_time: NaiveDateTime,
-    /// The time that the job finished, if it isn't currently in progress.
-    pub end_time: Option<NaiveDateTime>,
-    /// Whether or not the Job finished successfully, if it isn't currently in progress.
-    pub succeeded: Option<bool>,
-    /// Any output from the Job, if it isn't currently in progress.
-    pub output: Option<String>,
+    /// The ending state of the job, if it isn't currently in progress.
+    pub end_state: Option<EndState>,
     /// Whether or not a late alert has been sent for this Job.
     pub late_alert_sent: bool,
     /// Whether or not an error alert has been sent for this Job.
     pub error_alert_sent: bool,
 }
 
-impl Job {
-    /// Construct a Job instance.
-    pub fn new(
-        job_id: Uuid,
-        start_time: NaiveDateTime,
-        max_end_time: NaiveDateTime,
-        end_time: Option<NaiveDateTime>,
-        succeeded: Option<bool>,
-        output: Option<String>,
-        late_alert_sent: bool,
-        error_alert_sent: bool,
-    ) -> Result<Self, Error> {
-        // Job's must either have no end_time or succeeded, or both.
-        if (end_time.is_some() || succeeded.is_some())
-            && (end_time.is_none() || succeeded.is_none())
-        {
-            return Err(Error::InvalidJob("Job is in an invalid state".to_owned()));
-        }
-        Ok(Job {
-            job_id,
-            start_time,
-            max_end_time,
-            end_time,
-            succeeded,
-            output,
-            late_alert_sent,
-            error_alert_sent,
-        })
-    }
+/// The EndState struct represents the state of a Job when it has finished.
+#[derive(Clone, Debug, PartialEq)]
+pub struct EndState {
+    /// The time that the Job finished.
+    pub end_time: NaiveDateTime,
+    /// Whether or not the Job finished successfully.
+    pub succeeded: bool,
+    /// Any output from the Job.
+    pub output: Option<String>,
+}
 
+impl Job {
     /// Start a Job.
     pub fn start(maximum_duration: u64) -> Result<Self, Error> {
         let now = Utc::now().naive_utc();
 
-        Job::new(
-            Uuid::new_v4(),
-            now,
-            now + Duration::seconds(maximum_duration as i64),
-            None,
-            None,
-            None,
-            false,
-            false,
-        )
+        // TODO: This doesn't need to retur a result anymore - we've made invalid jobs compile-time
+        // errors, yay for Rust!
+        Ok(Self {
+            job_id: Uuid::new_v4(),
+            start_time: now,
+            max_end_time: now + Duration::seconds(maximum_duration as i64),
+            end_state: None,
+            late_alert_sent: false,
+            error_alert_sent: false,
+        })
     }
 
     /// Finish the Job. Note that if the Job isn't currently in progress, this will return an
@@ -79,22 +57,24 @@ impl Job {
             return Err(Error::JobAlreadyFinished(self.job_id));
         }
 
-        self.succeeded = Some(succeeded);
-        self.output = output;
-        self.end_time = Some(Utc::now().naive_utc());
+        self.end_state = Some(EndState {
+            end_time: Utc::now().naive_utc(),
+            succeeded,
+            output,
+        });
 
         Ok(())
     }
 
     /// Ascertain whether or not the Job is currently in progress.
     pub fn in_progress(&self) -> bool {
-        self.end_time.is_none()
+        self.end_state.is_none()
     }
 
     /// Ascertain wher or not the Job is late.
     pub fn late(&self) -> bool {
-        let end_time = if let Some(end_time) = self.end_time {
-            end_time
+        let end_time = if let Some(end_state) = &self.end_state {
+            end_state.end_time
         } else {
             Utc::now().naive_utc()
         };
@@ -104,15 +84,11 @@ impl Job {
 
     /// Get the duration of the Job, if it has finished.
     pub fn duration(&self) -> Option<u64> {
-        if !self.in_progress() {
-            Some(
-                (self.end_time.unwrap() - self.start_time)
-                    .num_seconds()
-                    .unsigned_abs(),
-            )
-        } else {
-            None
-        }
+        self.end_state.as_ref().map(|end_state| {
+            (end_state.end_time - self.start_time)
+                .num_seconds()
+                .unsigned_abs()
+        })
     }
 }
 
@@ -132,12 +108,21 @@ impl Serialize for Job {
             late: bool,
         }
 
+        let (end_time, succeeded, output) = if let Some(end_state) = &self.end_state {
+            (
+                Some(end_state.end_time),
+                Some(end_state.succeeded),
+                end_state.output.clone(),
+            )
+        } else {
+            (None, None, None)
+        };
         SerializedJob {
             job_id: self.job_id,
             start_time: self.start_time,
-            end_time: self.end_time,
-            succeeded: self.succeeded,
-            output: self.output.clone(),
+            end_time,
+            succeeded,
+            output,
             duration: self.duration(),
             in_progress: self.in_progress(),
             late: self.late(),
@@ -156,16 +141,14 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_relative_datetime};
 
-    use super::{Error, Job, NaiveDateTime, Uuid};
+    use super::{EndState, Error, Job, NaiveDateTime, Uuid};
 
     #[test]
     fn starting_jobs() {
         let job = Job::start(300).expect("Failed to start job");
 
         assert_eq!(job.max_end_time - job.start_time, Duration::seconds(300));
-        assert_eq!(job.end_time, None);
-        assert_eq!(job.succeeded, None);
-        assert_eq!(job.output, None);
+        assert_eq!(job.end_state, None);
         assert!(!job.late_alert_sent);
         assert!(!job.error_alert_sent);
 
@@ -180,17 +163,21 @@ mod tests {
         let result1 = job.finish(true, None);
         assert!(result1.is_ok());
         assert!(!job.in_progress());
-        assert!(job.end_time.is_some());
-        assert_eq!(job.succeeded, Some(true));
-        assert_eq!(job.output, None);
+        assert!(job.end_state.is_some());
+        let end_state = job.end_state.as_ref().unwrap();
+        let original_end_time = end_state.end_time;
+        assert!(end_state.succeeded);
+        assert_eq!(end_state.output, None);
         assert!(!job.late_alert_sent);
         assert!(!job.error_alert_sent);
 
         // Cannot finish a job again once it's been finished.
         let result2 = job.finish(false, Some("It won't wrong".to_owned()));
         assert_eq!(result2.unwrap_err(), Error::JobAlreadyFinished(job.job_id));
-        assert_eq!(job.succeeded, Some(true));
-        assert_eq!(job.output, None);
+        let end_state = job.end_state.unwrap();
+        assert_eq!(end_state.end_time, original_end_time);
+        assert!(end_state.succeeded);
+        assert_eq!(end_state.output, None);
     }
 
     #[rstest]
@@ -201,17 +188,18 @@ mod tests {
         #[case] succeeded: Option<bool>,
         #[case] expected_duration: Option<u64>,
     ) {
-        let job = Job::new(
-            Uuid::new_v4(),
-            gen_datetime("2024-04-20T20:30:30"),
-            gen_datetime("2024-04-20T20:40:00"),
-            end_time,
-            succeeded,
-            None,
-            false,
-            false,
-        )
-        .expect("Failed to create job");
+        let job = Job {
+            job_id: Uuid::new_v4(),
+            start_time: gen_datetime("2024-04-20T20:30:30"),
+            max_end_time: gen_datetime("2024-04-20T20:40:00"),
+            end_state: end_time.map(|end_time| EndState {
+                end_time,
+                succeeded: succeeded.unwrap(),
+                output: None,
+            }),
+            late_alert_sent: false,
+            error_alert_sent: false,
+        };
 
         assert_eq!(job.duration(), expected_duration);
     }
@@ -236,54 +224,36 @@ mod tests {
         #[case] result: (Option<NaiveDateTime>, Option<bool>),
         #[case] expected_late: bool,
     ) {
-        let job = Job::new(
-            Uuid::new_v4(),
-            gen_datetime("2024-04-20T20:30:30"),
+        let job = Job {
+            job_id: Uuid::new_v4(),
+            start_time: gen_datetime("2024-04-20T20:30:30"),
             max_end_time,
-            result.0,
-            result.1,
-            None,
-            false,
-            false,
-        )
-        .expect("Failed to create job");
+            end_state: result.0.map(|end_time| EndState {
+                end_time,
+                succeeded: result.1.unwrap(),
+                output: None,
+            }),
+            late_alert_sent: false,
+            error_alert_sent: false,
+        };
 
         assert_eq!(job.late(), expected_late);
     }
 
     #[test]
-    fn validation() {
-        let job = Job::new(
-            Uuid::new_v4(),
-            gen_datetime("2024-04-20T20:30:30"),
-            gen_datetime("2024-04-20T20:40:30"),
-            Some(gen_datetime("2024-04-20T20:35:30")),
-            None,
-            None,
-            false,
-            false,
-        );
-
-        assert!(job.is_err());
-        assert_eq!(
-            job.unwrap_err(),
-            Error::InvalidJob("Job is in an invalid state".to_owned())
-        );
-    }
-
-    #[test]
     fn serialisation() {
-        let job = Job::new(
-            Uuid::from_str("4987dbd2-cbc6-4ea7-b9b4-0af4abb4c0d3").unwrap(),
-            gen_datetime("2024-04-20T20:30:30"),
-            gen_datetime("2024-04-20T20:45:30"),
-            Some(gen_datetime("2024-04-20T20:40:30")),
-            Some(true),
-            None,
-            false,
-            false,
-        )
-        .unwrap();
+        let job = Job {
+            job_id: Uuid::from_str("4987dbd2-cbc6-4ea7-b9b4-0af4abb4c0d3").unwrap(),
+            start_time: gen_datetime("2024-04-20T20:30:30"),
+            max_end_time: gen_datetime("2024-04-20T20:45:30"),
+            end_state: Some(EndState {
+                end_time: gen_datetime("2024-04-20T20:40:30"),
+                succeeded: true,
+                output: None,
+            }),
+            late_alert_sent: false,
+            error_alert_sent: false,
+        };
 
         let serialized = json!({"job": job});
         assert_eq!(

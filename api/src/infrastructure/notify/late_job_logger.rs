@@ -15,9 +15,9 @@ impl NotifyLateJob for LateJobNotifer {
             job_start = late_job.start_time.to_string(),
             job_max_end = late_job.max_end_time.to_string(),
             job_actual_end = late_job
-                .end_time
+                .end_state
                 .iter()
-                .map(|time| time.to_string())
+                .map(|state| state.end_time.to_string())
                 .collect::<String>(),
             "Job('{}') is late",
             late_job.job_id

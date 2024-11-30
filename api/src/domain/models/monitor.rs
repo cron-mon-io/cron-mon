@@ -60,7 +60,7 @@ impl Monitor {
 
     /// Retrieve the most recently finished job.
     pub fn last_finished_job(&self) -> Option<&Job> {
-        self.jobs.iter().find(|&job| job.succeeded.is_some())
+        self.jobs.iter().find(|&job| !job.in_progress())
     }
 
     /// Retrieve the most recently started job.
@@ -119,6 +119,8 @@ mod tests {
     use rstest::rstest;
 
     use test_utils::{gen_relative_datetime, gen_uuid};
+
+    use crate::domain::models::job::EndState;
 
     use super::{Error, Job, Monitor, Uuid};
 
@@ -182,9 +184,7 @@ mod tests {
                 job_id: i.0,
                 start_time: gen_relative_datetime(-200),
                 max_end_time: i.1,
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
                 late_alert_sent: false,
                 error_alert_sent: false,
             })
@@ -202,9 +202,7 @@ mod tests {
                 job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
                 start_time: gen_relative_datetime(0),
                 max_end_time: gen_relative_datetime(300),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
                 late_alert_sent: false,
                 error_alert_sent: false,
             },
@@ -212,9 +210,11 @@ mod tests {
                 job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
                 start_time: gen_relative_datetime(-200),
                 max_end_time: gen_relative_datetime(100),
-                end_time: Some(gen_relative_datetime(0)),
-                succeeded: Some(true),
-                output: None,
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(0),
+                    succeeded: true,
+                    output: None,
+                }),
                 late_alert_sent: false,
                 error_alert_sent: false,
             },
@@ -222,9 +222,11 @@ mod tests {
                 job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
                 start_time: gen_relative_datetime(-300),
                 max_end_time: gen_relative_datetime(0),
-                end_time: Some(gen_relative_datetime(-50)),
-                succeeded: Some(false),
-                output: None,
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(-50),
+                    succeeded: false,
+                    output: None,
+                }),
                 late_alert_sent: false,
                 error_alert_sent: false,
             },
@@ -245,9 +247,7 @@ mod tests {
                 job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
                 start_time: gen_relative_datetime(0),
                 max_end_time: gen_relative_datetime(300),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
                 late_alert_sent: false,
                 error_alert_sent: false,
             },
@@ -255,9 +255,7 @@ mod tests {
                 job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
                 start_time: gen_relative_datetime(-200),
                 max_end_time: gen_relative_datetime(100),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
                 late_alert_sent: false,
                 error_alert_sent: false,
             },
@@ -265,9 +263,7 @@ mod tests {
                 job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
                 start_time: gen_relative_datetime(-300),
                 max_end_time: gen_relative_datetime(0),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
                 late_alert_sent: false,
                 error_alert_sent: false,
             },
@@ -285,9 +281,7 @@ mod tests {
                 job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
                 start_time: gen_relative_datetime(0),
                 max_end_time: gen_relative_datetime(300),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
                 late_alert_sent: false,
                 error_alert_sent: false,
             },
@@ -295,9 +289,7 @@ mod tests {
                 job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
                 start_time: gen_relative_datetime(-200),
                 max_end_time: gen_relative_datetime(100),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
                 late_alert_sent: false,
                 error_alert_sent: false,
             },
@@ -305,9 +297,7 @@ mod tests {
                 job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
                 start_time: gen_relative_datetime(-300),
                 max_end_time: gen_relative_datetime(0),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
                 late_alert_sent: false,
                 error_alert_sent: false,
             },

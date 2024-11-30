@@ -111,6 +111,7 @@ mod tests {
     use test_utils::{gen_relative_datetime, gen_uuid};
 
     use crate::domain::models::api_key::ApiKey;
+    use crate::domain::models::job::EndState;
     use crate::infrastructure::repositories::mock_api_key_repo::MockApiKeyRepo;
     use crate::infrastructure::repositories::MockRepository;
 
@@ -134,17 +135,14 @@ mod tests {
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
-                    jobs: vec![Job::new(
-                        gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                        gen_relative_datetime(-320),
-                        gen_relative_datetime(80),
-                        None,
-                        None,
-                        None,
-                        false,
-                        false,
-                    )
-                    .unwrap()],
+                    jobs: vec![Job {
+                        job_id: gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                        start_time: gen_relative_datetime(-320),
+                        max_end_time: gen_relative_datetime(80),
+                        end_state: None,
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    }],
                 }))
             });
         mock_monitor_repo
@@ -349,17 +347,18 @@ mod tests {
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
-                    jobs: vec![Job::new(
-                        gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                        gen_relative_datetime(-500),
-                        gen_relative_datetime(-200),
-                        Some(gen_relative_datetime(-100)),
-                        Some(true),
-                        None,
-                        false,
-                        false,
-                    )
-                    .unwrap()],
+                    jobs: vec![Job {
+                        job_id: gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                        start_time: gen_relative_datetime(-320),
+                        max_end_time: gen_relative_datetime(80),
+                        end_state: Some(EndState {
+                            end_time: gen_relative_datetime(-100),
+                            succeeded: true,
+                            output: None,
+                        }),
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    }],
                 }))
             });
         mock_monitor_repo.expect_save().never();

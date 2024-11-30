@@ -36,7 +36,10 @@ mod tests {
     use test_utils::logging::TracingLog;
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use crate::domain::models::{job::Job, monitor::Monitor};
+    use crate::domain::models::{
+        job::{EndState, Job},
+        monitor::Monitor,
+    };
     use crate::infrastructure::notify::MockNotifyLateJob;
     use crate::infrastructure::repositories::monitor::MockGetWithLateJobs;
 
@@ -55,39 +58,34 @@ mod tests {
                     expected_duration: 300,
                     grace_duration: 100,
                     jobs: vec![
-                        Job::new(
-                            gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                            gen_relative_datetime(-500),
-                            gen_relative_datetime(-100),
-                            None,
-                            None,
-                            None,
-                            false,
-                            false,
-                        )
-                        .unwrap(),
-                        Job::new(
-                            gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
-                            gen_relative_datetime(-1000),
-                            gen_relative_datetime(-600),
-                            Some(gen_relative_datetime(-550)),
-                            Some(true),
-                            None,
-                            false,
-                            false,
-                        )
-                        .unwrap(),
-                        Job::new(
-                            gen_uuid("051c2f13-20ae-456c-922b-b5799689d4ff"),
-                            gen_relative_datetime(0),
-                            gen_relative_datetime(400),
-                            None,
-                            None,
-                            None,
-                            false,
-                            false,
-                        )
-                        .unwrap(),
+                        Job {
+                            job_id: gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                            start_time: gen_relative_datetime(-500),
+                            max_end_time: gen_relative_datetime(-100),
+                            end_state: None,
+                            late_alert_sent: false,
+                            error_alert_sent: false,
+                        },
+                        Job {
+                            job_id: gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
+                            start_time: gen_relative_datetime(-1000),
+                            max_end_time: gen_relative_datetime(-600),
+                            end_state: Some(EndState {
+                                end_time: gen_relative_datetime(-550),
+                                succeeded: true,
+                                output: None,
+                            }),
+                            late_alert_sent: false,
+                            error_alert_sent: false,
+                        },
+                        Job {
+                            job_id: gen_uuid("051c2f13-20ae-456c-922b-b5799689d4ff"),
+                            start_time: gen_relative_datetime(0),
+                            max_end_time: gen_relative_datetime(400),
+                            end_state: None,
+                            late_alert_sent: false,
+                            error_alert_sent: false,
+                        },
                     ],
                 },
                 Monitor {
@@ -96,17 +94,14 @@ mod tests {
                     name: "get-pending-orders | generate invoices".to_owned(),
                     expected_duration: 21_600,
                     grace_duration: 1_800,
-                    jobs: vec![Job::new(
-                        gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
-                        gen_relative_datetime(-30_000),
-                        gen_relative_datetime(-6_600),
-                        None,
-                        None,
-                        None,
-                        false,
-                        false,
-                    )
-                    .unwrap()],
+                    jobs: vec![Job {
+                        job_id: gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
+                        start_time: gen_relative_datetime(-30_000),
+                        max_end_time: gen_relative_datetime(-6_600),
+                        end_state: None,
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    }],
                 },
             ])
         });
