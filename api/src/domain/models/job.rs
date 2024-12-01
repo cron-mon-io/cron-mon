@@ -35,19 +35,17 @@ pub struct EndState {
 
 impl Job {
     /// Start a Job.
-    pub fn start(maximum_duration: u64) -> Result<Self, Error> {
+    pub fn start(maximum_duration: u64) -> Self {
         let now = Utc::now().naive_utc();
 
-        // TODO: This doesn't need to retur a result anymore - we've made invalid jobs compile-time
-        // errors, yay for Rust!
-        Ok(Self {
+        Self {
             job_id: Uuid::new_v4(),
             start_time: now,
             max_end_time: now + Duration::seconds(maximum_duration as i64),
             end_state: None,
             late_alert_sent: false,
             error_alert_sent: false,
-        })
+        }
     }
 
     /// Finish the Job. Note that if the Job isn't currently in progress, this will return an
@@ -145,7 +143,7 @@ mod tests {
 
     #[test]
     fn starting_jobs() {
-        let job = Job::start(300).expect("Failed to start job");
+        let job = Job::start(300);
 
         assert_eq!(job.max_end_time - job.start_time, Duration::seconds(300));
         assert_eq!(job.end_state, None);
@@ -158,7 +156,7 @@ mod tests {
 
     #[test]
     fn finishing_jobs() {
-        let mut job = Job::start(300).expect("Failed to start job");
+        let mut job = Job::start(300);
 
         let result1 = job.finish(true, None);
         assert!(result1.is_ok());

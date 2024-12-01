@@ -74,7 +74,7 @@ impl<MonitorRepo: Repository<Monitor>, ApiKeyRepo: Repository<ApiKey> + GetByKey
     }
 
     async fn start_job(&mut self, monitor: &mut Monitor) -> Result<Job, Error> {
-        let job = monitor.start_job()?;
+        let job = monitor.start_job();
         self.monitor_repo.save(monitor).await?;
         Ok(job)
     }
