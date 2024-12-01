@@ -103,7 +103,7 @@ async fn test_save(#[future] infrastructure: Infrastructure) {
     let mut repo = MonitorRepository::new(&infra.pool);
 
     let mut new_monitor = Monitor::new("foo".to_owned(), "new-monitor".to_owned(), 100, 5);
-    let _ = new_monitor.start_job().expect("Failed to start job");
+    let _ = new_monitor.start_job();
     repo.save(&new_monitor).await.unwrap();
     assert_eq!(repo.all("foo").await.unwrap().len(), 4);
 
@@ -159,6 +159,8 @@ async fn test_loading_invalid_job() {
             end_time: None, // Missing end_time
             succeeded: Some(true),
             output: Some("Database successfully backed up".to_string()),
+            late_alert_sent: false,
+            error_alert_sent: false,
         }],
         vec![],
     )

@@ -47,14 +47,26 @@ impl From<&Monitor> for (MonitorData, Vec<JobData>) {
             value
                 .jobs
                 .iter()
-                .map(|job| JobData {
-                    job_id: job.job_id,
-                    monitor_id: value.monitor_id,
-                    start_time: job.start_time,
-                    max_end_time: job.max_end_time,
-                    end_time: job.end_time,
-                    succeeded: job.succeeded,
-                    output: job.output.clone(),
+                .map(|job| {
+                    let (end_time, succeeded, output) = match &job.end_state {
+                        Some(end_state) => (
+                            Some(end_state.end_time),
+                            Some(end_state.succeeded),
+                            end_state.output.clone(),
+                        ),
+                        None => (None, None, None),
+                    };
+                    JobData {
+                        job_id: job.job_id,
+                        monitor_id: value.monitor_id,
+                        start_time: job.start_time,
+                        max_end_time: job.max_end_time,
+                        end_time,
+                        succeeded,
+                        output,
+                        late_alert_sent: job.late_alert_sent,
+                        error_alert_sent: job.error_alert_sent,
+                    }
                 })
                 .collect(),
         )
@@ -79,15 +91,14 @@ mod tests {
             name: "foo".to_owned(),
             expected_duration: 300,
             grace_duration: 100,
-            jobs: vec![Job::new(
-                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                gen_datetime("2024-04-22T22:43:00"),
-                gen_datetime("2024-04-22T22:53:00"),
-                None,
-                None,
-                None,
-            )
-            .unwrap()],
+            jobs: vec![Job {
+                job_id: gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                start_time: gen_datetime("2024-04-22T22:43:00"),
+                max_end_time: gen_datetime("2024-04-22T22:53:00"),
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
+            }],
         };
 
         let (monitor_data, job_data) = <(MonitorData, Vec<JobData>)>::from(&monitor);
@@ -133,6 +144,8 @@ mod tests {
             end_time: None,
             succeeded: None,
             output: None,
+            late_alert_sent: true,
+            error_alert_sent: false,
         }];
 
         let monitor = monitor_data.to_model(&job_data).unwrap();
@@ -151,8 +164,8 @@ mod tests {
         assert_eq!(job.job_id, gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"));
         assert_eq!(job.start_time, gen_datetime("2024-04-22T22:43:00"));
         assert_eq!(job.max_end_time, gen_datetime("2024-04-22T22:53:00"));
-        assert_eq!(job.end_time, None);
-        assert_eq!(job.succeeded, None);
-        assert_eq!(job.output, None);
+        assert_eq!(job.end_state, None);
+        assert!(job.late_alert_sent);
+        assert!(!job.error_alert_sent);
     }
 }

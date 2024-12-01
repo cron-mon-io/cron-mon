@@ -54,13 +54,13 @@ impl Monitor {
     /// Jobs are considered late once they have been running for more than
     /// `expected_duration + grace_duration`. Note that late Jobs can still finish, either
     /// successfully or in error.
-    pub fn late_jobs(&self) -> Vec<&Job> {
-        self.jobs.iter().filter(|job| job.late()).collect()
+    pub fn late_jobs(&mut self) -> Vec<&mut Job> {
+        self.jobs.iter_mut().filter(|job| job.late()).collect()
     }
 
     /// Retrieve the most recently finished job.
     pub fn last_finished_job(&self) -> Option<&Job> {
-        self.jobs.iter().find(|&job| job.succeeded.is_some())
+        self.jobs.iter().find(|&job| !job.in_progress())
     }
 
     /// Retrieve the most recently started job.
@@ -75,12 +75,12 @@ impl Monitor {
     }
 
     /// Start a new job
-    pub fn start_job(&mut self) -> Result<Job, Error> {
+    pub fn start_job(&mut self) -> Job {
         // We give the job the _current_ maximum duration here so that if the monitor is modified,
         // any previous and in progress jobs are not affected.
-        let new_job = Job::start(self.maximum_duration().num_seconds() as u64)?;
+        let new_job = Job::start(self.maximum_duration().num_seconds() as u64);
         self.jobs.push(new_job.clone());
-        Ok(new_job)
+        new_job
     }
 
     /// Finish a job. Note that this will return an `Error` is a Job with the given `job_id`
@@ -119,6 +119,8 @@ mod tests {
     use rstest::rstest;
 
     use test_utils::{gen_relative_datetime, gen_uuid};
+
+    use crate::domain::models::job::EndState;
 
     use super::{Error, Job, Monitor, Uuid};
 
@@ -182,9 +184,9 @@ mod tests {
                 job_id: i.0,
                 start_time: gen_relative_datetime(-200),
                 max_end_time: i.1,
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             })
             .collect();
 
@@ -200,25 +202,33 @@ mod tests {
                 job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
                 start_time: gen_relative_datetime(0),
                 max_end_time: gen_relative_datetime(300),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
                 start_time: gen_relative_datetime(-200),
                 max_end_time: gen_relative_datetime(100),
-                end_time: Some(gen_relative_datetime(0)),
-                succeeded: Some(true),
-                output: None,
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(0),
+                    succeeded: true,
+                    output: None,
+                }),
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
                 start_time: gen_relative_datetime(-300),
                 max_end_time: gen_relative_datetime(0),
-                end_time: Some(gen_relative_datetime(-50)),
-                succeeded: Some(false),
-                output: None,
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(-50),
+                    succeeded: false,
+                    output: None,
+                }),
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
         ];
 
@@ -237,25 +247,25 @@ mod tests {
                 job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
                 start_time: gen_relative_datetime(0),
                 max_end_time: gen_relative_datetime(300),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
                 start_time: gen_relative_datetime(-200),
                 max_end_time: gen_relative_datetime(100),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
                 start_time: gen_relative_datetime(-300),
                 max_end_time: gen_relative_datetime(0),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
         ];
 
@@ -271,25 +281,25 @@ mod tests {
                 job_id: gen_uuid("70e7f11b-7ae3-4e69-adb0-52fdbf775ee1"),
                 start_time: gen_relative_datetime(0),
                 max_end_time: gen_relative_datetime(300),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("139fbf11-eff1-44cf-9f58-b5febb4729d6"),
                 start_time: gen_relative_datetime(-200),
                 max_end_time: gen_relative_datetime(100),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
             Job {
                 job_id: gen_uuid("a4a8d5ac-86c1-448d-aa82-3388d59ac43e"),
                 start_time: gen_relative_datetime(-300),
                 max_end_time: gen_relative_datetime(0),
-                end_time: None,
-                succeeded: None,
-                output: None,
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
             },
         ];
 
@@ -325,9 +335,9 @@ mod tests {
 
         assert!(mon.jobs_in_progress().is_empty());
 
-        let job1 = mon.start_job().expect("Failed to start job");
-        let job2 = mon.start_job().expect("Failed to start job");
-        let job3 = mon.start_job().expect("Failed to start job");
+        let job1 = mon.start_job();
+        let job2 = mon.start_job();
+        let job3 = mon.start_job();
 
         assert_eq!(mon.jobs_in_progress().len(), 3);
 
@@ -341,7 +351,7 @@ mod tests {
     fn finishing_jobs() {
         let mut mon = Monitor::new("too-tenant".to_owned(), "new-monitor".to_owned(), 3600, 600);
 
-        let job1 = mon.start_job().expect("Failed to start job");
+        let job1 = mon.start_job();
 
         assert_eq!(mon.jobs_in_progress().len(), 1);
 

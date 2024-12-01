@@ -66,7 +66,11 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
                     // Get all late jobs.
                     let monitor_datas: Vec<MonitorData> = monitor::table
                         .inner_join(job::table)
-                        .filter(in_progress_condition.or(finished_condition))
+                        .filter(
+                            job::late_alert_sent
+                                .eq(false)
+                                .and(in_progress_condition.or(finished_condition)),
+                        )
                         .select(MonitorData::as_select())
                         .distinct_on(monitor::monitor_id)
                         .load(conn)

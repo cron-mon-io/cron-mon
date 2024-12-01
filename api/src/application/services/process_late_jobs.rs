@@ -1,27 +1,39 @@
 use tracing::info;
 
+use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
 use crate::infrastructure::notify::NotifyLateJob;
-use crate::infrastructure::repositories::monitor::GetWithLateJobs;
+use crate::infrastructure::repositories::{monitor::GetWithLateJobs, Repository};
 
-pub struct ProcessLateJobsService<Repo: GetWithLateJobs, Notifier: NotifyLateJob> {
+pub struct ProcessLateJobsService<
+    Repo: GetWithLateJobs + Repository<Monitor>,
+    Notifier: NotifyLateJob,
+> {
     repo: Repo,
     notifier: Notifier,
 }
 
-impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo, Notifier> {
+impl<Repo: GetWithLateJobs + Repository<Monitor>, Notifier: NotifyLateJob>
+    ProcessLateJobsService<Repo, Notifier>
+{
     pub fn new(repo: Repo, notifier: Notifier) -> Self {
         Self { repo, notifier }
     }
 
     pub async fn process_late_jobs(&mut self) -> Result<(), Error> {
         info!("Beginning check for late Jobs...");
-        let monitors_with_late_jobs = self.repo.get_with_late_jobs().await?;
+        let mut monitors_with_late_jobs = self.repo.get_with_late_jobs().await?;
 
-        for mon in &monitors_with_late_jobs {
+        for mon in monitors_with_late_jobs.as_mut_slice() {
+            let monitor_name = mon.name.clone();
             for late_job in mon.late_jobs() {
-                self.notifier.notify_late_job(&mon.name, late_job)?;
+                if !late_job.late_alert_sent {
+                    self.notifier.notify_late_job(&monitor_name, late_job)?;
+                    late_job.late_alert_sent = true;
+                }
             }
+
+            self.repo.save(mon).await?;
         }
 
         info!("Check for late Jobs complete");
@@ -31,21 +43,45 @@ impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo
 
 #[cfg(test)]
 mod tests {
+    use async_trait::async_trait;
+    use mockall::mock;
     use tracing_test::traced_test;
 
-    use test_utils::logging::TracingLog;
-    use test_utils::{gen_relative_datetime, gen_uuid};
+    use test_utils::{gen_relative_datetime, gen_uuid, logging::get_tracing_logs};
 
-    use crate::domain::models::{job::Job, monitor::Monitor};
+    use crate::domain::models::{
+        job::{EndState, Job},
+        monitor::Monitor,
+    };
+    use crate::errors::Error;
     use crate::infrastructure::notify::MockNotifyLateJob;
-    use crate::infrastructure::repositories::monitor::MockGetWithLateJobs;
+    use crate::infrastructure::repositories::{monitor::GetWithLateJobs, Repository};
 
     use super::ProcessLateJobsService;
+
+    mock! {
+        pub MonitorRepo {}
+
+        #[async_trait]
+        impl GetWithLateJobs for MonitorRepo {
+            async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error>;
+        }
+
+        #[async_trait]
+        impl Repository<Monitor> for MonitorRepo {
+            async fn get(
+                &mut self, monitor_id: uuid::Uuid, tenant: &str
+            ) -> Result<Option<Monitor>, Error>;
+            async fn all(&mut self, tenant: &str) -> Result<Vec<Monitor>, Error>;
+            async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error>;
+            async fn save(&mut self, monitor: &Monitor) -> Result<(), Error>;
+        }
+    }
 
     #[traced_test]
     #[tokio::test(start_paused = true)]
     async fn test_process_late_jobs_service() {
-        let mut mock_repo = MockGetWithLateJobs::new();
+        let mut mock_repo = MockMonitorRepo::new();
         mock_repo.expect_get_with_late_jobs().once().returning(|| {
             Ok(vec![
                 Monitor {
@@ -55,33 +91,34 @@ mod tests {
                     expected_duration: 300,
                     grace_duration: 100,
                     jobs: vec![
-                        Job::new(
-                            gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                            gen_relative_datetime(-500),
-                            gen_relative_datetime(-100),
-                            None,
-                            None,
-                            None,
-                        )
-                        .unwrap(),
-                        Job::new(
-                            gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
-                            gen_relative_datetime(-1000),
-                            gen_relative_datetime(-600),
-                            Some(gen_relative_datetime(-550)),
-                            Some(true),
-                            None,
-                        )
-                        .unwrap(),
-                        Job::new(
-                            gen_uuid("051c2f13-20ae-456c-922b-b5799689d4ff"),
-                            gen_relative_datetime(0),
-                            gen_relative_datetime(400),
-                            None,
-                            None,
-                            None,
-                        )
-                        .unwrap(),
+                        Job {
+                            job_id: gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                            start_time: gen_relative_datetime(-500),
+                            max_end_time: gen_relative_datetime(-100),
+                            end_state: None,
+                            late_alert_sent: false,
+                            error_alert_sent: false,
+                        },
+                        Job {
+                            job_id: gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
+                            start_time: gen_relative_datetime(-1000),
+                            max_end_time: gen_relative_datetime(-600),
+                            end_state: Some(EndState {
+                                end_time: gen_relative_datetime(-550),
+                                succeeded: true,
+                                output: None,
+                            }),
+                            late_alert_sent: false,
+                            error_alert_sent: false,
+                        },
+                        Job {
+                            job_id: gen_uuid("051c2f13-20ae-456c-922b-b5799689d4ff"),
+                            start_time: gen_relative_datetime(0),
+                            max_end_time: gen_relative_datetime(400),
+                            end_state: None,
+                            late_alert_sent: false,
+                            error_alert_sent: false,
+                        },
                     ],
                 },
                 Monitor {
@@ -90,18 +127,18 @@ mod tests {
                     name: "get-pending-orders | generate invoices".to_owned(),
                     expected_duration: 21_600,
                     grace_duration: 1_800,
-                    jobs: vec![Job::new(
-                        gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
-                        gen_relative_datetime(-30_000),
-                        gen_relative_datetime(-6_600),
-                        None,
-                        None,
-                        None,
-                    )
-                    .unwrap()],
+                    jobs: vec![Job {
+                        job_id: gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
+                        start_time: gen_relative_datetime(-30_000),
+                        max_end_time: gen_relative_datetime(-6_600),
+                        end_state: None,
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    }],
                 },
             ])
         });
+        mock_repo.expect_save().times(2).returning(|_| Ok(()));
 
         let mut mock_notifier = MockNotifyLateJob::new();
         mock_notifier
@@ -135,7 +172,7 @@ mod tests {
         assert!(result.is_ok());
 
         logs_assert(|logs| {
-            let logs = TracingLog::from_logs(logs);
+            let logs = get_tracing_logs(logs);
             assert_eq!(logs.len(), 2);
             assert_eq!(logs[0].level, tracing::Level::INFO);
             assert_eq!(logs[0].body, "Beginning check for late Jobs...");

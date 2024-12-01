@@ -34,7 +34,7 @@ mod tests {
 
     use rstest::*;
 
-    use crate::domain::models::job::Job;
+    use crate::domain::models::job::{EndState, Job};
     use test_utils::{gen_datetime, gen_uuid};
 
     use super::{order_monitors_by_last_started_job, Monitor};
@@ -57,24 +57,30 @@ mod tests {
                 expected_duration: 3600,
                 grace_duration: 1200,
                 jobs: vec![
-                    Job::new(
-                        gen_uuid("8106bab7-d643-4ede-bd92-60c79f787344"),
-                        gen_datetime("2024-05-01T00:30:00"),
-                        gen_datetime("2024-05-01T01:10:00"),
-                        Some(gen_datetime("2024-05-01T00:49:00")),
-                        Some(true),
-                        Some("Orders generated successfully".to_owned()),
-                    )
-                    .unwrap(),
-                    Job::new(
-                        gen_uuid("c1893113-66d7-4707-9a51-c8be46287b2c"),
-                        gen_datetime("2024-05-01T00:00:00"),
-                        gen_datetime("2024-05-01T00:40:00"),
-                        Some(gen_datetime("2024-05-01T00:39:00")),
-                        Some(false),
-                        Some("Failed to generate orders".to_owned()),
-                    )
-                    .unwrap(),
+                    Job {
+                        job_id: gen_uuid("8106bab7-d643-4ede-bd92-60c79f787344"),
+                        start_time: gen_datetime("2024-05-01T00:30:00"),
+                        max_end_time: gen_datetime("2024-05-01T01:10:00"),
+                        end_state: Some(EndState {
+                            end_time: gen_datetime("2024-05-01T00:49:00"),
+                            succeeded: true,
+                            output: Some("Orders generated successfully".to_owned()),
+                        }),
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    },
+                    Job {
+                        job_id: gen_uuid("c1893113-66d7-4707-9a51-c8be46287b2c"),
+                        start_time: gen_datetime("2024-05-01T00:00:00"),
+                        max_end_time: gen_datetime("2024-05-01T00:40:00"),
+                        end_state: Some(EndState {
+                            end_time: gen_datetime("2024-05-01T00:39:00"),
+                            succeeded: false,
+                            output: Some("Failed to generate orders".to_owned()),
+                        }),
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    },
                 ],
             },
             Monitor {
@@ -83,15 +89,14 @@ mod tests {
                 name: "send-emails.sh".to_owned(),
                 expected_duration: 7200,
                 grace_duration: 1800,
-                jobs: vec![Job::new(
-                    gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5"),
-                    gen_datetime("2024-05-01T00:20:00"),
-                    gen_datetime("2024-05-01T01:00:00"),
-                    None,
-                    None,
-                    None,
-                )
-                .unwrap()],
+                jobs: vec![Job {
+                    job_id: gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5"),
+                    start_time: gen_datetime("2024-05-01T00:20:00"),
+                    max_end_time: gen_datetime("2024-05-01T01:00:00"),
+                    end_state: None,
+                    late_alert_sent: false,
+                    error_alert_sent: false,
+                }],
             },
         ]
     }

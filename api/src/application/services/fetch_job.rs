@@ -42,6 +42,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_uuid};
 
+    use crate::domain::models::job::EndState;
     use crate::infrastructure::repositories::MockRepository;
 
     use super::{Error, FetchJobService, Job, Monitor};
@@ -60,15 +61,18 @@ mod tests {
                     name: "foo".to_owned(),
                     expected_duration: 300,
                     grace_duration: 100,
-                    jobs: vec![Job::new(
-                        gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                        gen_datetime("2024-04-22T22:43:00"),
-                        gen_datetime("2024-04-22T22:53:00"),
-                        Some(gen_datetime("2024-04-22T22:49:00")),
-                        Some(true),
-                        None,
-                    )
-                    .unwrap()],
+                    jobs: vec![Job {
+                        job_id: gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                        start_time: gen_datetime("2024-04-22T22:43:00"),
+                        max_end_time: gen_datetime("2024-04-22T22:53:00"),
+                        end_state: Some(EndState {
+                            end_time: gen_datetime("2024-04-22T22:49:00"),
+                            succeeded: true,
+                            output: None,
+                        }),
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    }],
                 }))
             });
 
@@ -84,15 +88,18 @@ mod tests {
 
         assert_eq!(
             job_result,
-            Ok(Job::new(
-                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
-                gen_datetime("2024-04-22T22:43:00"),
-                gen_datetime("2024-04-22T22:53:00"),
-                Some(gen_datetime("2024-04-22T22:49:00")),
-                Some(true),
-                None,
-            )
-            .unwrap())
+            Ok(Job {
+                job_id: gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                start_time: gen_datetime("2024-04-22T22:43:00"),
+                max_end_time: gen_datetime("2024-04-22T22:53:00"),
+                end_state: Some(EndState {
+                    end_time: gen_datetime("2024-04-22T22:49:00"),
+                    succeeded: true,
+                    output: None,
+                }),
+                late_alert_sent: false,
+                error_alert_sent: false,
+            })
         );
     }
 

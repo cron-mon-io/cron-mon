@@ -26,6 +26,8 @@ diesel::table! {
         output -> Nullable<Text>,
         succeeded -> Nullable<Bool>,
         max_end_time -> Timestamp,
+        late_alert_sent -> Bool,
+        error_alert_sent -> Bool,
     }
 }
 

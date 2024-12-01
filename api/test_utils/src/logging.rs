@@ -113,6 +113,28 @@ pub fn assert_all_log_bodies_eq(logs: Vec<TracingLog>, expected_log_bodies: Vec<
     assert_eq!(actual_bodies, expected_log_bodies);
 }
 
+pub fn get_tracing_logs(logs: &[&str]) -> Vec<TracingLog> {
+    TracingLog::from_logs(logs)
+        .into_iter()
+        // We need to do this for integration tests since the logs are not filtered so we end up
+        // gathering logs from other modules as well.
+        .filter(|log| log.module.starts_with("cron_mon_api"))
+        .collect::<Vec<TracingLog>>()
+}
+
+pub fn get_log_messages(logs: &[TracingLog], length: usize) -> Vec<&str> {
+    logs.iter()
+        .map(|log| {
+            let len = if log.body.len() < length {
+                log.body.len()
+            } else {
+                length
+            };
+            &log.body[..len]
+        })
+        .collect::<Vec<&str>>()
+}
+
 #[cfg(test)]
 mod tests {
     use super::{assert_all_log_bodies_eq, TracingLog};

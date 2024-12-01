@@ -46,15 +46,19 @@ pub fn job_seeds() -> Vec<JobData> {
             end_time: Some(gen_datetime("2024-05-01T00:49:00.000")),
             succeeded: Some(true),
             output: Some("Database successfully backed up".to_string()),
+            late_alert_sent: false,
+            error_alert_sent: false,
         },
         JobData {
             job_id: gen_uuid("c1893113-66d7-4707-9a51-c8be46287b2c"),
             monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
             start_time: gen_datetime("2024-05-01T00:00:00.000"),
             max_end_time: gen_datetime("2024-05-01T00:40:00.000"),
-            end_time: Some(gen_datetime("2024-05-01T00:39:00.000")),
+            end_time: Some(gen_datetime("2024-05-01T01:39:00.000")),
             succeeded: Some(false),
             output: Some("Could not connect to database".to_string()),
+            late_alert_sent: false,
+            error_alert_sent: false,
         },
         JobData {
             job_id: gen_uuid("9d4e2d69-af63-4c1e-8639-60cb2683aee5"),
@@ -64,6 +68,8 @@ pub fn job_seeds() -> Vec<JobData> {
             end_time: None,
             succeeded: None,
             output: None,
+            late_alert_sent: true,
+            error_alert_sent: false,
         },
         JobData {
             job_id: gen_uuid("2a09c819-ed8c-4e3a-b085-889f3f475c02"),
@@ -73,6 +79,8 @@ pub fn job_seeds() -> Vec<JobData> {
             end_time: None,
             succeeded: None,
             output: None,
+            late_alert_sent: false,
+            error_alert_sent: false,
         },
         JobData {
             job_id: gen_uuid("db610603-5094-49a4-8838-204103cd5b78"),
@@ -82,6 +90,8 @@ pub fn job_seeds() -> Vec<JobData> {
             end_time: None,
             succeeded: None,
             output: None,
+            late_alert_sent: false,
+            error_alert_sent: false,
         },
     ]
 }
