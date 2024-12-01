@@ -30,7 +30,7 @@ uuid = { version = "1.11.0", features = ["v4", "serde", "fast-rng", "macro-diagn
 rstest = "0.22.0"
 pretty_assertions = "1.4.1"
 test-utils = { path = "test_utils" }
-tracing-test = "0.2.5"
+tracing-test = { version = "0.2.5", features = ["no-env-filter"] }
 wiremock = "0.6.2"
 mockall = "0.13.1"
 testcontainers = "0.23.1"

@@ -37,8 +37,7 @@ impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo
 mod tests {
     use tracing_test::traced_test;
 
-    use test_utils::logging::TracingLog;
-    use test_utils::{gen_relative_datetime, gen_uuid};
+    use test_utils::{gen_relative_datetime, gen_uuid, logging::get_tracing_logs};
 
     use crate::domain::models::{
         job::{EndState, Job},
@@ -142,7 +141,7 @@ mod tests {
         assert!(result.is_ok());
 
         logs_assert(|logs| {
-            let logs = TracingLog::from_logs(logs);
+            let logs = get_tracing_logs(logs);
             assert_eq!(logs.len(), 2);
             assert_eq!(logs[0].level, tracing::Level::INFO);
             assert_eq!(logs[0].body, "Beginning check for late Jobs...");

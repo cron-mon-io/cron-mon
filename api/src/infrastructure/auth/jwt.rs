@@ -137,7 +137,7 @@ mod tests {
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    use test_utils::logging::TracingLog;
+    use test_utils::logging::get_tracing_logs;
 
     use crate::errors::Error;
     use crate::infrastructure::auth::{Jwt, JwtAuth};
@@ -185,7 +185,7 @@ mod tests {
         assert_eq!(received_requests.len(), 1);
         assert_eq!(received_requests[0].url.path(), "/certs");
         logs_assert(|logs| {
-            let logs = TracingLog::from_logs(logs);
+            let logs = get_tracing_logs(logs);
             assert_eq!(logs.len(), 1);
             assert_eq!(
                 logs[0].body,
