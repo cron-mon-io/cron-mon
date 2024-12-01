@@ -122,6 +122,19 @@ pub fn get_tracing_logs(logs: &[&str]) -> Vec<TracingLog> {
         .collect::<Vec<TracingLog>>()
 }
 
+pub fn get_log_messages(logs: &[TracingLog], length: usize) -> Vec<&str> {
+    logs.iter()
+        .map(|log| {
+            let len = if log.body.len() < length {
+                log.body.len()
+            } else {
+                length
+            };
+            &log.body[..len]
+        })
+        .collect::<Vec<&str>>()
+}
+
 #[cfg(test)]
 mod tests {
     use super::{assert_all_log_bodies_eq, TracingLog};
