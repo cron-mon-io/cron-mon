@@ -1,15 +1,21 @@
 use tracing::info;
 
+use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
 use crate::infrastructure::notify::NotifyLateJob;
-use crate::infrastructure::repositories::monitor::GetWithLateJobs;
+use crate::infrastructure::repositories::{monitor::GetWithLateJobs, Repository};
 
-pub struct ProcessLateJobsService<Repo: GetWithLateJobs, Notifier: NotifyLateJob> {
+pub struct ProcessLateJobsService<
+    Repo: GetWithLateJobs + Repository<Monitor>,
+    Notifier: NotifyLateJob,
+> {
     repo: Repo,
     notifier: Notifier,
 }
 
-impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo, Notifier> {
+impl<Repo: GetWithLateJobs + Repository<Monitor>, Notifier: NotifyLateJob>
+    ProcessLateJobsService<Repo, Notifier>
+{
     pub fn new(repo: Repo, notifier: Notifier) -> Self {
         Self { repo, notifier }
     }
@@ -26,6 +32,8 @@ impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo
                     late_job.late_alert_sent = true;
                 }
             }
+
+            self.repo.save(mon).await?;
         }
 
         info!("Check for late Jobs complete");
@@ -35,6 +43,8 @@ impl<Repo: GetWithLateJobs, Notifier: NotifyLateJob> ProcessLateJobsService<Repo
 
 #[cfg(test)]
 mod tests {
+    use async_trait::async_trait;
+    use mockall::mock;
     use tracing_test::traced_test;
 
     use test_utils::{gen_relative_datetime, gen_uuid, logging::get_tracing_logs};
@@ -43,15 +53,35 @@ mod tests {
         job::{EndState, Job},
         monitor::Monitor,
     };
+    use crate::errors::Error;
     use crate::infrastructure::notify::MockNotifyLateJob;
-    use crate::infrastructure::repositories::monitor::MockGetWithLateJobs;
+    use crate::infrastructure::repositories::{monitor::GetWithLateJobs, Repository};
 
     use super::ProcessLateJobsService;
+
+    mock! {
+        pub MonitorRepo {}
+
+        #[async_trait]
+        impl GetWithLateJobs for MonitorRepo {
+            async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error>;
+        }
+
+        #[async_trait]
+        impl Repository<Monitor> for MonitorRepo {
+            async fn get(
+                &mut self, monitor_id: uuid::Uuid, tenant: &str
+            ) -> Result<Option<Monitor>, Error>;
+            async fn all(&mut self, tenant: &str) -> Result<Vec<Monitor>, Error>;
+            async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error>;
+            async fn save(&mut self, monitor: &Monitor) -> Result<(), Error>;
+        }
+    }
 
     #[traced_test]
     #[tokio::test(start_paused = true)]
     async fn test_process_late_jobs_service() {
-        let mut mock_repo = MockGetWithLateJobs::new();
+        let mut mock_repo = MockMonitorRepo::new();
         mock_repo.expect_get_with_late_jobs().once().returning(|| {
             Ok(vec![
                 Monitor {
@@ -108,6 +138,7 @@ mod tests {
                 },
             ])
         });
+        mock_repo.expect_save().times(2).returning(|_| Ok(()));
 
         let mut mock_notifier = MockNotifyLateJob::new();
         mock_notifier
