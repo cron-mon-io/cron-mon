@@ -54,7 +54,7 @@ pub fn job_seeds() -> Vec<JobData> {
             monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
             start_time: gen_datetime("2024-05-01T00:00:00.000"),
             max_end_time: gen_datetime("2024-05-01T00:40:00.000"),
-            end_time: Some(gen_datetime("2024-05-01T00:39:00.000")),
+            end_time: Some(gen_datetime("2024-05-01T01:39:00.000")),
             succeeded: Some(false),
             output: Some("Could not connect to database".to_string()),
             late_alert_sent: false,
