@@ -20,6 +20,9 @@ impl<'r> Responder<'r, 'static> for Error {
             // default to server-side errors.
             Error::InvalidMonitor(_) => (Status::InternalServerError, "Invalid Monitor"),
             Error::InvalidJob(_) => (Status::InternalServerError, "Invalid Job"),
+            Error::InvalidAlertConfig(_) => {
+                (Status::InternalServerError, "Invalid Alert Configuration")
+            }
             Error::Unauthorized(_) => (Status::Unauthorized, "Unauthorized"),
             Error::AuthenticationError(_) => (Status::InternalServerError, "Authentication Error"),
         };
@@ -91,6 +94,13 @@ mod tests {
         Err(Error::InvalidJob("invalid job".to_string()))
     }
 
+    #[rocket::get("/invalid_alert_config")]
+    fn invalid_alert_config() -> Result<(), Error> {
+        Err(Error::InvalidAlertConfig(
+            "invalid alert config".to_string(),
+        ))
+    }
+
     #[rocket::get("/unauthorized")]
     fn unauthorized() -> Result<(), Error> {
         Err(Error::Unauthorized("insufficient permissions".to_string()))
@@ -115,6 +125,7 @@ mod tests {
                 job_already_finished,
                 invalid_monitor,
                 invalid_job,
+                invalid_alert_config,
                 unauthorized,
                 auth_error
             ],
@@ -248,6 +259,24 @@ mod tests {
                     "code": 500,
                     "reason": "Invalid Job",
                     "description": "Invalid Job: invalid job"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_invalid_alert_config(test_client: Client) {
+        let response = test_client.get("/invalid_alert_config").dispatch();
+
+        assert_eq!(response.status(), Status::InternalServerError);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 500,
+                    "reason": "Invalid Alert Configuration",
+                    "description": "Invalid Alert Configuration: invalid alert config"
                 }
             })
         );
