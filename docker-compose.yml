@@ -96,12 +96,19 @@ services:
       PGUSER: cron-mon-api
       PGPASSWORD: itsasecret
       PGDATABASE: cron-mon
+    env_file:
+      - .env
     volumes:
       - ./api/src/infrastructure/seeding/seeds.sql:/usr/share/seeds.sql
     depends_on:
       db:
         condition: service_healthy
-    command: psql -f /usr/share/seeds.sql
+    command: [
+      'psql',
+      '--set=slack_channel="$SLACK_CHANNEL"',
+      '--set=slack_token="$SLACK_TOKEN"',
+      '-f /usr/share/seeds.sql'
+    ]
 
   rust-release:
     image: cron-mon/rust-release-image
