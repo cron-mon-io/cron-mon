@@ -3,14 +3,13 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
-use diesel_async::pooled_connection::deadpool::Object;
 use diesel_async::AsyncConnection;
-use diesel_async::{AsyncPgConnection, RunQueryDsl};
+use diesel_async::RunQueryDsl;
 use uuid::Uuid;
 
 use crate::domain::models::api_key::ApiKey;
 use crate::errors::Error;
-use crate::infrastructure::database::DbPool;
+use crate::infrastructure::database::{get_connection, DbPool};
 use crate::infrastructure::db_schema::api_key;
 use crate::infrastructure::models::api_key::ApiKeyData;
 use crate::infrastructure::repositories::api_keys::GetByKey;
@@ -29,13 +28,6 @@ impl<'a> ApiKeyRepository<'a> {
         }
     }
 
-    async fn get_connection(&mut self) -> Result<Object<AsyncPgConnection>, Error> {
-        self.pool
-            .get()
-            .await
-            .map_err(|e| Error::RepositoryError(e.to_string()))
-    }
-
     fn db_to_key(&mut self, key: &ApiKeyData) -> ApiKey {
         let api_key = ApiKey::from(key);
         self.data.insert(key.api_key_id, key.clone());
@@ -46,7 +38,7 @@ impl<'a> ApiKeyRepository<'a> {
 #[async_trait]
 impl<'a> GetByKey for ApiKeyRepository<'a> {
     async fn get_by_key(&mut self, key: &str) -> Result<Option<ApiKey>, Error> {
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         connection
             .transaction::<Option<ApiKey>, DieselError, _>(|conn| {
                 Box::pin(async move {
@@ -68,7 +60,7 @@ impl<'a> GetByKey for ApiKeyRepository<'a> {
 #[async_trait]
 impl<'a> Repository<ApiKey> for ApiKeyRepository<'a> {
     async fn get(&mut self, api_key_id: Uuid, tenant: &str) -> Result<Option<ApiKey>, Error> {
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         connection
             .transaction::<Option<ApiKey>, DieselError, _>(|conn| {
                 Box::pin(async move {
@@ -91,7 +83,7 @@ impl<'a> Repository<ApiKey> for ApiKeyRepository<'a> {
     }
 
     async fn all(&mut self, tenant: &str) -> Result<Vec<ApiKey>, Error> {
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         connection
             .transaction::<Vec<ApiKey>, DieselError, _>(|conn| {
                 Box::pin(async move {
@@ -109,7 +101,7 @@ impl<'a> Repository<ApiKey> for ApiKeyRepository<'a> {
     }
 
     async fn save(&mut self, key: &ApiKey) -> Result<(), Error> {
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         connection
             .transaction::<(), DieselError, _>(|conn| {
                 Box::pin(async move {
@@ -137,7 +129,7 @@ impl<'a> Repository<ApiKey> for ApiKeyRepository<'a> {
 
     async fn delete(&mut self, key: &ApiKey) -> Result<(), Error> {
         let api_key_data = ApiKeyData::from(key);
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         diesel::delete(&api_key_data)
             .execute(&mut connection)
             .await

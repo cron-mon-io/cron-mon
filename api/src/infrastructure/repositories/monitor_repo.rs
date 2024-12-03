@@ -4,14 +4,13 @@ use async_trait::async_trait;
 use diesel::dsl::now;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
-use diesel_async::pooled_connection::deadpool::Object;
 use diesel_async::AsyncConnection;
-use diesel_async::{AsyncPgConnection, RunQueryDsl};
+use diesel_async::RunQueryDsl;
 use uuid::Uuid;
 
 use crate::domain::models::monitor::Monitor;
 use crate::errors::Error;
-use crate::infrastructure::database::DbPool;
+use crate::infrastructure::database::{get_connection, DbPool};
 use crate::infrastructure::db_schema::job;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
@@ -32,13 +31,6 @@ impl<'a> MonitorRepository<'a> {
         }
     }
 
-    async fn get_connection(&mut self) -> Result<Object<AsyncPgConnection>, Error> {
-        self.pool
-            .get()
-            .await
-            .map_err(|e| Error::RepositoryError(e.to_string()))
-    }
-
     fn db_to_monitor(
         &mut self,
         monitor_data: MonitorData,
@@ -53,7 +45,7 @@ impl<'a> MonitorRepository<'a> {
 #[async_trait]
 impl<'a> GetWithLateJobs for MonitorRepository<'a> {
     async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         let (monitor_datas, job_datas) = connection
             .transaction::<(Vec<MonitorData>, Vec<JobData>), DieselError, _>(|conn| {
                 Box::pin(async move {
@@ -100,7 +92,7 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
 #[async_trait]
 impl<'a> Repository<Monitor> for MonitorRepository<'a> {
     async fn get(&mut self, monitor_id: Uuid, tenant: &str) -> Result<Option<Monitor>, Error> {
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         let result = connection
             .transaction::<Option<(MonitorData, Vec<JobData>)>, DieselError, _>(|conn| {
                 Box::pin(async move {
@@ -137,7 +129,7 @@ impl<'a> Repository<Monitor> for MonitorRepository<'a> {
     }
 
     async fn all(&mut self, tenant: &str) -> Result<Vec<Monitor>, Error> {
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         let (monitor_datas, job_datas) = connection
             .transaction::<(Vec<MonitorData>, Vec<JobData>), DieselError, _>(|conn| {
                 Box::pin(async move {
@@ -170,7 +162,7 @@ impl<'a> Repository<Monitor> for MonitorRepository<'a> {
     async fn save(&mut self, monitor: &Monitor) -> Result<(), Error> {
         let (monitor_data, job_datas) = <(MonitorData, Vec<JobData>)>::from(monitor);
 
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         connection
             .transaction::<(), DieselError, _>(|conn| {
                 Box::pin(async {
@@ -217,7 +209,7 @@ impl<'a> Repository<Monitor> for MonitorRepository<'a> {
     async fn delete(&mut self, monitor: &Monitor) -> Result<(), Error> {
         let (monitor_data, _) = <(MonitorData, Vec<JobData>)>::from(monitor);
 
-        let mut connection = self.get_connection().await?;
+        let mut connection = get_connection(self.pool).await?;
         diesel::delete(&monitor_data)
             .execute(&mut connection)
             .await
