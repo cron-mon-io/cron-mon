@@ -17,6 +17,7 @@ pub struct AlertConfig {
     /// Whether to send alerts for errored jobs.
     pub on_error: bool,
     /// The type of alert.
+    #[serde(rename = "type")]
     pub type_: AlertType,
 }
 
@@ -24,6 +25,7 @@ pub struct AlertConfig {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub enum AlertType {
     /// An alert that sends a Slack message.
+    #[serde(rename = "slack")]
     Slack(SlackAlertConfig),
 }
 
@@ -61,6 +63,8 @@ impl AlertConfig {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use super::*;
 
     #[test]
@@ -87,6 +91,38 @@ mod tests {
             AlertType::Slack(SlackAlertConfig {
                 channel: "test-channel".to_string(),
                 token: "test-token".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn test_serialisation() {
+        let alert_config = AlertConfig::new_slack_config(
+            "test-name".to_string(),
+            "test-tenant".to_string(),
+            true,
+            true,
+            true,
+            "test-channel".to_string(),
+            "test-token".to_string(),
+        );
+
+        let value = serde_json::to_value(&alert_config).unwrap();
+        assert_eq!(
+            value,
+            json!({
+                "alert_config_id": alert_config.alert_config_id.to_string(),
+                "name": "test-name",
+                "tenant": "test-tenant",
+                "active": true,
+                "on_late": true,
+                "on_error": true,
+                "type": {
+                    "slack": {
+                        "channel": "test-channel",
+                        "token": "test-token"
+                    }
+                }
             })
         );
     }
