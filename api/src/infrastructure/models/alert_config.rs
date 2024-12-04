@@ -95,6 +95,11 @@ mod tests {
         None,
         Some("test-token".to_owned()),
     )]
+    #[case::missing_token(
+        Some("test-channel".to_owned()),
+        None,
+    )]
+    #[case::missing_channel_and_token(None, None)]
     fn test_converting_invalid_db_data_to_model(
         #[case] channel: Option<String>,
         #[case] token: Option<String>,
