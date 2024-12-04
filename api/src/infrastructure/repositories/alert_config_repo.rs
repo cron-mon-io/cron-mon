@@ -121,7 +121,7 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
         connection
             .transaction::<(), DieselError, _>(|conn| {
                 Box::pin(async {
-                    if self.data.get(&alert_config.alert_config_id).is_some() {
+                    if self.data.contains_key(&alert_config.alert_config_id) {
                         diesel::update(&alert_config_data)
                             .set(&alert_config_data)
                             .execute(conn)
