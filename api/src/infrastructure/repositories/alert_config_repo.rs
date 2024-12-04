@@ -11,7 +11,7 @@ use crate::domain::models::alert_config::AlertConfig;
 use crate::errors::Error;
 use crate::infrastructure::database::{get_connection, DbPool};
 use crate::infrastructure::db_schema::{alert_config, slack_alert_config};
-use crate::infrastructure::models::alert_config::AlertConfigReadData;
+use crate::infrastructure::models::alert_config::AlertConfigData;
 use crate::infrastructure::repositories::Repository;
 
 macro_rules! build_polymorphic_query {
@@ -38,7 +38,7 @@ macro_rules! build_polymorphic_query {
 
 pub struct AlertConfigRepository<'a> {
     pool: &'a DbPool,
-    data: HashMap<Uuid, AlertConfigReadData>,
+    data: HashMap<Uuid, AlertConfigData>,
 }
 
 impl<'a> AlertConfigRepository<'a> {
@@ -49,7 +49,7 @@ impl<'a> AlertConfigRepository<'a> {
         }
     }
 
-    fn db_to_key(&mut self, alert_config_data: &AlertConfigReadData) -> Result<AlertConfig, Error> {
+    fn db_to_key(&mut self, alert_config_data: &AlertConfigData) -> Result<AlertConfig, Error> {
         let alert_config = alert_config_data.to_model()?;
         self.data
             .insert(alert_config.alert_config_id, alert_config_data.clone());
@@ -66,7 +66,7 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     ) -> Result<Option<AlertConfig>, Error> {
         let mut connection = get_connection(self.pool).await?;
         let result = connection
-            .transaction::<Option<AlertConfigReadData>, DieselError, _>(|conn| {
+            .transaction::<Option<AlertConfigData>, DieselError, _>(|conn| {
                 Box::pin(async move {
                     build_polymorphic_query!()
                         .filter(
@@ -91,7 +91,7 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     async fn all(&mut self, tenant: &str) -> Result<Vec<AlertConfig>, Error> {
         let mut connection = get_connection(self.pool).await?;
         let results = connection
-            .transaction::<Vec<AlertConfigReadData>, DieselError, _>(|conn| {
+            .transaction::<Vec<AlertConfigData>, DieselError, _>(|conn| {
                 Box::pin(async move {
                     build_polymorphic_query!()
                         .filter(alert_config::tenant.eq(tenant))

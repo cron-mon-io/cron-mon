@@ -5,7 +5,7 @@ use crate::domain::models::alert_config::{AlertConfig, AlertType, SlackAlertConf
 use crate::errors::Error;
 
 #[derive(Clone, Queryable)]
-pub struct AlertConfigReadData {
+pub struct AlertConfigData {
     pub alert_config_id: Uuid,
     pub name: String,
     pub tenant: String,
@@ -17,7 +17,7 @@ pub struct AlertConfigReadData {
     pub slack_bot_oauth_token: Option<String>,
 }
 
-impl AlertConfigReadData {
+impl AlertConfigData {
     pub fn to_model(&self) -> Result<AlertConfig, Error> {
         Ok(AlertConfig {
             alert_config_id: self.alert_config_id,
@@ -58,7 +58,7 @@ mod tests {
 
     #[test]
     fn test_converting_db_to_alert_config() {
-        let alert_config_data = AlertConfigReadData {
+        let alert_config_data = AlertConfigData {
             alert_config_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             name: "test-slack-alert".to_owned(),
             tenant: "foo-tenant".to_owned(),
@@ -99,7 +99,7 @@ mod tests {
         #[case] channel: Option<String>,
         #[case] token: Option<String>,
     ) {
-        let alert_config_data = AlertConfigReadData {
+        let alert_config_data = AlertConfigData {
             alert_config_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             name: "test-slack-alert".to_owned(),
             tenant: "foo-tenant".to_owned(),
