@@ -4,13 +4,16 @@ use wiremock::MockServer;
 
 use cron_mon_api::infrastructure::database::{run_migrations, DbPool};
 use cron_mon_api::infrastructure::models::{
-    api_key::ApiKeyData, job::JobData, monitor::MonitorData,
+    alert_config::{NewAlertConfigData, NewSlackAlertConfigData},
+    api_key::ApiKeyData,
+    job::JobData,
+    monitor::MonitorData,
 };
 use cron_mon_api::rocket;
 
 use super::auth::setup_mock_jwks_server;
 use super::postgres::seed_db;
-use super::seeds::{api_key_seeds, job_seeds, monitor_seeds};
+use super::seeds::{alert_config_seeds, api_key_seeds, job_seeds, monitor_seeds};
 use super::{postgres_container, PostgresContainer};
 
 #[fixture]
@@ -28,7 +31,13 @@ pub struct Infrastructure {
 impl Infrastructure {
     /// Create a new, default instance of Infrastructure.
     pub async fn create() -> Self {
-        Self::new(monitor_seeds(), job_seeds(), api_key_seeds()).await
+        Self::new(
+            monitor_seeds(),
+            job_seeds(),
+            api_key_seeds(),
+            alert_config_seeds(),
+        )
+        .await
     }
 
     /// Create a new instance of Infrastructure with the provided seeds.
@@ -36,21 +45,29 @@ impl Infrastructure {
         monitor_seeds: Vec<MonitorData>,
         job_seeds: Vec<JobData>,
         api_key_seeds: Vec<ApiKeyData>,
+        alert_config_seeds: (Vec<NewAlertConfigData>, Vec<NewSlackAlertConfigData>),
     ) -> Self {
-        Self::new(monitor_seeds, job_seeds, api_key_seeds).await
+        Self::new(monitor_seeds, job_seeds, api_key_seeds, alert_config_seeds).await
     }
 
     async fn new(
         monitor_seeds: Vec<MonitorData>,
         job_seeds: Vec<JobData>,
         api_key_seeds: Vec<ApiKeyData>,
+        alert_config_seeds: (Vec<NewAlertConfigData>, Vec<NewSlackAlertConfigData>),
     ) -> Self {
         let container = postgres_container().await;
 
         run_migrations();
 
         // See data seeds for the expected data (/api/tests/common/mod.rs)
-        let pool = seed_db(&monitor_seeds, &job_seeds, &api_key_seeds).await;
+        let pool = seed_db(
+            &monitor_seeds,
+            &job_seeds,
+            &api_key_seeds,
+            &alert_config_seeds,
+        )
+        .await;
 
         Self {
             _container: container,
