@@ -1,6 +1,6 @@
 use std::env;
 
-use diesel_async::RunQueryDsl;
+use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use testcontainers::{runners::AsyncRunner, ContainerAsync, ImageExt};
 use testcontainers_modules::postgres::Postgres;
 
@@ -47,15 +47,7 @@ pub async fn seed_db(
         .await
         .expect("Failed to retrieve DB connection from the pool");
 
-    diesel::delete(monitor::table)
-        .execute(&mut conn)
-        .await
-        .expect("Failed to delete existing monitor data");
-
-    diesel::delete(api_key::table)
-        .execute(&mut conn)
-        .await
-        .expect("Failed to delete existing api_key data");
+    delete_existing_data(&mut conn).await;
 
     diesel::insert_into(monitor::table)
         .values(monitor_seeds)
@@ -76,4 +68,21 @@ pub async fn seed_db(
         .expect("Failed to seed api_keys");
 
     pool
+}
+
+async fn delete_existing_data(conn: &mut AsyncPgConnection) {
+    diesel::delete(monitor::table)
+        .execute(&mut conn)
+        .await
+        .expect("Failed to delete existing monitor data");
+
+    diesel::delete(job::table)
+        .execute(&mut conn)
+        .await
+        .expect("Failed to delete existing job data");
+
+    diesel::delete(api_key::table)
+        .execute(&mut conn)
+        .await
+        .expect("Failed to delete existing api_key data");
 }
