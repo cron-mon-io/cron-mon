@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::domain::models::alert_config::{AlertConfig, AlertType, SlackAlertConfig};
 use crate::errors::Error;
+use crate::infrastructure::db_schema::{alert_config, slack_alert_config};
 
 #[derive(Clone, Queryable)]
 pub struct AlertConfigData {
@@ -15,6 +16,28 @@ pub struct AlertConfigData {
     pub on_error: bool,
     pub slack_channel: Option<String>,
     pub slack_bot_oauth_token: Option<String>,
+}
+
+#[derive(Identifiable, Insertable, AsChangeset)]
+#[diesel(table_name = alert_config)]
+#[diesel(primary_key(alert_config_id))]
+pub struct NewAlertConfigData {
+    pub alert_config_id: Uuid,
+    pub name: String,
+    pub tenant: String,
+    pub type_: String,
+    pub active: bool,
+    pub on_late: bool,
+    pub on_error: bool,
+}
+
+#[derive(Identifiable, Insertable, AsChangeset)]
+#[diesel(table_name = slack_alert_config)]
+#[diesel(primary_key(alert_config_id))]
+pub struct NewSlackAlertConfigData {
+    pub alert_config_id: Uuid,
+    pub slack_channel: String,
+    pub slack_bot_oauth_token: String,
 }
 
 impl AlertConfigData {
@@ -44,6 +67,34 @@ impl AlertConfigData {
                 _ => return Err(Error::InvalidAlertConfig("Unknown alert type".to_owned())),
             },
         })
+    }
+}
+
+impl NewAlertConfigData {
+    pub fn from_model(alert_config: &AlertConfig) -> (Self, Option<NewSlackAlertConfigData>) {
+        let (type_, specific_data) = match &alert_config.type_ {
+            AlertType::Slack(slack_config) => (
+                "slack".to_string(),
+                Some(NewSlackAlertConfigData {
+                    alert_config_id: alert_config.alert_config_id,
+                    slack_channel: slack_config.channel.clone(),
+                    slack_bot_oauth_token: slack_config.token.clone(),
+                }),
+            ),
+        };
+
+        (
+            NewAlertConfigData {
+                alert_config_id: alert_config.alert_config_id,
+                name: alert_config.name.clone(),
+                tenant: alert_config.tenant.clone(),
+                type_,
+                active: alert_config.active,
+                on_late: alert_config.on_late,
+                on_error: alert_config.on_error,
+            },
+            specific_data,
+        )
     }
 }
 
@@ -119,5 +170,40 @@ mod tests {
         let result = alert_config_data.to_model();
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_model_to_db_data() {
+        let alert_config = AlertConfig {
+            alert_config_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+            name: "test-slack-alert".to_owned(),
+            tenant: "foo-tenant".to_owned(),
+            active: true,
+            on_late: true,
+            on_error: false,
+            type_: AlertType::Slack(SlackAlertConfig {
+                channel: "test-channel".to_owned(),
+                token: "test-token".to_owned(),
+            }),
+        };
+
+        let (alert_config_data, slack_data) = NewAlertConfigData::from_model(&alert_config);
+
+        assert_eq!(
+            alert_config_data.alert_config_id,
+            alert_config.alert_config_id
+        );
+        assert_eq!(&alert_config_data.name, "test-slack-alert");
+        assert_eq!(&alert_config_data.tenant, "foo-tenant");
+        assert_eq!(&alert_config_data.type_, "slack");
+        assert!(alert_config_data.active);
+        assert!(alert_config_data.on_late);
+        assert!(!alert_config_data.on_error);
+
+        assert!(slack_data.is_some());
+        let slack_data = slack_data.unwrap();
+        assert_eq!(slack_data.alert_config_id, alert_config.alert_config_id);
+        assert_eq!(&slack_data.slack_channel, "test-channel");
+        assert_eq!(&slack_data.slack_bot_oauth_token, "test-token");
     }
 }
