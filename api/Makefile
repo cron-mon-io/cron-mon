@@ -13,7 +13,7 @@ run-monitor-debug:
 test: lint unit-test integration-tests
 
 lint:
-	cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings
+	cargo fmt --check && cargo clippy --verbose --all-targets --all-features -- -D warnings
 
 unit-test:
 	cargo test --lib --no-fail-fast
