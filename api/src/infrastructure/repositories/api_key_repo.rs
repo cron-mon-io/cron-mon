@@ -21,6 +21,7 @@ pub struct ApiKeyRepository<'a> {
     data: HashMap<Uuid, ApiKeyData>,
 }
 
+#[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> ApiKeyRepository<'a> {
     pub fn new(pool: &'a DbPool) -> Self {
         Self {
@@ -44,6 +45,7 @@ impl<'a> ApiKeyRepository<'a> {
 }
 
 #[async_trait]
+#[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> GetByKey for ApiKeyRepository<'a> {
     async fn get_by_key(&mut self, key: &str) -> Result<Option<ApiKey>, Error> {
         let mut connection = self.get_connection().await?;
@@ -66,6 +68,7 @@ impl<'a> GetByKey for ApiKeyRepository<'a> {
 }
 
 #[async_trait]
+#[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> Repository<ApiKey> for ApiKeyRepository<'a> {
     async fn get(&mut self, api_key_id: Uuid, tenant: &str) -> Result<Option<ApiKey>, Error> {
         let mut connection = self.get_connection().await?;

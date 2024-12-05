@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/rust:1.80.0-slim as builder
+FROM public.ecr.aws/docker/library/rust:1.83-slim as builder
 
 RUN apt-get update && apt-get install build-essential libpq-dev libssl-dev pkg-config -y
 RUN rustup component add rustfmt clippy

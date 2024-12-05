@@ -31,13 +31,13 @@ mod tests {
 
     use super::ApiKey;
 
+    #[rocket::get("/")]
+    async fn protected_index(api_key: ApiKey) -> String {
+        format!("API key: {}", api_key.0)
+    }
+
     #[fixture]
     fn client() -> Client {
-        #[rocket::get("/")]
-        async fn protected_index(api_key: ApiKey) -> String {
-            format!("API key: {}", api_key.0)
-        }
-
         let test_rocket = rocket::build().mount("/", rocket::routes![protected_index]);
         Client::tracked(test_rocket)
             .expect("Couldn't create test Rocket app for ApiKey request guard test")
