@@ -59,6 +59,7 @@ impl<'a> AlertConfigRepository<'a> {
 }
 
 #[async_trait]
+#[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     async fn get(
         &mut self,
