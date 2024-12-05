@@ -84,8 +84,8 @@ only the root-level `Makefile` has:
   This can be handy is you run into any problems with your local database and you just want to trash
   it and start again. The next time the database container runs this will be recreated naturally
 
-> [!WARNING]
-> * - Seeding the local database with test data requires a `.env` file to be present at the root of the project, containing the following environment variables:
+> [!NOTE]
+> \* - Seeding the local database with test data requires a `.env` file to be present at the root of the project, containing the following environment variables:
 > - `SLACK_CHANNEL`: A Slack channel to send Slack alerts to (can be empty if not using Slack integration)
 > - `SLACK_TOKEN`: A Slack Bot OAuth token for sending SLack alerts (can be empty if not using Slack integration)
 
