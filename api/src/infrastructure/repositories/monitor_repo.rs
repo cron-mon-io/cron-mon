@@ -24,6 +24,7 @@ pub struct MonitorRepository<'a> {
     data: HashMap<Uuid, (MonitorData, Vec<JobData>)>,
 }
 
+#[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> MonitorRepository<'a> {
     pub fn new(pool: &'a DbPool) -> Self {
         Self {
@@ -51,6 +52,7 @@ impl<'a> MonitorRepository<'a> {
 }
 
 #[async_trait]
+#[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> GetWithLateJobs for MonitorRepository<'a> {
     async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
         let mut connection = self.get_connection().await?;
@@ -98,6 +100,7 @@ impl<'a> GetWithLateJobs for MonitorRepository<'a> {
 }
 
 #[async_trait]
+#[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> Repository<Monitor> for MonitorRepository<'a> {
     async fn get(&mut self, monitor_id: Uuid, tenant: &str) -> Result<Option<Monitor>, Error> {
         let mut connection = self.get_connection().await?;
