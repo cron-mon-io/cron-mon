@@ -15,11 +15,6 @@ impl Fairing for CORS {
     }
 
     async fn on_ignite(&self, rocket: Rocket<Build>) -> Result {
-        #[options("/<_..>")]
-        fn options_all() {
-            // Nothing to do here since this Fairing already adds the CORS headers below.
-        }
-
         Ok(rocket.mount("/", routes![options_all]))
     }
 
@@ -34,6 +29,11 @@ impl Fairing for CORS {
         response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
+}
+
+#[options("/<_..>")]
+fn options_all() {
+    // Nothing to do here since this Fairing already adds the CORS headers below.
 }
 
 #[cfg(test)]
