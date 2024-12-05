@@ -72,13 +72,19 @@ mod tests {
 
     #[rocket::get("/")]
     async fn protected_index(jwt: Jwt) -> String {
+        format!("Hello, {}!", jwt.name)
+    }
+
+    #[rocket::get("/")]
+    async fn protected_index_that_panics(jwt: Jwt) -> String {
+        // We should never get here.
         panic!("Hello, {}!", jwt.name)
     }
 
     #[test]
     fn test_from_request_no_jwt_auth() {
         // Setup a Rocket client that doesn't have a JwtAuth service at all.
-        let test_rocket = rocket::build().mount("/", rocket::routes![protected_index]);
+        let test_rocket = rocket::build().mount("/", rocket::routes![protected_index_that_panics]);
         let client = Client::tracked(test_rocket)
             .expect("Couldn't create test Rocket app for Jwt request guard test");
 
