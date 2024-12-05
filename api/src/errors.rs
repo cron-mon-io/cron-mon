@@ -10,6 +10,7 @@ pub enum Error {
     ApiKeyNotFound(Uuid),
     JobNotFound(Uuid, Uuid),
     JobAlreadyFinished(Uuid),
+    AlertConfigurationError(String),
     InvalidMonitor(String),
     InvalidJob(String),
     InvalidAlertConfig(String),
@@ -35,6 +36,9 @@ impl Display for Error {
             }
             Self::JobAlreadyFinished(job_id) => {
                 write!(f, "Job('{job_id}') is already finished")
+            }
+            Self::AlertConfigurationError(reason) => {
+                write!(f, "Failed to configure alert: {reason}")
             }
             Self::InvalidMonitor(reason) => write!(f, "Invalid Monitor: {reason}"),
             Self::InvalidJob(reason) => write!(f, "Invalid Job: {reason}"),
