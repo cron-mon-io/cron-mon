@@ -66,6 +66,8 @@ impl AlertConfigData {
                 }
                 _ => return Err(Error::InvalidAlertConfig("Unknown alert type".to_owned())),
             },
+            // TODO: Implement the rest of the conversion
+            monitor_ids: Vec::new(),
         })
     }
 }
@@ -200,6 +202,7 @@ mod tests {
                 channel: "test-channel".to_owned(),
                 token: "test-token".to_owned(),
             }),
+            monitor_ids: Vec::new(),
         };
 
         let (alert_config_data, slack_data) = NewAlertConfigData::from_model(&alert_config);
