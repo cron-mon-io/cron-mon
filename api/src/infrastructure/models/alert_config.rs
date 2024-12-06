@@ -7,6 +7,7 @@ use crate::infrastructure::db_schema::{alert_config, monitor_alert_config, slack
 
 // Only used for reading data.
 #[derive(Clone, Queryable)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct AlertConfigData {
     pub alert_config_id: Uuid,
     pub name: String,
@@ -23,6 +24,7 @@ pub struct AlertConfigData {
 #[derive(Identifiable, Insertable, Queryable)]
 #[diesel(table_name = monitor_alert_config)]
 #[diesel(primary_key(alert_config_id, monitor_id))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct MonitorAlertConfigData {
     pub alert_config_id: Uuid,
     pub monitor_id: Uuid,
@@ -32,6 +34,7 @@ pub struct MonitorAlertConfigData {
 #[derive(Identifiable, Insertable, AsChangeset)]
 #[diesel(table_name = alert_config)]
 #[diesel(primary_key(alert_config_id))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewAlertConfigData {
     pub alert_config_id: Uuid,
     pub name: String,
@@ -46,6 +49,7 @@ pub struct NewAlertConfigData {
 #[derive(Identifiable, Insertable, AsChangeset)]
 #[diesel(table_name = slack_alert_config)]
 #[diesel(primary_key(alert_config_id))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewSlackAlertConfigData {
     pub alert_config_id: Uuid,
     pub slack_channel: String,
