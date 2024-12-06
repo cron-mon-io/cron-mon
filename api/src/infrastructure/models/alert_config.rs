@@ -60,7 +60,7 @@ impl AlertConfigData {
                         })
                     } else {
                         return Err(Error::InvalidAlertConfig(
-                            "Slack channel or bot OAuth token is missing".to_owned(),
+                            "Slack channel and/ or bot OAuth token is missing".to_owned(),
                         ));
                     }
                 }
@@ -142,24 +142,36 @@ mod tests {
     }
 
     #[rstest]
+    #[case::unknown_type("unknown", None, None, "Unknown alert type")]
     #[case::missing_channel(
+        "slack",
         None,
         Some("test-token".to_owned()),
+        "Slack channel and/ or bot OAuth token is missing"
     )]
     #[case::missing_token(
+        "slack",
         Some("test-channel".to_owned()),
         None,
+        "Slack channel and/ or bot OAuth token is missing"
     )]
-    #[case::missing_channel_and_token(None, None)]
+    #[case::missing_channel_and_token(
+        "slack",
+        None,
+        None,
+        "Slack channel and/ or bot OAuth token is missing"
+    )]
     fn test_converting_invalid_db_data_to_model(
+        #[case] type_: &str,
         #[case] channel: Option<String>,
         #[case] token: Option<String>,
+        #[case] expected_error: &str,
     ) {
         let alert_config_data = AlertConfigData {
             alert_config_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             name: "test-slack-alert".to_owned(),
             tenant: "foo-tenant".to_owned(),
-            type_: "slack".to_owned(),
+            type_: type_.to_owned(),
             active: true,
             on_late: true,
             on_error: false,
@@ -169,7 +181,10 @@ mod tests {
 
         let result = alert_config_data.to_model();
 
-        assert!(result.is_err());
+        assert_eq!(
+            result,
+            Err(Error::InvalidAlertConfig(expected_error.to_owned()))
+        );
     }
 
     #[test]

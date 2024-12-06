@@ -86,7 +86,7 @@ async fn test_get(#[future] infrastructure: Infrastructure) {
 
 #[rstest]
 #[tokio::test]
-async fn test_save(#[future] infrastructure: Infrastructure) {
+async fn test_save_with_new(#[future] infrastructure: Infrastructure) {
     let infra = infrastructure.await;
     let mut repo = AlertConfigRepository::new(&infra.pool);
 
@@ -117,6 +117,38 @@ async fn test_save(#[future] infrastructure: Infrastructure) {
     assert_eq!(new_alert_config.on_late, read_new_alert_config.on_late);
     assert_eq!(new_alert_config.on_error, read_new_alert_config.on_error);
     assert_eq!(new_alert_config.type_, read_new_alert_config.type_);
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_save_with_existing(#[future] infrastructure: Infrastructure) {
+    let infra = infrastructure.await;
+    let mut repo = AlertConfigRepository::new(&infra.pool);
+
+    let mut alert_config = repo
+        .get(gen_uuid("fadd7266-648b-4102-8f85-c768655f4297"), "foo")
+        .await
+        .unwrap()
+        .unwrap();
+    alert_config.name = "Updated name".to_string();
+    alert_config.active = false;
+    alert_config.on_late = false;
+    alert_config.on_error = false;
+
+    repo.save(&alert_config).await.unwrap();
+    assert_eq!(repo.all("foo").await.unwrap().len(), 3);
+
+    let read_alert_config = repo
+        .get(alert_config.alert_config_id, "foo")
+        .await
+        .unwrap()
+        .unwrap();
+
+    assert_eq!(alert_config.name, read_alert_config.name);
+    assert_eq!(alert_config.active, read_alert_config.active);
+    assert_eq!(alert_config.on_late, read_alert_config.on_late);
+    assert_eq!(alert_config.on_error, read_alert_config.on_error);
+    assert_eq!(alert_config.type_, read_alert_config.type_);
 }
 
 #[rstest]
