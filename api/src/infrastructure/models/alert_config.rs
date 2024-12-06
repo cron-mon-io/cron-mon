@@ -1,9 +1,13 @@
 use diesel::prelude::*;
 use uuid::Uuid;
 
-use crate::domain::models::alert_config::{AlertConfig, AlertType, SlackAlertConfig};
+use crate::domain::models::alert_config::{
+    AlertConfig, AlertType, SlackAlertConfig, WebhookAlertConfig,
+};
 use crate::errors::Error;
-use crate::infrastructure::db_schema::{alert_config, monitor_alert_config, slack_alert_config};
+use crate::infrastructure::db_schema::{
+    alert_config, monitor_alert_config, slack_alert_config, webhook_alert_config,
+};
 
 // Only used for reading data.
 #[derive(Clone, Identifiable, Queryable)]
@@ -20,6 +24,7 @@ pub struct AlertConfigData {
     pub on_error: bool,
     pub slack_channel: Option<String>,
     pub slack_bot_oauth_token: Option<String>,
+    pub webhook_url: Option<String>,
 }
 
 // Used for reading and writing data.
@@ -59,6 +64,16 @@ pub struct NewSlackAlertConfigData {
     pub slack_bot_oauth_token: String,
 }
 
+// Only used for writing data.
+#[derive(Identifiable, Insertable, AsChangeset)]
+#[diesel(table_name = webhook_alert_config)]
+#[diesel(primary_key(alert_config_id))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct NewWebhookAlertConfigData {
+    pub alert_config_id: Uuid,
+    pub webhook_url: String,
+}
+
 impl AlertConfigData {
     pub fn to_model(
         &self,
@@ -86,6 +101,15 @@ impl AlertConfigData {
                         ));
                     }
                 }
+                "webhook" => {
+                    if let Some(url) = &self.webhook_url {
+                        AlertType::Webhook(WebhookAlertConfig { url: url.clone() })
+                    } else {
+                        return Err(Error::InvalidAlertConfig(
+                            "Webhook URL is missing".to_owned(),
+                        ));
+                    }
+                }
                 _ => return Err(Error::InvalidAlertConfig("Unknown alert type".to_owned())),
             },
             monitor_ids: monitor_alert_configs
@@ -103,14 +127,24 @@ impl NewAlertConfigData {
         Self,
         Vec<MonitorAlertConfigData>,
         Option<NewSlackAlertConfigData>,
+        Option<NewWebhookAlertConfigData>,
     ) {
-        let (type_, specific_data) = match &alert_config.type_ {
+        let (type_, slack_config, webhook_config) = match &alert_config.type_ {
             AlertType::Slack(slack_config) => (
                 "slack".to_string(),
                 Some(NewSlackAlertConfigData {
                     alert_config_id: alert_config.alert_config_id,
                     slack_channel: slack_config.channel.clone(),
                     slack_bot_oauth_token: slack_config.token.clone(),
+                }),
+                None,
+            ),
+            AlertType::Webhook(webhook_config) => (
+                "webhook".to_string(),
+                None,
+                Some(NewWebhookAlertConfigData {
+                    alert_config_id: alert_config.alert_config_id,
+                    webhook_url: webhook_config.url.clone(),
                 }),
             ),
         };
@@ -133,7 +167,8 @@ impl NewAlertConfigData {
                     monitor_id: *monitor_id,
                 })
                 .collect(),
-            specific_data,
+            slack_config,
+            webhook_config,
         )
     }
 }
@@ -169,6 +204,7 @@ mod tests {
             on_error: false,
             slack_channel: Some("test-channel".to_owned()),
             slack_bot_oauth_token: Some("test-token".to_owned()),
+            webhook_url: None,
         };
 
         let alert_config = alert_config_data.to_model(&monitor_alert_configs).unwrap();
@@ -234,6 +270,7 @@ mod tests {
             on_error: false,
             slack_channel: channel,
             slack_bot_oauth_token: token,
+            webhook_url: None,
         };
 
         let result = alert_config_data.to_model(&[]);
@@ -263,7 +300,7 @@ mod tests {
             ],
         };
 
-        let (alert_config_data, monitor_alert_configs, slack_data) =
+        let (alert_config_data, monitor_alert_configs, slack_data, _webhook_data) =
             NewAlertConfigData::from_model(&alert_config);
 
         assert_eq!(

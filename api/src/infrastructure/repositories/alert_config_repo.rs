@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::domain::models::alert_config::AlertConfig;
 use crate::errors::Error;
 use crate::infrastructure::database::{get_connection, DbPool};
-use crate::infrastructure::db_schema::{alert_config, slack_alert_config};
+use crate::infrastructure::db_schema::{alert_config, slack_alert_config, webhook_alert_config};
 use crate::infrastructure::models::alert_config::{
     AlertConfigData, MonitorAlertConfigData, NewAlertConfigData,
 };
@@ -23,6 +23,11 @@ macro_rules! build_polymorphic_query {
                 slack_alert_config::dsl::slack_alert_config
                     .on(slack_alert_config::dsl::alert_config_id.eq(alert_config::alert_config_id)),
             )
+            .left_join(
+                webhook_alert_config::dsl::webhook_alert_config
+                    .on(webhook_alert_config::dsl::alert_config_id
+                        .eq(alert_config::alert_config_id)),
+            )
             .select((
                 alert_config::alert_config_id,
                 alert_config::name,
@@ -33,6 +38,7 @@ macro_rules! build_polymorphic_query {
                 alert_config::on_error,
                 slack_alert_config::dsl::slack_channel.nullable(),
                 slack_alert_config::dsl::slack_bot_oauth_token.nullable(),
+                webhook_alert_config::dsl::webhook_url.nullable(),
             ))
             .into_boxed()
     }};
@@ -145,7 +151,7 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     }
 
     async fn save(&mut self, alert_config: &AlertConfig) -> Result<(), Error> {
-        let (alert_config_data, _, slack_alert_config_data) =
+        let (alert_config_data, _, slack_alert_config_data, _webhook_alert_config_data) =
             NewAlertConfigData::from_model(alert_config);
 
         // We can do this now as we only support Slack, but when we add more integrations we will

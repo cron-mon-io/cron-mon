@@ -75,10 +75,20 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    webhook_alert_config (alert_config_id) {
+        alert_config_id -> Uuid,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        webhook_url -> Varchar,
+    }
+}
+
 diesel::joinable!(job -> monitor (monitor_id));
 diesel::joinable!(monitor_alert_config -> alert_config (alert_config_id));
 diesel::joinable!(monitor_alert_config -> monitor (monitor_id));
 diesel::joinable!(slack_alert_config -> alert_config (alert_config_id));
+diesel::joinable!(webhook_alert_config -> alert_config (alert_config_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     alert_config,
@@ -87,4 +97,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     monitor,
     monitor_alert_config,
     slack_alert_config,
+    webhook_alert_config,
 );

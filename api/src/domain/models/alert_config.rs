@@ -32,6 +32,9 @@ pub enum AlertType {
     /// An alert that sends a Slack message.
     #[serde(rename = "slack")]
     Slack(SlackAlertConfig),
+    /// An alert that invokes a webhook.
+    #[serde(rename = "webhook")]
+    Webhook(WebhookAlertConfig),
 }
 
 /// Slack-specifc configuration for alerts.
@@ -41,6 +44,13 @@ pub struct SlackAlertConfig {
     pub channel: String,
     /// The Slack bot-user OAuth token (for use with chat.postMessage)
     pub token: String,
+}
+
+/// Webhook-specific configuration for alerts.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct WebhookAlertConfig {
+    /// The URL to send the alert to.
+    pub url: String,
 }
 
 impl AlertConfig {

@@ -272,7 +272,7 @@ VALUES
         :'slack_token'
     );
 INSERT INTO webhook_alert_config
-    (alert_config_id, url)
+    (alert_config_id, webhook_url)
 VALUES
     (
         '8a4fc2e6-1a94-4212-9c72-9bb1de78d68b',
