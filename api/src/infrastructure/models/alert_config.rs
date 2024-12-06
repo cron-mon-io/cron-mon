@@ -3,8 +3,9 @@ use uuid::Uuid;
 
 use crate::domain::models::alert_config::{AlertConfig, AlertType, SlackAlertConfig};
 use crate::errors::Error;
-use crate::infrastructure::db_schema::{alert_config, slack_alert_config};
+use crate::infrastructure::db_schema::{alert_config, monitor_alert_config, slack_alert_config};
 
+// Only used for reading data.
 #[derive(Clone, Queryable)]
 pub struct AlertConfigData {
     pub alert_config_id: Uuid,
@@ -18,6 +19,16 @@ pub struct AlertConfigData {
     pub slack_bot_oauth_token: Option<String>,
 }
 
+// Used for reading and writing data.
+#[derive(Identifiable, Insertable, Queryable)]
+#[diesel(table_name = monitor_alert_config)]
+#[diesel(primary_key(alert_config_id, monitor_id))]
+pub struct MonitorAlertConfigData {
+    pub alert_config_id: Uuid,
+    pub monitor_id: Uuid,
+}
+
+// Only used for writing data.
 #[derive(Identifiable, Insertable, AsChangeset)]
 #[diesel(table_name = alert_config)]
 #[diesel(primary_key(alert_config_id))]
@@ -31,6 +42,7 @@ pub struct NewAlertConfigData {
     pub on_error: bool,
 }
 
+// Only used for writing data.
 #[derive(Identifiable, Insertable, AsChangeset)]
 #[diesel(table_name = slack_alert_config)]
 #[diesel(primary_key(alert_config_id))]
@@ -41,7 +53,10 @@ pub struct NewSlackAlertConfigData {
 }
 
 impl AlertConfigData {
-    pub fn to_model(&self) -> Result<AlertConfig, Error> {
+    pub fn to_model(
+        &self,
+        monitor_alert_configs: &[MonitorAlertConfigData],
+    ) -> Result<AlertConfig, Error> {
         Ok(AlertConfig {
             alert_config_id: self.alert_config_id,
             name: self.name.clone(),
@@ -66,14 +81,22 @@ impl AlertConfigData {
                 }
                 _ => return Err(Error::InvalidAlertConfig("Unknown alert type".to_owned())),
             },
-            // TODO: Implement the rest of the conversion
-            monitor_ids: Vec::new(),
+            monitor_ids: monitor_alert_configs
+                .iter()
+                .map(|mac| mac.monitor_id)
+                .collect(),
         })
     }
 }
 
 impl NewAlertConfigData {
-    pub fn from_model(alert_config: &AlertConfig) -> (Self, Option<NewSlackAlertConfigData>) {
+    pub fn from_model(
+        alert_config: &AlertConfig,
+    ) -> (
+        Self,
+        Vec<MonitorAlertConfigData>,
+        Option<NewSlackAlertConfigData>,
+    ) {
         let (type_, specific_data) = match &alert_config.type_ {
             AlertType::Slack(slack_config) => (
                 "slack".to_string(),
@@ -95,6 +118,14 @@ impl NewAlertConfigData {
                 on_late: alert_config.on_late,
                 on_error: alert_config.on_error,
             },
+            alert_config
+                .monitor_ids
+                .iter()
+                .map(|monitor_id| MonitorAlertConfigData {
+                    alert_config_id: alert_config.alert_config_id,
+                    monitor_id: *monitor_id,
+                })
+                .collect(),
             specific_data,
         )
     }
@@ -111,6 +142,16 @@ mod tests {
 
     #[test]
     fn test_converting_db_to_alert_config() {
+        let monitor_alert_configs = vec![
+            MonitorAlertConfigData {
+                alert_config_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                monitor_id: gen_uuid("02d9fd94-48dc-40e5-b2fa-fa6b66eaf2ca"),
+            },
+            MonitorAlertConfigData {
+                alert_config_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                monitor_id: gen_uuid("70810d10-1d86-4bde-b29d-b1f490528675"),
+            },
+        ];
         let alert_config_data = AlertConfigData {
             alert_config_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
             name: "test-slack-alert".to_owned(),
@@ -123,7 +164,7 @@ mod tests {
             slack_bot_oauth_token: Some("test-token".to_owned()),
         };
 
-        let alert_config = alert_config_data.to_model().unwrap();
+        let alert_config = alert_config_data.to_model(&monitor_alert_configs).unwrap();
 
         assert_eq!(
             alert_config.alert_config_id,
@@ -140,6 +181,13 @@ mod tests {
                 channel: "test-channel".to_owned(),
                 token: "test-token".to_owned()
             })
+        );
+        assert_eq!(
+            alert_config.monitor_ids,
+            vec![
+                gen_uuid("02d9fd94-48dc-40e5-b2fa-fa6b66eaf2ca"),
+                gen_uuid("70810d10-1d86-4bde-b29d-b1f490528675")
+            ]
         );
     }
 
@@ -181,7 +229,7 @@ mod tests {
             slack_bot_oauth_token: token,
         };
 
-        let result = alert_config_data.to_model();
+        let result = alert_config_data.to_model(&[]);
 
         assert_eq!(
             result,
@@ -202,10 +250,14 @@ mod tests {
                 channel: "test-channel".to_owned(),
                 token: "test-token".to_owned(),
             }),
-            monitor_ids: Vec::new(),
+            monitor_ids: vec![
+                gen_uuid("02d9fd94-48dc-40e5-b2fa-fa6b66eaf2ca"),
+                gen_uuid("70810d10-1d86-4bde-b29d-b1f490528675"),
+            ],
         };
 
-        let (alert_config_data, slack_data) = NewAlertConfigData::from_model(&alert_config);
+        let (alert_config_data, monitor_alert_configs, slack_data) =
+            NewAlertConfigData::from_model(&alert_config);
 
         assert_eq!(
             alert_config_data.alert_config_id,
@@ -217,6 +269,24 @@ mod tests {
         assert!(alert_config_data.active);
         assert!(alert_config_data.on_late);
         assert!(!alert_config_data.on_error);
+
+        assert_eq!(monitor_alert_configs.len(), 2);
+        assert_eq!(
+            monitor_alert_configs[0].alert_config_id,
+            alert_config.alert_config_id
+        );
+        assert_eq!(
+            monitor_alert_configs[0].monitor_id,
+            gen_uuid("02d9fd94-48dc-40e5-b2fa-fa6b66eaf2ca")
+        );
+        assert_eq!(
+            monitor_alert_configs[1].alert_config_id,
+            alert_config.alert_config_id
+        );
+        assert_eq!(
+            monitor_alert_configs[1].monitor_id,
+            gen_uuid("70810d10-1d86-4bde-b29d-b1f490528675")
+        );
 
         assert!(slack_data.is_some());
         let slack_data = slack_data.unwrap();

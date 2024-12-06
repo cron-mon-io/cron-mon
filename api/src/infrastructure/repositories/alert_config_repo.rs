@@ -11,8 +11,7 @@ use crate::domain::models::alert_config::AlertConfig;
 use crate::errors::Error;
 use crate::infrastructure::database::{get_connection, DbPool};
 use crate::infrastructure::db_schema::{alert_config, slack_alert_config};
-use crate::infrastructure::models::alert_config::AlertConfigData;
-use crate::infrastructure::models::alert_config::NewAlertConfigData;
+use crate::infrastructure::models::alert_config::{AlertConfigData, NewAlertConfigData};
 use crate::infrastructure::repositories::Repository;
 
 macro_rules! build_polymorphic_query {
@@ -51,7 +50,7 @@ impl<'a> AlertConfigRepository<'a> {
     }
 
     fn db_to_model(&mut self, alert_config_data: &AlertConfigData) -> Result<AlertConfig, Error> {
-        let alert_config = alert_config_data.to_model()?;
+        let alert_config = alert_config_data.to_model(&[])?;
         self.data
             .insert(alert_config.alert_config_id, alert_config.clone());
         Ok(alert_config)
@@ -111,7 +110,7 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     }
 
     async fn save(&mut self, alert_config: &AlertConfig) -> Result<(), Error> {
-        let (alert_config_data, slack_alert_config_data) =
+        let (alert_config_data, _, slack_alert_config_data) =
             NewAlertConfigData::from_model(alert_config);
 
         // We can do this now as we only support Slack, but when we add more integrations we will
