@@ -203,7 +203,7 @@ async fn test_loading_invalid_config() {
     assert_eq!(
         alert_config_result,
         Err(Error::InvalidAlertConfig(
-            "Slack channel or bot OAuth token is missing".to_string()
+            "Slack channel and/ or bot OAuth token is missing".to_string()
         ))
     );
 }
