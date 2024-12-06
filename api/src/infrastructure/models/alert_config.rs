@@ -6,7 +6,9 @@ use crate::errors::Error;
 use crate::infrastructure::db_schema::{alert_config, monitor_alert_config, slack_alert_config};
 
 // Only used for reading data.
-#[derive(Clone, Queryable)]
+#[derive(Clone, Identifiable, Queryable)]
+#[diesel(table_name = alert_config)]
+#[diesel(primary_key(alert_config_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct AlertConfigData {
     pub alert_config_id: Uuid,
@@ -21,7 +23,8 @@ pub struct AlertConfigData {
 }
 
 // Used for reading and writing data.
-#[derive(Identifiable, Insertable, Queryable)]
+#[derive(Associations, Identifiable, Insertable, Queryable, Selectable)]
+#[diesel(belongs_to(AlertConfigData, foreign_key = alert_config_id))]
 #[diesel(table_name = monitor_alert_config)]
 #[diesel(primary_key(alert_config_id, monitor_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]

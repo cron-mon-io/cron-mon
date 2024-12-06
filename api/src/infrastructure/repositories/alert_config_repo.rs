@@ -11,7 +11,9 @@ use crate::domain::models::alert_config::AlertConfig;
 use crate::errors::Error;
 use crate::infrastructure::database::{get_connection, DbPool};
 use crate::infrastructure::db_schema::{alert_config, slack_alert_config};
-use crate::infrastructure::models::alert_config::{AlertConfigData, NewAlertConfigData};
+use crate::infrastructure::models::alert_config::{
+    AlertConfigData, MonitorAlertConfigData, NewAlertConfigData,
+};
 use crate::infrastructure::repositories::Repository;
 
 macro_rules! build_polymorphic_query {
@@ -49,8 +51,12 @@ impl<'a> AlertConfigRepository<'a> {
         }
     }
 
-    fn db_to_model(&mut self, alert_config_data: &AlertConfigData) -> Result<AlertConfig, Error> {
-        let alert_config = alert_config_data.to_model(&[])?;
+    fn db_to_model(
+        &mut self,
+        alert_config_data: &AlertConfigData,
+        monitor_alert_configs: &[MonitorAlertConfigData],
+    ) -> Result<AlertConfig, Error> {
+        let alert_config = alert_config_data.to_model(monitor_alert_configs)?;
         self.data
             .insert(alert_config.alert_config_id, alert_config.clone());
         Ok(alert_config)
@@ -67,45 +73,74 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     ) -> Result<Option<AlertConfig>, Error> {
         let mut connection = get_connection(self.pool).await?;
         let result = connection
-            .transaction::<Option<AlertConfigData>, DieselError, _>(|conn| {
-                Box::pin(async move {
-                    build_polymorphic_query!()
-                        .filter(
-                            alert_config::alert_config_id
-                                .eq(alert_config_id)
-                                .and(alert_config::tenant.eq(tenant)),
-                        )
-                        .first(conn)
-                        .await
-                        .optional()
-                })
-            })
+            .transaction::<Option<(AlertConfigData, Vec<MonitorAlertConfigData>)>, DieselError, _>(
+                |conn| {
+                    Box::pin(async move {
+                        let alert_config_data: Option<AlertConfigData> = build_polymorphic_query!()
+                            .filter(
+                                alert_config::alert_config_id
+                                    .eq(alert_config_id)
+                                    .and(alert_config::tenant.eq(tenant)),
+                            )
+                            .first(conn)
+                            .await
+                            .optional()?;
+
+                        Ok(if let Some(config_data) = alert_config_data {
+                            let monitor_alert_config_datas =
+                                MonitorAlertConfigData::belonging_to(&config_data)
+                                    .select(MonitorAlertConfigData::as_select())
+                                    .load(conn)
+                                    .await?;
+                            Some((config_data, monitor_alert_config_datas))
+                        } else {
+                            None
+                        })
+                    })
+                },
+            )
             .await
             .map_err(|err| Error::RepositoryError(err.to_string()))?;
 
         Ok(match result {
             None => None,
-            Some(alert_config_data) => Some(self.db_to_model(&alert_config_data)?),
+            Some((alert_config_data, monitor_alert_configs)) => {
+                Some(self.db_to_model(&alert_config_data, &monitor_alert_configs)?)
+            }
         })
     }
 
     async fn all(&mut self, tenant: &str) -> Result<Vec<AlertConfig>, Error> {
         let mut connection = get_connection(self.pool).await?;
-        let results = connection
-            .transaction::<Vec<AlertConfigData>, DieselError, _>(|conn| {
-                Box::pin(async move {
-                    build_polymorphic_query!()
-                        .filter(alert_config::tenant.eq(tenant))
-                        .load(conn)
-                        .await
-                })
-            })
+        let (alert_config_datas, monitor_alert_config_datas) = connection
+            .transaction::<(Vec<AlertConfigData>, Vec<MonitorAlertConfigData>), DieselError, _>(
+                |conn| {
+                    Box::pin(async move {
+                        let alert_configs: Vec<AlertConfigData> = build_polymorphic_query!()
+                            .filter(alert_config::tenant.eq(tenant))
+                            .load(conn)
+                            .await?;
+
+                        let monitor_alert_configs =
+                            MonitorAlertConfigData::belonging_to(&alert_configs)
+                                .select(MonitorAlertConfigData::as_select())
+                                .load(conn)
+                                .await?;
+
+                        Ok((alert_configs, monitor_alert_configs))
+                    })
+                },
+            )
             .await
             .map_err(|err| Error::RepositoryError(err.to_string()))?;
 
-        Ok(results
-            .iter()
-            .map(|data| self.db_to_model(data))
+        Ok(monitor_alert_config_datas
+            .grouped_by(&alert_config_datas)
+            .into_iter()
+            .zip(alert_config_datas)
+            .map(|(monitor_alert_config_datas, alert_config_datas)| {
+                self.db_to_model(&alert_config_datas, &monitor_alert_config_datas)
+            })
             .collect::<Result<Vec<AlertConfig>, Error>>()?)
     }
 
