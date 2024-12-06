@@ -10,7 +10,7 @@ use moka::sync::Cache;
 use rocket::fs::FileServer;
 use rocket::{routes, Build, Rocket};
 
-use crate::application::routes::{api_keys, health, jobs, monitors};
+use crate::application::routes::{alert_configs, api_keys, health, jobs, monitors};
 use crate::infrastructure::auth::jwt::{Jwk, JwtAuthService};
 use crate::infrastructure::auth::JwtAuth;
 use crate::infrastructure::database::create_connection_pool;
@@ -44,6 +44,7 @@ pub fn rocket() -> Rocket<Build> {
                 jobs::get_job,
                 jobs::start_job,
                 jobs::finish_job,
+                alert_configs::list_alert_configs,
                 api_keys::list_api_keys,
                 api_keys::generate_key,
                 api_keys::revoke_key

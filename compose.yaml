@@ -103,7 +103,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: 'psql --set=slack_channel="$SLACK_CHANNEL" --set=slack_token="$SLACK_TOKEN" -f /usr/share/seeds.sql'
+    command: psql --set=slack_channel="$SLACK_CHANNEL" --set=slack_token="$SLACK_TOKEN" --set=webhook_url="$WEBHOOK_URL" -f /usr/share/seeds.sql
 
   rust-release:
     image: cron-mon/rust-release-image

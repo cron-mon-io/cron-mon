@@ -4,6 +4,7 @@ DELETE FROM monitor;
 DELETE FROM api_key;
 DELETE FROM alert_config;
 DELETE FROM slack_alert_config;
+DELETE FROM webhook_alert_config;
 DELETE FROM monitor_alert_config;
 
 -- Monitors.
@@ -252,6 +253,15 @@ VALUES
         TRUE,
         TRUE,
         FALSE
+    ),
+    (
+        '8a4fc2e6-1a94-4212-9c72-9bb1de78d68b',
+        'cron-mon',
+        'Webhook Alerts',
+        'webhook',
+        TRUE,
+        TRUE,
+        TRUE
     );
 INSERT INTO slack_alert_config
     (alert_config_id, slack_channel, slack_bot_oauth_token)
@@ -261,10 +271,19 @@ VALUES
         :'slack_channel',
         :'slack_token'
     );
+INSERT INTO webhook_alert_config
+    (alert_config_id, url)
+VALUES
+    (
+        '8a4fc2e6-1a94-4212-9c72-9bb1de78d68b',
+        :'webhook_url'
+    );
 
 -- Monitor alert configs.
 INSERT INTO monitor_alert_config
     (alert_config_id, monitor_id)
 VALUES
     ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'c1bf0515-df39-448b-aa95-686360a33b36'),
-    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'f0b291fe-bd41-4787-bc2d-1329903f7a6a');
+    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'f0b291fe-bd41-4787-bc2d-1329903f7a6a'),
+    ('8a4fc2e6-1a94-4212-9c72-9bb1de78d68b', 'c1bf0515-df39-448b-aa95-686360a33b36'),
+    ('8a4fc2e6-1a94-4212-9c72-9bb1de78d68b', 'f0b291fe-bd41-4787-bc2d-1329903f7a6a');
