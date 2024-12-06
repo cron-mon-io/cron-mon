@@ -163,6 +163,7 @@ async fn test_loading_invalid_job() {
             error_alert_sent: false,
         }],
         vec![],
+        (vec![], vec![]),
     )
     .await;
 

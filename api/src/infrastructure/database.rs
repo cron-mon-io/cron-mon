@@ -2,7 +2,10 @@ use std::env;
 
 use diesel::Connection;
 use diesel::PgConnection;
-use diesel_async::pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager};
+use diesel_async::pooled_connection::{
+    deadpool::{Object, Pool},
+    AsyncDieselConnectionManager,
+};
 use diesel_async::AsyncPgConnection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
@@ -20,6 +23,12 @@ pub fn create_connection_pool() -> Result<DbPool, Error> {
         .expect("Failed to create DB connection pool.");
 
     Ok(pool)
+}
+
+pub async fn get_connection(pool: &DbPool) -> Result<Object<AsyncPgConnection>, Error> {
+    pool.get()
+        .await
+        .map_err(|e| Error::RepositoryError(e.to_string()))
 }
 
 pub fn run_migrations() {

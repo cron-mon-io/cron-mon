@@ -1,5 +1,8 @@
 use cron_mon_api::infrastructure::models::{
-    api_key::ApiKeyData, job::JobData, monitor::MonitorData,
+    alert_config::{NewAlertConfigData, NewSlackAlertConfigData},
+    api_key::ApiKeyData,
+    job::JobData,
+    monitor::MonitorData,
 };
 use test_utils::{gen_datetime, gen_uuid};
 
@@ -132,4 +135,55 @@ pub fn api_key_seeds() -> Vec<ApiKeyData> {
             last_used_monitor_name: None,
         },
     ]
+}
+
+pub fn alert_config_seeds() -> (Vec<NewAlertConfigData>, Vec<NewSlackAlertConfigData>) {
+    (
+        vec![
+            NewAlertConfigData {
+                alert_config_id: gen_uuid("fadd7266-648b-4102-8f85-c768655f4297"),
+                name: "Test Slack alert (for lates)".to_owned(),
+                tenant: "foo".to_owned(),
+                type_: "slack".to_owned(),
+                active: true,
+                on_late: true,
+                on_error: false,
+            },
+            NewAlertConfigData {
+                alert_config_id: gen_uuid("3ba21f52-32c9-41dc-924d-d18d4fc0e81c"),
+                name: "Test Slack alert (for errors)".to_owned(),
+                tenant: "foo".to_owned(),
+                type_: "slack".to_owned(),
+                active: true,
+                on_late: false,
+                on_error: true,
+            },
+            NewAlertConfigData {
+                alert_config_id: gen_uuid("8d307d12-4696-4801-bfb6-628f8f640864"),
+                name: "Test Slack alert (for lates and errors)".to_owned(),
+                tenant: "foo".to_owned(),
+                type_: "slack".to_owned(),
+                active: true,
+                on_late: true,
+                on_error: true,
+            },
+        ],
+        vec![
+            NewSlackAlertConfigData {
+                alert_config_id: gen_uuid("fadd7266-648b-4102-8f85-c768655f4297"),
+                slack_channel: "#test-channel".to_owned(),
+                slack_bot_oauth_token: "test-token".to_owned(),
+            },
+            NewSlackAlertConfigData {
+                alert_config_id: gen_uuid("3ba21f52-32c9-41dc-924d-d18d4fc0e81c"),
+                slack_channel: "#test-channel".to_owned(),
+                slack_bot_oauth_token: "test-token".to_owned(),
+            },
+            NewSlackAlertConfigData {
+                alert_config_id: gen_uuid("8d307d12-4696-4801-bfb6-628f8f640864"),
+                slack_channel: "#test-channel".to_owned(),
+                slack_bot_oauth_token: "test-token".to_owned(),
+            },
+        ],
+    )
 }

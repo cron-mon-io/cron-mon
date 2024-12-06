@@ -74,16 +74,20 @@ intended to be ran within the application container of development container.
 Both `Makefile`s have mostly the same commands, with the exception of the following commands that
 only the root-level `Makefile` has:
 
-- `install`: Builds all application containers, installs the required Node modules in the Vue
-  application and sets up a local PostgreSQL database with test data.
+- `install`: Builds all application containers and sets up a local PostgreSQL database with test data*.
 - `build-containers`: Builds all application containers.
 - `seed`: Remove all data from the local database and insert the test data (this is the same test
-  data that get's written to the local database during `make install`).
+  data that get's written to the local database during `make install`)*.
 - `shell`: Open a `bash` shell on the application container, where you can use the _other_
   `Makefile` to run commands without the overhead of spinning up containers for each command.
 - `delete-postgres-volume`: Remove the Docker volume being used to make PostgreSQL data persist.
   This can be handy is you run into any problems with your local database and you just want to trash
   it and start again. The next time the database container runs this will be recreated naturally
+
+> [!NOTE]
+> \* - Seeding the local database with test data requires a `.env` file to be present at the root of the project, containing the following environment variables:
+> - `SLACK_CHANNEL`: A Slack channel to send Slack alerts to (can be empty if not using Slack integration)
+> - `SLACK_TOKEN`: A Slack Bot OAuth token for sending SLack alerts (can be empty if not using Slack integration)
 
 The following commands are present in both `Makefile`s:
 
