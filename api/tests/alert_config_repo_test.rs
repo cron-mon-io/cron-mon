@@ -82,6 +82,10 @@ async fn test_get(#[future] infrastructure: Infrastructure) {
 
     let alert_config = should_be_some.unwrap();
     assert_eq!(alert_config.name, "Test Slack alert (for lates)");
+    assert_eq!(
+        alert_config.monitor_ids,
+        vec![gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36")]
+    )
 }
 
 #[rstest]
@@ -90,7 +94,7 @@ async fn test_save_with_new(#[future] infrastructure: Infrastructure) {
     let infra = infrastructure.await;
     let mut repo = AlertConfigRepository::new(&infra.pool);
 
-    let new_alert_config = AlertConfig::new_slack_config(
+    let mut new_alert_config = AlertConfig::new_slack_config(
         "New config".to_string(),
         "foo".to_string(),
         false,
@@ -99,6 +103,10 @@ async fn test_save_with_new(#[future] infrastructure: Infrastructure) {
         "#new-channel".to_string(),
         "new-test-token".to_string(),
     );
+    new_alert_config.monitor_ids = vec![
+        gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
+        gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a"),
+    ];
 
     repo.save(&new_alert_config).await.unwrap();
     assert_eq!(repo.all("foo").await.unwrap().len(), 4);
@@ -117,6 +125,10 @@ async fn test_save_with_new(#[future] infrastructure: Infrastructure) {
     assert_eq!(new_alert_config.on_late, read_new_alert_config.on_late);
     assert_eq!(new_alert_config.on_error, read_new_alert_config.on_error);
     assert_eq!(new_alert_config.type_, read_new_alert_config.type_);
+    assert_eq!(
+        new_alert_config.monitor_ids,
+        read_new_alert_config.monitor_ids
+    );
 }
 
 #[rstest]
@@ -134,6 +146,10 @@ async fn test_save_with_existing(#[future] infrastructure: Infrastructure) {
     alert_config.active = false;
     alert_config.on_late = false;
     alert_config.on_error = false;
+    alert_config.monitor_ids = vec![
+        gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a"),
+        gen_uuid("cc6cf74e-b25d-4c8c-94a6-914e3f139c14"),
+    ];
 
     repo.save(&alert_config).await.unwrap();
     assert_eq!(repo.all("foo").await.unwrap().len(), 3);
@@ -149,6 +165,7 @@ async fn test_save_with_existing(#[future] infrastructure: Infrastructure) {
     assert_eq!(alert_config.on_late, read_alert_config.on_late);
     assert_eq!(alert_config.on_error, read_alert_config.on_error);
     assert_eq!(alert_config.type_, read_alert_config.type_);
+    assert_eq!(alert_config.monitor_ids, read_alert_config.monitor_ids);
 }
 
 #[rstest]
