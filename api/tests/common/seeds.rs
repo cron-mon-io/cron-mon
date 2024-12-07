@@ -1,5 +1,5 @@
 use cron_mon_api::infrastructure::models::{
-    alert_config::{NewAlertConfigData, NewSlackAlertConfigData},
+    alert_config::{MonitorAlertConfigData, NewAlertConfigData, NewSlackAlertConfigData},
     api_key::ApiKeyData,
     job::JobData,
     monitor::MonitorData,
@@ -137,7 +137,11 @@ pub fn api_key_seeds() -> Vec<ApiKeyData> {
     ]
 }
 
-pub fn alert_config_seeds() -> (Vec<NewAlertConfigData>, Vec<NewSlackAlertConfigData>) {
+pub fn alert_config_seeds() -> (
+    Vec<NewAlertConfigData>,
+    Vec<NewSlackAlertConfigData>,
+    Vec<MonitorAlertConfigData>,
+) {
     (
         vec![
             NewAlertConfigData {
@@ -183,6 +187,28 @@ pub fn alert_config_seeds() -> (Vec<NewAlertConfigData>, Vec<NewSlackAlertConfig
                 alert_config_id: gen_uuid("8d307d12-4696-4801-bfb6-628f8f640864"),
                 slack_channel: "#test-channel".to_owned(),
                 slack_bot_oauth_token: "test-token".to_owned(),
+            },
+        ],
+        vec![
+            MonitorAlertConfigData {
+                monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
+                alert_config_id: gen_uuid("fadd7266-648b-4102-8f85-c768655f4297"),
+            },
+            MonitorAlertConfigData {
+                monitor_id: gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a"),
+                alert_config_id: gen_uuid("3ba21f52-32c9-41dc-924d-d18d4fc0e81c"),
+            },
+            MonitorAlertConfigData {
+                monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
+                alert_config_id: gen_uuid("3ba21f52-32c9-41dc-924d-d18d4fc0e81c"),
+            },
+            MonitorAlertConfigData {
+                monitor_id: gen_uuid("cc6cf74e-b25d-4c8c-94a6-914e3f139c14"),
+                alert_config_id: gen_uuid("3ba21f52-32c9-41dc-924d-d18d4fc0e81c"),
+            },
+            MonitorAlertConfigData {
+                monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
+                alert_config_id: gen_uuid("8d307d12-4696-4801-bfb6-628f8f640864"),
             },
         ],
     )

@@ -15,6 +15,9 @@ impl<'r> Responder<'r, 'static> for Error {
             Error::ApiKeyNotFound(_) => (Status::NotFound, "API Key Not Found"),
             Error::JobNotFound(_, _) => (Status::NotFound, "Job Not Found"),
             Error::JobAlreadyFinished(_) => (Status::BadRequest, "Job Already Finished"),
+            Error::AlertConfigurationError(_) => {
+                (Status::InternalServerError, "Alert Configuration Error")
+            }
             // Both of these could either be server-side or client-side. For now we'll handle the
             // client providing invalid data outside of where we return these, allowing us to
             // default to server-side errors.
@@ -84,6 +87,13 @@ mod tests {
         )))
     }
 
+    #[rocket::get("/alert_config_error")]
+    fn alert_config_error() -> Result<(), Error> {
+        Err(Error::AlertConfigurationError(
+            "something went wrong".to_string(),
+        ))
+    }
+
     #[rocket::get("/invalid_monitor")]
     fn invalid_monitor() -> Result<(), Error> {
         Err(Error::InvalidMonitor("invalid monitor".to_string()))
@@ -123,6 +133,7 @@ mod tests {
                 key_not_found,
                 job_not_found,
                 job_already_finished,
+                alert_config_error,
                 invalid_monitor,
                 invalid_job,
                 invalid_alert_config,
@@ -223,6 +234,24 @@ mod tests {
                     "code": 400,
                     "reason": "Job Already Finished",
                     "description": "Job('01a92c6c-6803-409d-b675-022fff62575a') is already finished"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_alert_config_error(test_client: Client) {
+        let response = test_client.get("/alert_config_error").dispatch();
+
+        assert_eq!(response.status(), Status::InternalServerError);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 500,
+                    "reason": "Alert Configuration Error",
+                    "description": "Failed to configure alert: something went wrong"
                 }
             })
         );

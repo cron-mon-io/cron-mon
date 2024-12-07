@@ -4,7 +4,7 @@ use wiremock::MockServer;
 
 use cron_mon_api::infrastructure::database::{run_migrations, DbPool};
 use cron_mon_api::infrastructure::models::{
-    alert_config::{NewAlertConfigData, NewSlackAlertConfigData},
+    alert_config::{MonitorAlertConfigData, NewAlertConfigData, NewSlackAlertConfigData},
     api_key::ApiKeyData,
     job::JobData,
     monitor::MonitorData,
@@ -45,7 +45,11 @@ impl Infrastructure {
         monitor_seeds: Vec<MonitorData>,
         job_seeds: Vec<JobData>,
         api_key_seeds: Vec<ApiKeyData>,
-        alert_config_seeds: (Vec<NewAlertConfigData>, Vec<NewSlackAlertConfigData>),
+        alert_config_seeds: (
+            Vec<NewAlertConfigData>,
+            Vec<NewSlackAlertConfigData>,
+            Vec<MonitorAlertConfigData>,
+        ),
     ) -> Self {
         Self::new(monitor_seeds, job_seeds, api_key_seeds, alert_config_seeds).await
     }
@@ -54,7 +58,11 @@ impl Infrastructure {
         monitor_seeds: Vec<MonitorData>,
         job_seeds: Vec<JobData>,
         api_key_seeds: Vec<ApiKeyData>,
-        alert_config_seeds: (Vec<NewAlertConfigData>, Vec<NewSlackAlertConfigData>),
+        alert_config_seeds: (
+            Vec<NewAlertConfigData>,
+            Vec<NewSlackAlertConfigData>,
+            Vec<MonitorAlertConfigData>,
+        ),
     ) -> Self {
         let container = postgres_container().await;
 
