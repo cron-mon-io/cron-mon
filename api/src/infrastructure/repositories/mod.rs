@@ -1,4 +1,5 @@
 pub mod alert_config_repo;
+pub mod alert_configs;
 pub mod api_key_repo;
 pub mod api_keys;
 pub mod monitor;

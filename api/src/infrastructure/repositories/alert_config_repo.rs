@@ -15,6 +15,7 @@ use crate::infrastructure::models::alert_config::NewSlackAlertConfigData;
 use crate::infrastructure::models::alert_config::{
     AlertConfigData, MonitorAlertConfigData, NewAlertConfigData,
 };
+use crate::infrastructure::repositories::alert_configs::GetByMonitors;
 use crate::infrastructure::repositories::Repository;
 
 macro_rules! build_polymorphic_query {
@@ -128,6 +129,58 @@ impl<'a> AlertConfigRepository<'a> {
 
 #[async_trait]
 #[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
+impl<'a> GetByMonitors for AlertConfigRepository<'a> {
+    async fn get_by_monitors(
+        &mut self,
+        monitor_ids: &[Uuid],
+        tenant: &str,
+    ) -> Result<Vec<AlertConfig>, Error> {
+        let mut connection = get_connection(self.pool).await?;
+        let (alert_config_datas, monitor_alert_config_datas) = connection
+            .transaction::<(Vec<AlertConfigData>, Vec<MonitorAlertConfigData>), DieselError, _>(
+                |conn| {
+                    Box::pin(async move {
+                        // TODO: Remove some of the duplication here with the `all` method.
+                        let alert_configs: Vec<AlertConfigData> = build_polymorphic_query!()
+                            .inner_join(
+                                monitor_alert_config::table
+                                    .on(monitor_alert_config::alert_config_id
+                                        .eq(alert_config::alert_config_id)),
+                            )
+                            .filter(
+                                alert_config::tenant
+                                    .eq(tenant)
+                                    .and(monitor_alert_config::monitor_id.eq_any(monitor_ids)),
+                            )
+                            .load(conn)
+                            .await?;
+
+                        let monitor_alert_configs =
+                            MonitorAlertConfigData::belonging_to(&alert_configs)
+                                .select(MonitorAlertConfigData::as_select())
+                                .load(conn)
+                                .await?;
+
+                        Ok((alert_configs, monitor_alert_configs))
+                    })
+                },
+            )
+            .await
+            .map_err(|err| Error::RepositoryError(err.to_string()))?;
+
+        Ok(monitor_alert_config_datas
+            .grouped_by(&alert_config_datas)
+            .into_iter()
+            .zip(alert_config_datas)
+            .map(|(monitor_alert_config_datas, alert_config_datas)| {
+                self.db_to_model(&alert_config_datas, &monitor_alert_config_datas)
+            })
+            .collect::<Result<Vec<AlertConfig>, Error>>()?)
+    }
+}
+
+#[async_trait]
+#[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     async fn get(
         &mut self,
@@ -179,6 +232,8 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
             .transaction::<(Vec<AlertConfigData>, Vec<MonitorAlertConfigData>), DieselError, _>(
                 |conn| {
                     Box::pin(async move {
+                        // TODO: Remove some of the duplication here with the `get_by_monitors`
+                        // method.
                         let alert_configs: Vec<AlertConfigData> = build_polymorphic_query!()
                             .filter(alert_config::tenant.eq(tenant))
                             .load(conn)
