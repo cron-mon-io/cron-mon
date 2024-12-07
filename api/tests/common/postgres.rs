@@ -6,10 +6,10 @@ use testcontainers_modules::postgres::Postgres;
 
 use cron_mon_api::infrastructure::database::{create_connection_pool, DbPool};
 use cron_mon_api::infrastructure::db_schema::{
-    alert_config, api_key, job, monitor, slack_alert_config,
+    alert_config, api_key, job, monitor, monitor_alert_config, slack_alert_config,
 };
 use cron_mon_api::infrastructure::models::{
-    alert_config::{NewAlertConfigData, NewSlackAlertConfigData},
+    alert_config::{MonitorAlertConfigData, NewAlertConfigData, NewSlackAlertConfigData},
     api_key::ApiKeyData,
     job::JobData,
     monitor::MonitorData,
@@ -44,7 +44,11 @@ pub async fn seed_db(
     monitor_seeds: &Vec<MonitorData>,
     job_seeds: &Vec<JobData>,
     api_key_seeds: &Vec<ApiKeyData>,
-    alert_config_seeds: &(Vec<NewAlertConfigData>, Vec<NewSlackAlertConfigData>),
+    alert_config_seeds: &(
+        Vec<NewAlertConfigData>,
+        Vec<NewSlackAlertConfigData>,
+        Vec<MonitorAlertConfigData>,
+    ),
 ) -> DbPool {
     let pool = create_connection_pool().expect("Failed to setup DB connection pool");
 
@@ -73,7 +77,8 @@ pub async fn seed_db(
         .await
         .expect("Failed to seed api_keys");
 
-    let (alert_config_seeds, slack_alert_config_seeds) = alert_config_seeds;
+    let (alert_config_seeds, slack_alert_config_seeds, monitor_alert_config_seeds) =
+        alert_config_seeds;
     diesel::insert_into(alert_config::table)
         .values(alert_config_seeds)
         .execute(&mut conn)
@@ -85,6 +90,12 @@ pub async fn seed_db(
         .execute(&mut conn)
         .await
         .expect("Failed to seed slack_alert_configs");
+
+    diesel::insert_into(monitor_alert_config::table)
+        .values(monitor_alert_config_seeds)
+        .execute(&mut conn)
+        .await
+        .expect("Failed to seed monitor_alert_config");
 
     pool
 }
@@ -114,4 +125,9 @@ async fn delete_existing_data(conn: &mut AsyncPgConnection) {
         .execute(conn)
         .await
         .expect("Failed to delete existing slack_alert_config data");
+
+    diesel::delete(monitor_alert_config::table)
+        .execute(conn)
+        .await
+        .expect("Failed to delete existing monitor_alert_config data");
 }

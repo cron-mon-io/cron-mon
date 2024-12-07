@@ -189,6 +189,7 @@ async fn test_loading_invalid_config() {
                 on_error: false,
             }],
             vec![],
+            vec![],
         ),
     )
     .await;
