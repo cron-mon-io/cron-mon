@@ -80,8 +80,8 @@ async fn test_get(#[future] infrastructure: Infrastructure) {
     assert!(wrong_tenant.is_none());
     assert!(should_be_some.is_some());
 
-    let monitor = should_be_some.unwrap();
-    assert_eq!(monitor.name, "Test Slack alert (for lates)");
+    let alert_config = should_be_some.unwrap();
+    assert_eq!(alert_config.name, "Test Slack alert (for lates)");
 }
 
 #[rstest]
@@ -194,13 +194,13 @@ async fn test_loading_invalid_config() {
     )
     .await;
 
-    // Attempt to retrieve that monitor.
+    // Attempt to retrieve that alert config.
     let mut repo = AlertConfigRepository::new(&infra.pool);
     let alert_config_result = repo
         .get(gen_uuid("027820c0-ab21-47cd-bff0-bc298b3e6646"), "foo")
         .await;
 
-    // Ensure that the monitor is not returned.
+    // Ensure that the alert config is not returned.
     assert_eq!(
         alert_config_result,
         Err(Error::InvalidAlertConfig(
