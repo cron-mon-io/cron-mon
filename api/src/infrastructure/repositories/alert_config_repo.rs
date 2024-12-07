@@ -3,14 +3,15 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
-use diesel_async::AsyncConnection;
-use diesel_async::RunQueryDsl;
+use diesel_async::pooled_connection::deadpool::Object;
+use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use uuid::Uuid;
 
 use crate::domain::models::alert_config::AlertConfig;
 use crate::errors::Error;
 use crate::infrastructure::database::{get_connection, DbPool};
-use crate::infrastructure::db_schema::{alert_config, slack_alert_config};
+use crate::infrastructure::db_schema::{alert_config, monitor_alert_config, slack_alert_config};
+use crate::infrastructure::models::alert_config::NewSlackAlertConfigData;
 use crate::infrastructure::models::alert_config::{
     AlertConfigData, MonitorAlertConfigData, NewAlertConfigData,
 };
@@ -60,6 +61,68 @@ impl<'a> AlertConfigRepository<'a> {
         self.data
             .insert(alert_config.alert_config_id, alert_config.clone());
         Ok(alert_config)
+    }
+
+    async fn update(
+        &mut self,
+        conn: &mut Object<AsyncPgConnection>,
+        alert_config_data: &NewAlertConfigData,
+        slack_alert_config_data: &NewSlackAlertConfigData,
+        monitor_alert_configs: &[MonitorAlertConfigData],
+    ) -> Result<(), DieselError> {
+        diesel::update(alert_config_data)
+            .set(alert_config_data)
+            .execute(conn)
+            .await?;
+        diesel::update(slack_alert_config_data)
+            .set(slack_alert_config_data)
+            .execute(conn)
+            .await?;
+
+        // Delete all monitor_alert_configs for the alert_config and insert the new ones. This is
+        // inefficient in some scenarios, like when the list of monitors an alert is configured for
+        // hasn't changed, since we'll be doing a DELETE and an INSERT unneccessarily, but it's the
+        // simplest way to handle this for now, and it's not expected to be a common operation, or
+        // that there'll be a large amount of data in either tables.
+        diesel::delete(
+            monitor_alert_config::table.filter(
+                monitor_alert_config::alert_config_id.eq(alert_config_data.alert_config_id),
+            ),
+        )
+        .execute(conn)
+        .await?;
+
+        diesel::insert_into(monitor_alert_config::table)
+            .values(monitor_alert_configs)
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn insert(
+        &mut self,
+        conn: &mut Object<AsyncPgConnection>,
+        alert_config_data: &NewAlertConfigData,
+        slack_alert_config_data: &NewSlackAlertConfigData,
+        monitor_alert_configs: &[MonitorAlertConfigData],
+    ) -> Result<(), DieselError> {
+        diesel::insert_into(alert_config::table)
+            .values(alert_config_data)
+            .execute(conn)
+            .await?;
+
+        diesel::insert_into(slack_alert_config::table)
+            .values(slack_alert_config_data)
+            .execute(conn)
+            .await?;
+
+        diesel::insert_into(monitor_alert_config::table)
+            .values(monitor_alert_configs)
+            .execute(conn)
+            .await?;
+
+        Ok(())
     }
 }
 
@@ -145,7 +208,7 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     }
 
     async fn save(&mut self, alert_config: &AlertConfig) -> Result<(), Error> {
-        let (alert_config_data, _, slack_alert_config_data) =
+        let (alert_config_data, monitor_alert_configs, slack_alert_config_data) =
             NewAlertConfigData::from_model(alert_config);
 
         // We can do this now as we only support Slack, but when we add more integrations we will
@@ -157,24 +220,21 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
             .transaction::<(), DieselError, _>(|conn| {
                 Box::pin(async {
                     if self.data.contains_key(&alert_config.alert_config_id) {
-                        diesel::update(&alert_config_data)
-                            .set(&alert_config_data)
-                            .execute(conn)
-                            .await?;
-                        diesel::update(&slack_alert_config_data)
-                            .set(&slack_alert_config_data)
-                            .execute(conn)
-                            .await?;
+                        self.update(
+                            conn,
+                            &alert_config_data,
+                            &slack_alert_config_data,
+                            &monitor_alert_configs,
+                        )
+                        .await?;
                     } else {
-                        diesel::insert_into(alert_config::table)
-                            .values(&alert_config_data)
-                            .execute(conn)
-                            .await?;
-
-                        diesel::insert_into(slack_alert_config::table)
-                            .values(&slack_alert_config_data)
-                            .execute(conn)
-                            .await?;
+                        self.insert(
+                            conn,
+                            &alert_config_data,
+                            &slack_alert_config_data,
+                            &monitor_alert_configs,
+                        )
+                        .await?;
                     }
 
                     self.data
