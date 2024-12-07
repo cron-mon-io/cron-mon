@@ -72,6 +72,7 @@ impl AlertConfigData {
             on_late: self.on_late,
             on_error: self.on_error,
             type_: match self.type_.as_str() {
+                // TODO: This constant should be in the domain layer.
                 "slack" => {
                     if let (Some(channel), Some(token)) =
                         (&self.slack_channel, &self.slack_bot_oauth_token)
