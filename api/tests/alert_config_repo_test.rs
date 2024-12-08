@@ -9,9 +9,50 @@ use cron_mon_api::domain::models::alert_config::{AlertConfig, AlertType, SlackAl
 use cron_mon_api::errors::Error;
 use cron_mon_api::infrastructure::models::alert_config::NewAlertConfigData;
 use cron_mon_api::infrastructure::repositories::alert_config_repo::AlertConfigRepository;
+use cron_mon_api::infrastructure::repositories::alert_configs::GetByMonitors;
 use cron_mon_api::infrastructure::repositories::Repository;
 
 use common::{infrastructure, Infrastructure};
+use uuid::Uuid;
+
+#[rstest]
+#[case(
+    vec![
+        gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
+        gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a")
+    ],
+    vec![
+        "Test Slack alert (for errors)".to_owned(),
+        "Test Slack alert (for lates and errors)".to_owned(),
+        "Test Slack alert (for lates)".to_owned(),
+    ]
+)]
+#[case(
+    vec![
+        gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a")
+    ],
+    vec![
+        "Test Slack alert (for errors)".to_owned()
+    ]
+)]
+#[tokio::test]
+async fn test_get_by_monitors(
+    #[case] monitor_ids: Vec<Uuid>,
+    #[case] alert_config_names: Vec<String>,
+    #[future] infrastructure: Infrastructure,
+) {
+    let infra = infrastructure.await;
+    let mut repo = AlertConfigRepository::new(&infra.pool);
+
+    let alert_configs = repo.get_by_monitors(&monitor_ids, "foo").await.unwrap();
+
+    let names: Vec<String> = alert_configs
+        .iter()
+        .map(|alert_config| alert_config.name.clone())
+        .collect();
+
+    assert_eq!(names, alert_config_names);
+}
 
 #[rstest]
 #[tokio::test]
