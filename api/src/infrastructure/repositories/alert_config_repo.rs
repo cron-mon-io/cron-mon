@@ -167,14 +167,14 @@ impl<'a> AlertConfigRepository<'a> {
             .await
             .map_err(|err| Error::RepositoryError(err.to_string()))?;
 
-        Ok(monitor_alert_config_datas
+        monitor_alert_config_datas
             .grouped_by(&alert_config_datas)
             .into_iter()
             .zip(alert_config_datas)
             .map(|(monitor_alert_config_datas, alert_config_datas)| {
                 self.db_to_model(&alert_config_datas, &monitor_alert_config_datas)
             })
-            .collect::<Result<Vec<AlertConfig>, Error>>()?)
+            .collect::<Result<Vec<AlertConfig>, Error>>()
     }
 }
 
