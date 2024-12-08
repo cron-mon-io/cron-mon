@@ -69,9 +69,9 @@ async fn test_all(#[future] infrastructure: Infrastructure) {
     assert_eq!(
         names,
         vec![
-            "Test Slack alert (for lates)".to_owned(),
             "Test Slack alert (for errors)".to_owned(),
-            "Test Slack alert (for lates and errors)".to_owned()
+            "Test Slack alert (for lates and errors)".to_owned(),
+            "Test Slack alert (for lates)".to_owned(),
         ]
     );
 

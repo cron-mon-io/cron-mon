@@ -36,6 +36,7 @@ macro_rules! build_polymorphic_query {
                 slack_alert_config::dsl::slack_channel.nullable(),
                 slack_alert_config::dsl::slack_bot_oauth_token.nullable(),
             ))
+            .distinct()
             .into_boxed()
     }};
 }
