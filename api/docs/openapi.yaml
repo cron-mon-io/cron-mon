@@ -13,6 +13,8 @@ tags:
     description: "Operations on Jobs"
   - name: API Keys
     description: "Operations on API Keys"
+  - name: Alert Configurations
+    description: "Operations on Alert Configurations"
 
 paths:
   /api/v1/monitors:
