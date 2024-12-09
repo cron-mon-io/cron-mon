@@ -826,6 +826,64 @@ components:
             monitor_name:
               type: string
               description: The name of the Monitor that was accessed
+    AlertConfig:
+      description: "A configuration for an alert"
+      type: object
+      required:
+        - alert_config_id
+        - name
+        - active
+        - on_late
+        - on_error
+        - monitor_ids
+        - type
+      properties:
+        alert_config_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the alert configuration
+        name:
+          type: string
+          description: The name of the alert configuration
+        active:
+          type: boolean
+          description: |
+            Whether or not the alert configuration is active. Alert configurations will never trigger alerts
+            whilst they are inactive.
+        on_late:
+          type: boolean
+          description: Whether or not the configured alerts should be sent for jobs that are late
+        on_error:
+          type: boolean
+          description: Whether or not the configured alerts should be sent for jobs that exhibit an error
+        monitor_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: The IDs of Monitors that are currently using this alert configuration
+        type:
+          type: object
+          oneOf:
+            - $ref: "#/components/schemas/SlackAlertConfig"
+    SlackAlertConfig:
+      description: Slack-specific alert configuration
+      type: object
+      required:
+        - slack
+      properties:
+        slack:
+          type: object
+          required:
+            - channel
+            - token
+          properties:
+            channel:
+              type: string
+              description: The channel to send the Slack alerts to
+            token:
+              type: string
+              description: The Slack Bot OAuth token to use to send the Slack alert (via chat.postMessage)
     Paging:
       description: "Pagination information"
       type: object
