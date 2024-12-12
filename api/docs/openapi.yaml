@@ -255,7 +255,7 @@ paths:
       parameters:
         - in: path
           name: monitor_id
-          description: "The ID of the Monitor to retrieve."
+          description: "The ID of the Monitor to delete."
           required: true
           schema:
             type: string
