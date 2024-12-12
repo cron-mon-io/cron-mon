@@ -578,7 +578,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/AlertConfig"
+                      $ref: "#/components/schemas/AlertConfigSummary"
                   paging:
                     $ref: "#/components/schemas/Paging"
               example:
@@ -964,7 +964,7 @@ components:
         - active
         - on_late
         - on_error
-        - monitor_ids
+        - monitors
         - type
       properties:
         alert_config_id:
@@ -985,12 +985,22 @@ components:
         on_error:
           type: boolean
           description: Whether or not the configured alerts should be sent for jobs that exhibit an error
-        monitor_ids:
+        monitors:
           type: array
           items:
-            type: string
-            format: uuid
-          description: The IDs of Monitors that are currently using this alert configuration
+            type: object
+            required:
+              - monitor_id
+              - name
+            properties:
+              monitor_id:
+                type: string
+                format: uuid
+                description: The ID of a Monitor that is currently using this alert configuration
+              name:
+                type: string
+                description: The name of a Monitor that is currently using this alert configuration
+          description: Monitors that are using this alert configuration
         type:
           type: object
           oneOf:
@@ -1013,6 +1023,39 @@ components:
             token:
               type: string
               description: The Slack Bot OAuth token to use to send the Slack alert (via chat.postMessage)
+    AlertConfigSummary:
+      description: "A configuration for an alert"
+      type: object
+      required:
+        - alert_config_id
+        - name
+        - active
+        - on_late
+        - on_error
+        - type
+      properties:
+        alert_config_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the alert configuration
+        name:
+          type: string
+          description: The name of the alert configuration
+        active:
+          type: boolean
+          description: |
+            Whether or not the alert configuration is active. Alert configurations will never trigger alerts
+            whilst they are inactive.
+        on_late:
+          type: boolean
+          description: Whether or not the configured alerts should be sent for jobs that are late
+        on_error:
+          type: boolean
+          description: Whether or not the configured alerts should be sent for jobs that exhibit an error
+        type:
+          type: string
+          enum:
+            - slack
     Paging:
       description: "Pagination information"
       type: object
