@@ -683,6 +683,216 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
+  /api/v1/alert-configs/{alert_config_id}:
+    get:
+      tags:
+        - Alert Configurations
+      summary: Retrieve a specifc alert configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: alert_config_id
+          description: "The ID of the alert configuration to retrieve"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The retrieved alert configuration.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AlertConfig"
+              example:
+                data:
+                  alert_config_id: "557360e7-277e-4821-bd56-e4137f35dcc0"
+                  name: "Slack alerts for lates"
+                  active: true
+                  on_late: true
+                  on_error: false
+                  monitors:
+                    - monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
+                      name: "backup-db.sh"
+                    - monitor_id: "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
+                      name: "generate-orders"
+                  type:
+                    slack:
+                      channel: "#cron-alerts"
+                      token: "a-slack-bot-oauth-token"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    patch:
+      tags:
+        - Alert Configurations
+      summary: Modify an alert configuration
+      description: |
+        Note this endpoint does not facilitate adding or remove the alert to a Monitor. This can be
+        done with `POST /api/v1/monitors/{monitor_id}/alert-configs` and
+        `DELETE /api/v1/monitors/{monitor_id}/alert-configs/{alert_config_id}`, respectively.
+
+        This endpoint also does not allow for alert configurations to change type. If the `type` in the
+        request body is different to what the alert configuration is currently, a `400` is returned.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: alert_config_id
+          description: "The ID of the alert configuration to trigger a test alert for"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: "The new alert configuration information."
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - active
+                - on_late
+                - on_error
+                - type
+              properties:
+                name:
+                  type: string
+                  description: The name to give the alert configuration
+                active:
+                  type: boolean
+                  description: Whether or not the alert configuration should be active
+                on_late:
+                  type: boolean
+                  description: |
+                    Whether or not the configured alerts should be sent for jobs that are late
+                on_error:
+                  type: boolean
+                  description: |
+                    Whether or not the configured alerts should be sent for jobs that exhibit an error
+                type:
+                  type: object
+                  description: The type alert being configured
+                  oneOf:
+                    - $ref: "#/components/schemas/SlackAlertConfig"
+            example:
+              name: "Slack alerts"
+              active: true
+              on_late: true
+              on_error: true
+              type:
+                slack:
+                  channel: "#cron-alerts"
+                  token: "a-slack-bot-oauth-token"
+      responses:
+        "200":
+          description: The newly updated alert configuration.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AlertConfig"
+              example:
+                data:
+                  alert_config_id: "557360e7-277e-4821-bd56-e4137f35dcc0"
+                  name: "Slack alerts for lates"
+                  active: true
+                  on_late: true
+                  on_error: false
+                  monitors:
+                    - monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
+                      name: "backup-db.sh"
+                    - monitor_id: "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
+                      name: "generate-orders"
+                  type:
+                    slack:
+                      channel: "#cron-alerts"
+                      token: "a-slack-bot-oauth-token"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      tags:
+        - Alert Configurations
+      summary: "Delete an alert configuration"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: alert_config_id
+          description: "The ID of the alert configuration to delete."
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "The alert configuration was deleted."
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /api/v1/alert-configs/{alert_config_id}/test:
+    post:
+      tags:
+        - Alert Configurations
+      summary: Trigger a test alert
+      description: |
+        The contents of the alert depends on the alert type to a certain degree, but the message
+        within the alert will always contain "Test {name} Cron Mon alert, triggered by {email}",
+        where `name` is the name of the alert configuration, and `email` is the email address of
+        the authenticated user, obtained from the JWT in the `Authorization` header.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: alert_config_id
+          description: "The ID of the alert configuration to trigger a test alert for"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "201":
+          description: The retrieved alert configuration.
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntityError"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
 components:
   responses:
     BadRequestError:
