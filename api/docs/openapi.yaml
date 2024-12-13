@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
   description: |
-    The API for [CronMon](https://github.com/cron-mon-io/cron-mon), which allows
-    you to create, modify, and delete Monitors, as well as start and finish Jobs
-    within those Monitors.
+    The API for [CronMon](https://github.com/cron-mon-io), which facilitates creating
+    and managing Monitors, API Keys and Alert Configurations, and using Monitors to
+    start and finish jobs.
   version: 0.1.0
   title: CronMon API
 tags:
