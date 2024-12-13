@@ -22,8 +22,8 @@ pub struct AlertConfig {
     /// The type of alert.
     #[serde(rename = "type")]
     pub type_: AlertType,
-    /// A list of IDs for Monitors that this alert configuration is associated with.
-    pub monitor_ids: Vec<Uuid>,
+    /// A list of Monitors that this alert configuration is applied on.
+    pub monitors: Vec<AppliedMonitor>,
 }
 
 /// The different types of alerts that can be configured.
@@ -41,6 +41,15 @@ pub struct SlackAlertConfig {
     pub channel: String,
     /// The Slack bot-user OAuth token (for use with chat.postMessage)
     pub token: String,
+}
+
+/// Brief info on a Monitor using an alert configuration.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct AppliedMonitor {
+    /// The ID of a Monitor using an alert configuration.
+    pub monitor_id: Uuid,
+    /// The name of a Monitor using an alert configuration.
+    pub name: String,
 }
 
 impl AlertConfig {
@@ -62,7 +71,7 @@ impl AlertConfig {
             on_late,
             on_error,
             type_: AlertType::Slack(SlackAlertConfig { channel, token }),
-            monitor_ids: Vec::new(),
+            monitors: Vec::new(),
         }
     }
 
@@ -75,7 +84,10 @@ impl AlertConfig {
                 monitor.monitor_id, self.alert_config_id
             )));
         }
-        self.monitor_ids.push(monitor.monitor_id);
+        self.monitors.push(AppliedMonitor {
+            monitor_id: monitor.monitor_id,
+            name: monitor.name.clone(),
+        });
         Ok(())
     }
 
@@ -89,13 +101,19 @@ impl AlertConfig {
                 monitor.monitor_id, self.alert_config_id
             )));
         }
-        self.monitor_ids.retain(|&id| id != monitor.monitor_id);
+        self.monitors
+            .retain(|monitor_info| monitor_info.monitor_id != monitor.monitor_id);
         Ok(())
     }
 
     /// Check if the alert configuration is associated with a monitor.
     pub fn is_associated_with_monitor(&self, monitor: &Monitor) -> bool {
-        self.monitor_ids.contains(&monitor.monitor_id)
+        let monitor_ids: Vec<_> = self
+            .monitors
+            .iter()
+            .map(|monitor_info| monitor_info.monitor_id)
+            .collect();
+        monitor_ids.contains(&monitor.monitor_id)
     }
 }
 
@@ -134,26 +152,33 @@ mod tests {
                 token: "test-token".to_string(),
             })
         );
-        assert!(alert_config.monitor_ids.is_empty());
+        assert!(alert_config.monitors.is_empty());
     }
 
     #[test]
     fn test_serialisation() {
-        let alert_config = AlertConfig::new_slack_config(
-            "test-name".to_string(),
-            "test-tenant".to_string(),
-            true,
-            true,
-            true,
-            "test-channel".to_string(),
-            "test-token".to_string(),
-        );
+        let alert_config = AlertConfig {
+            alert_config_id: gen_uuid("3867e53d-9c17-4ce9-b153-eff3d8c9edec"),
+            name: "test-name".to_string(),
+            tenant: "test-tenant".to_string(),
+            active: true,
+            on_late: true,
+            on_error: true,
+            type_: AlertType::Slack(SlackAlertConfig {
+                channel: "test-channel".to_string(),
+                token: "test-token".to_string(),
+            }),
+            monitors: vec![AppliedMonitor {
+                monitor_id: gen_uuid("ba0cd705-4a5b-4635-9def-611b1143e4aa"),
+                name: "test-name".to_string(),
+            }],
+        };
 
         let value = serde_json::to_value(&alert_config).unwrap();
         assert_eq!(
             value,
             json!({
-                "alert_config_id": alert_config.alert_config_id.to_string(),
+                "alert_config_id": "3867e53d-9c17-4ce9-b153-eff3d8c9edec",
                 "name": "test-name",
                 "tenant": "test-tenant",
                 "active": true,
@@ -165,7 +190,12 @@ mod tests {
                         "token": "test-token"
                     }
                 },
-                "monitor_ids": []
+                "monitors": [
+                    {
+                        "monitor_id": "ba0cd705-4a5b-4635-9def-611b1143e4aa",
+                        "name": "test-name"
+                    }
+                ]
             })
         );
     }
@@ -184,17 +214,23 @@ mod tests {
         let monitor = Monitor::new("test-tenant".to_string(), "test-name".to_string(), 200, 100);
 
         // Sanity check to make sure we start from a clean slate.
-        assert_eq!(alert_config.monitor_ids, vec![]);
+        assert_eq!(alert_config.monitors, vec![]);
         assert!(!alert_config.is_associated_with_monitor(&monitor));
 
         alert_config.associate_monitor(&monitor).unwrap();
 
-        assert_eq!(alert_config.monitor_ids, vec![monitor.monitor_id]);
+        assert_eq!(
+            alert_config.monitors,
+            vec![AppliedMonitor {
+                monitor_id: monitor.monitor_id,
+                name: monitor.name.clone()
+            }]
+        );
         assert!(alert_config.is_associated_with_monitor(&monitor));
 
         alert_config.disassociate_monitor(&monitor).unwrap();
 
-        assert_eq!(alert_config.monitor_ids, vec![]);
+        assert_eq!(alert_config.monitors, vec![]);
         assert!(!alert_config.is_associated_with_monitor(&monitor));
     }
 
@@ -219,7 +255,10 @@ mod tests {
                 channel: "test-channel".to_string(),
                 token: "test-token".to_string(),
             }),
-            monitor_ids: vec![gen_uuid("ba0cd705-4a5b-4635-9def-611b1143e4aa")],
+            monitors: vec![AppliedMonitor {
+                monitor_id: gen_uuid("ba0cd705-4a5b-4635-9def-611b1143e4aa"),
+                name: "test-name".to_string(),
+            }],
         };
 
         let result = alert_config.associate_monitor(&monitor);
@@ -255,7 +294,7 @@ mod tests {
                 channel: "test-channel".to_string(),
                 token: "test-token".to_string(),
             }),
-            monitor_ids: vec![],
+            monitors: vec![],
         };
 
         let result = alert_config.disassociate_monitor(&monitor);
