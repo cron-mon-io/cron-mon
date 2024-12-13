@@ -8,13 +8,13 @@ info:
   title: CronMon API
 tags:
   - name: Monitors
-    description: "Operations on monitors"
+    description: Operations on monitors
   - name: Jobs
-    description: "Operations on Jobs"
+    description: Operations on Jobs
   - name: API Keys
-    description: "Operations on API Keys"
+    description: Operations on API Keys
   - name: Alert Configurations
-    description: "Operations on Alert Configurations"
+    description: Operations on Alert Configurations
   - name: Monitors x Alert Configurations
     description: Operations on Monitors and Alert Configurations
 
@@ -50,12 +50,12 @@ paths:
                 paging:
                   total: 2
                 data:
-                  - monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
-                    name: "foo-backup.sh"
+                  - monitor_id: cfe88463-5c04-4b43-b10f-1f508963cc5d
+                    name: foo-backup.sh
                     expected_duration: 1320
                     grace_duration: 300
                     last_started_job:
-                      job_id: "c72be737-1089-4e10-9da3-0076f4d4123d"
+                      job_id: c72be737-1089-4e10-9da3-0076f4d4123d
                       start_time: "2024-03-31T20:54:00"
                       end_time: null
                       succeeded: null
@@ -64,12 +64,12 @@ paths:
                       late: false
                       in_progress: true
                     last_finished_job: null
-                  - monitor_id: "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
-                    name: "analyse-bar.py"
+                  - monitor_id: e534a01a-4efe-4b8e-9b04-44a3c76b0462
+                    name: analyse-bar.py
                     expected_duration: 21600
                     grace_duration: 1800
                     last_started_job:
-                      job_id: "68c71e5a-932f-4443-9b32-dd2e66381499"
+                      job_id: 68c71e5a-932f-4443-9b32-dd2e66381499
                       start_time: "2024-03-31T12:35:00"
                       end_time: "2024-03-31T12:59:00"
                       succeeded: true
@@ -78,7 +78,7 @@ paths:
                       late: false
                       in_progress: false
                     last_finished_job:
-                      job_id: "68c71e5a-932f-4443-9b32-dd2e66381499"
+                      job_id: 68c71e5a-932f-4443-9b32-dd2e66381499
                       start_time: "2024-03-31T12:35:00"
                       end_time: "2024-03-31T12:59:00"
                       succeeded: true
@@ -93,18 +93,18 @@ paths:
     post:
       tags:
         - Monitors
-      summary: "Create a new Monitor"
+      summary: Create a new Monitor
       security:
         - bearerAuth: []
       requestBody:
-        description: "The new Monitor to create."
+        description: The new Monitor to create.
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/MonitorInfo"
             example:
-              name: "weekly-foobar"
+              name: weekly-foobar
               expected_duration: 43200
               grace_duration: 7200
       responses:
@@ -116,8 +116,8 @@ paths:
                 $ref: "#/components/schemas/Monitor"
               example:
                 data:
-                  monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
-                  name: "weekly-foobar"
+                  monitor_id: cfe88463-5c04-4b43-b10f-1f508963cc5d
+                  name: weekly-foobar
                   expected_duration: 43200
                   grace_duration: 7200
                   jobs: []
@@ -130,20 +130,20 @@ paths:
     get:
       tags:
         - Monitors
-      summary: "Retrieve a single Monitor"
+      summary: Retrieve a single Monitor
       security:
         - bearerAuth: []
       parameters:
         - in: path
           name: monitor_id
-          description: "The ID of the Monitor to retrieve."
+          description: The ID of the Monitor to retrieve.
           required: true
           schema:
             type: string
             format: uuid
       responses:
         "200":
-          description: "The retrieved Monitor."
+          description: The retrieved Monitor.
           content:
             application/json:
               schema:
@@ -155,12 +155,12 @@ paths:
                     $ref: "#/components/schemas/Monitor"
               example:
                 data:
-                  monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
-                  name: "foo-backup.sh"
+                  monitor_id: cfe88463-5c04-4b43-b10f-1f508963cc5d
+                  name: foo-backup.sh
                   expected_duration: 1320
                   grace_duration: 300
                   jobs:
-                    - job_id: "c72be737-1089-4e10-9da3-0076f4d4123d"
+                    - job_id: c72be737-1089-4e10-9da3-0076f4d4123d
                       start_time: "2024-03-31T20:54:00"
                       end_time: null
                       succeeded: null
@@ -168,7 +168,7 @@ paths:
                       duration: null
                       late: false
                       in_progress: true
-                    - job_id: "68c71e5a-932f-4443-9b32-dd2e66381499"
+                    - job_id: 68c71e5a-932f-4443-9b32-dd2e66381499
                       start_time: "2024-03-31T12:35:00"
                       end_time: "2024-03-31T12:59:00"
                       succeeded: true
@@ -185,31 +185,31 @@ paths:
     patch:
       tags:
         - Monitors
-      summary: "Modify a Monitor"
+      summary: Modify a Monitor
       security:
         - bearerAuth: []
       parameters:
         - in: path
           name: monitor_id
-          description: "The ID of the Monitor to retrieve."
+          description: The ID of the Monitor to retrieve.
           required: true
           schema:
             type: string
             format: uuid
       requestBody:
-        description: "The new Monitor information"
+        description: The new Monitor information
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/MonitorInfo"
             example:
-              name: "weekly-foobar"
+              name: weekly-foobar
               expected_duration: 43200
               grace_duration: 7200
       responses:
         "200":
-          description: "The retrieved Monitor."
+          description: The retrieved Monitor.
           content:
             application/json:
               schema:
@@ -221,12 +221,12 @@ paths:
                     $ref: "#/components/schemas/Monitor"
               example:
                 data:
-                  monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
-                  name: "foo-backup.sh"
+                  monitor_id: cfe88463-5c04-4b43-b10f-1f508963cc5d
+                  name: foo-backup.sh
                   expected_duration: 1320
                   grace_duration: 300
                   jobs:
-                    - job_id: "c72be737-1089-4e10-9da3-0076f4d4123d"
+                    - job_id: c72be737-1089-4e10-9da3-0076f4d4123d
                       start_time: "2024-03-31T20:54:00"
                       end_time: null
                       succeeded: null
@@ -234,7 +234,7 @@ paths:
                       duration: null
                       late: false
                       in_progress: true
-                    - job_id: "68c71e5a-932f-4443-9b32-dd2e66381499"
+                    - job_id: 68c71e5a-932f-4443-9b32-dd2e66381499
                       start_time: "2024-03-31T12:35:00"
                       end_time: "2024-03-31T12:59:00"
                       succeeded: true
@@ -251,20 +251,20 @@ paths:
     delete:
       tags:
         - Monitors
-      summary: "Delete a Monitor"
+      summary: Delete a Monitor
       security:
         - bearerAuth: []
       parameters:
         - in: path
           name: monitor_id
-          description: "The ID of the Monitor to delete."
+          description: The ID of the Monitor to delete.
           required: true
           schema:
             type: string
             format: uuid
       responses:
         "200":
-          description: "The Monitor was deleted."
+          description: The Monitor was deleted.
         "404":
           $ref: "#/components/responses/NotFoundError"
         "422":
@@ -276,20 +276,20 @@ paths:
     post:
       tags:
         - Jobs
-      summary: "Start a Job within a Monitor"
+      summary: Start a Job within a Monitor
       security:
         - apiKeyAuth: []
       parameters:
         - in: path
           name: monitor_id
-          description: "The ID of the Monitor the Job belongs to."
+          description: The ID of the Monitor the Job belongs to.
           required: true
           schema:
             type: string
             format: uuid
       responses:
         "200":
-          description: "A job was started."
+          description: A job was started.
           content:
             application/json:
               schema:
@@ -307,7 +307,7 @@ paths:
                         format: uuid
               example:
                 data:
-                  job_id: "c72be737-1089-4e10-9da3-0076f4d4123d"
+                  job_id: c72be737-1089-4e10-9da3-0076f4d4123d
         "404":
           $ref: "#/components/responses/NotFoundError"
         "422":
@@ -319,27 +319,27 @@ paths:
     get:
       tags:
         - Jobs
-      summary: "Retrieve a single Job within a Monitor"
+      summary: Retrieve a single Job within a Monitor
       security:
         - bearerAuth: []
       parameters:
         - in: path
           name: monitor_id
-          description: "The ID of the Monitor the Job belongs to."
+          description: The ID of the Monitor the Job belongs to.
           required: true
           schema:
             type: string
             format: uuid
         - in: path
           name: job_id
-          description: "The ID of the Job to retrieve."
+          description: The ID of the Job to retrieve.
           required: true
           schema:
             type: string
             format: uuid
       responses:
         "200":
-          description: "The retrieved Job within the Monitor."
+          description: The retrieved Job within the Monitor.
           content:
             application/json:
               schema:
@@ -351,7 +351,7 @@ paths:
                     $ref: "#/components/schemas/Job"
               example:
                 data:
-                  job_id: "c72be737-1089-4e10-9da3-0076f4d4123d"
+                  job_id: c72be737-1089-4e10-9da3-0076f4d4123d
                   start_time: "2024-03-31T20:54:00"
                   end_time: null
                   succeeded: null
@@ -370,26 +370,26 @@ paths:
     post:
       tags:
         - Jobs
-      summary: "Finish a Job within a Monitor"
+      summary: Finish a Job within a Monitor
       security:
         - apiKeyAuth: []
       parameters:
         - in: path
           name: monitor_id
-          description: "The ID of the Monitor the Job belongs to."
+          description: The ID of the Monitor the Job belongs to.
           required: true
           schema:
             type: string
             format: uuid
         - in: path
           name: job_id
-          description: "The ID of the Job to retrieve."
+          description: The ID of the Job to retrieve.
           required: true
           schema:
             type: string
             format: uuid
       requestBody:
-        description: "Information about how the Job finished"
+        description: Information about how the Job finished
         required: true
         content:
           application/json:
@@ -400,17 +400,17 @@ paths:
               properties:
                 succeeded:
                   type: boolean
-                  description: "Whether or not the job finished successfully."
+                  description: Whether or not the job finished successfully.
                 output:
                   type: string
                   nullable: true
-                  description: "Any output from the job"
+                  description: Any output from the job
             example:
               succeeded: true
-              output: "Job finished"
+              output: Job finished
       responses:
         "200":
-          description: "Job finished successfully"
+          description: Job finished successfully
           content:
             application/json:
               schema:
@@ -422,11 +422,11 @@ paths:
                     $ref: "#/components/schemas/Job"
               example:
                 data:
-                  job_id: "68c71e5a-932f-4443-9b32-dd2e66381499"
+                  job_id: 68c71e5a-932f-4443-9b32-dd2e66381499
                   start_time: "2024-03-31T12:35:00"
                   end_time: "2024-03-31T12:59:00"
                   succeeded: true
-                  output: "Job finished"
+                  output: Job finished
                   duration: 1440
                   late: false
                   in_progress: false
@@ -470,20 +470,20 @@ paths:
                 paging:
                   total: 2
                 data:
-                  - api_key_id: "773cade2-c6bd-4b3b-9974-46e412d54c25"
-                    name: "My API Key"
-                    masked: "crnmn_************tIn0"
+                  - api_key_id: 773cade2-c6bd-4b3b-9974-46e412d54c25
+                    name: My API Key
+                    masked: crnmn_************tIn0
                     last_used:
                       time: "2024-03-31T20:54:00"
-                      monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
-                      monitor_name: "foo-backup.sh"
-                  - api_key_id: "caf5389d-31ef-424a-bb65-cc3b50b62cee"
-                    name: "My API Key"
-                    masked: "crnmn_************tIn0"
+                      monitor_id: cfe88463-5c04-4b43-b10f-1f508963cc5d
+                      monitor_name: foo-backup.sh
+                  - api_key_id: caf5389d-31ef-424a-bb65-cc3b50b62cee
+                    name: My API Key
+                    masked: crnmn_************tIn0
                     last_used:
                       time: "2024-03-31T20:54:00"
-                      monitor_id: "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
-                      monitor_name: "analyse-bar.py"
+                      monitor_id: e534a01a-4efe-4b8e-9b04-44a3c76b0462
+                      monitor_name: analyse-bar.py
         "400":
           $ref: "#/components/responses/BadRequestError"
         "500":
@@ -491,11 +491,11 @@ paths:
     post:
       tags:
         - API Keys
-      summary: "Create a new API Key"
+      summary: Create a new API Key
       security:
         - bearerAuth: []
       requestBody:
-        description: "The new API Key to create."
+        description: The new API Key to create.
         required: true
         content:
           application/json:
@@ -507,7 +507,7 @@ paths:
                 name:
                   type: string
             example:
-              name: "My API Key"
+              name: My API Key
       responses:
         "201":
           description: The newly created API Key
@@ -527,7 +527,7 @@ paths:
                         type: string
               example:
                 data:
-                  key: "crnmn_eyJpYXQiOjE3Mjk4OTI1NzQuMTk1NjUxLCJ1cmwiOiJodHRwczovL3NlbnRyeS5pbyIsInJlZ2lvbl91cmwiOiJodHRwczovL3VzLnNlbnRyeS5pbyIsIm9yZyI6InRhaWxzY29tIn0"
+                  key: crnmn_eyJpYXQiOjE3Mjk4OTI1NzQuMTk1NjUxLCJ1cmwiOiJodHRwczovL3NlbnRyeS5pbyIsInJlZ2lvbl91cmwiOiJodHRwczovL3VzLnNlbnRyeS5pbyIsIm9yZyI6InRhaWxzY29tIn0
         "400":
           $ref: "#/components/responses/BadRequestError"
         "500":
@@ -537,20 +537,20 @@ paths:
     delete:
       tags:
         - API Keys
-      summary: "Delete/ revoke an API Key"
+      summary: Delete/ revoke an API Key
       security:
         - bearerAuth: []
       parameters:
         - in: path
           name: api_key_id
-          description: "The ID of the API Key to delete."
+          description: The ID of the API Key to delete.
           required: true
           schema:
             type: string
             format: uuid
       responses:
         "200":
-          description: "The API Key was deleted."
+          description: The API Key was deleted.
         "404":
           $ref: "#/components/responses/NotFoundError"
         "422":
@@ -587,28 +587,28 @@ paths:
                 paging:
                   total: 2
                 data:
-                  - alert_config_id: "557360e7-277e-4821-bd56-e4137f35dcc0"
-                    name: "Slack alerts for lates"
+                  - alert_config_id: 557360e7-277e-4821-bd56-e4137f35dcc0
+                    name: Slack alerts for lates
                     active: true
                     on_late: true
                     on_error: false
                     monitor_ids:
-                      - "cfe88463-5c04-4b43-b10f-1f508963cc5d"
-                      - "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
+                      - cfe88463-5c04-4b43-b10f-1f508963cc5d
+                      - e534a01a-4efe-4b8e-9b04-44a3c76b0462
                     type:
                       slack:
                         channel: "#cron-alerts"
-                        token: "a-slack-bot-oauth-token"
-                  - alert_config_id: "b1fd4478-46bd-4edd-adb2-5aa816784241"
-                    name: "Webhook alerts for errors"
+                        token: a-slack-bot-oauth-token
+                  - alert_config_id: b1fd4478-46bd-4edd-adb2-5aa816784241
+                    name: Webhook alerts for errors
                     active: true
                     on_late: false
                     on_error: true
                     monitor_ids:
-                      - "cfe88463-5c04-4b43-b10f-1f508963cc5d"
+                      - cfe88463-5c04-4b43-b10f-1f508963cc5d
                     type:
                       webhook:
-                        url: "http://example.com/errors/callback"
+                        url: http://example.com/errors/callback
         "400":
           $ref: "#/components/responses/BadRequestError"
         "500":
@@ -620,7 +620,7 @@ paths:
       security:
         - bearerAuth: []
       requestBody:
-        description: "The new alert configuration to create."
+        description: The new alert configuration to create.
         required: true
         content:
           application/json:
@@ -653,14 +653,14 @@ paths:
                   oneOf:
                     - $ref: "#/components/schemas/SlackAlertConfig"
             example:
-              name: "Slack alerts"
+              name: Slack alerts
               active: true
               on_late: true
               on_error: true
               type:
                 slack:
                   channel: "#cron-alerts"
-                  token: "a-slack-bot-oauth-token"
+                  token: a-slack-bot-oauth-token
       responses:
         "201":
           description: The newly created alert configuration
@@ -670,8 +670,8 @@ paths:
                 $ref: "#/components/schemas/AlertConfig"
               example:
                 data:
-                  alert_config_id: "8662e29c-65b8-4431-9fe3-3cea34d2b408"
-                  name: "Slack alerts"
+                  alert_config_id: 8662e29c-65b8-4431-9fe3-3cea34d2b408
+                  name: Slack alerts
                   active: true
                   on_late: true
                   on_error: false
@@ -679,7 +679,7 @@ paths:
                   type:
                     slack:
                       channel: "#cron-alerts"
-                      token: "a-slack-bot-oauth-token"
+                      token: a-slack-bot-oauth-token
         "400":
           $ref: "#/components/responses/BadRequestError"
         "500":
@@ -695,7 +695,7 @@ paths:
       parameters:
         - in: path
           name: alert_config_id
-          description: "The ID of the alert configuration to retrieve"
+          description: The ID of the alert configuration to retrieve
           required: true
           schema:
             type: string
@@ -716,20 +716,20 @@ paths:
                       $ref: "#/components/schemas/AlertConfig"
               example:
                 data:
-                  alert_config_id: "557360e7-277e-4821-bd56-e4137f35dcc0"
-                  name: "Slack alerts for lates"
+                  alert_config_id: 557360e7-277e-4821-bd56-e4137f35dcc0
+                  name: Slack alerts for lates
                   active: true
                   on_late: true
                   on_error: false
                   monitors:
-                    - monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
-                      name: "backup-db.sh"
-                    - monitor_id: "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
-                      name: "generate-orders"
+                    - monitor_id: cfe88463-5c04-4b43-b10f-1f508963cc5d
+                      name: backup-db.sh
+                    - monitor_id: e534a01a-4efe-4b8e-9b04-44a3c76b0462
+                      name: generate-orders
                   type:
                     slack:
                       channel: "#cron-alerts"
-                      token: "a-slack-bot-oauth-token"
+                      token: a-slack-bot-oauth-token
         "400":
           $ref: "#/components/responses/BadRequestError"
         "404":
@@ -754,13 +754,13 @@ paths:
       parameters:
         - in: path
           name: alert_config_id
-          description: "The ID of the alert configuration to trigger a test alert for"
+          description: The ID of the alert configuration to trigger a test alert for
           required: true
           schema:
             type: string
             format: uuid
       requestBody:
-        description: "The new alert configuration information."
+        description: The new alert configuration information.
         required: true
         content:
           application/json:
@@ -793,14 +793,14 @@ paths:
                   oneOf:
                     - $ref: "#/components/schemas/SlackAlertConfig"
             example:
-              name: "Slack alerts"
+              name: Slack alerts
               active: true
               on_late: true
               on_error: true
               type:
                 slack:
                   channel: "#cron-alerts"
-                  token: "a-slack-bot-oauth-token"
+                  token: a-slack-bot-oauth-token
       responses:
         "200":
           description: The newly updated alert configuration.
@@ -817,20 +817,20 @@ paths:
                       $ref: "#/components/schemas/AlertConfig"
               example:
                 data:
-                  alert_config_id: "557360e7-277e-4821-bd56-e4137f35dcc0"
-                  name: "Slack alerts for lates"
+                  alert_config_id: 557360e7-277e-4821-bd56-e4137f35dcc0
+                  name: Slack alerts for lates
                   active: true
                   on_late: true
                   on_error: false
                   monitors:
-                    - monitor_id: "cfe88463-5c04-4b43-b10f-1f508963cc5d"
-                      name: "backup-db.sh"
-                    - monitor_id: "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
-                      name: "generate-orders"
+                    - monitor_id: cfe88463-5c04-4b43-b10f-1f508963cc5d
+                      name: backup-db.sh
+                    - monitor_id: e534a01a-4efe-4b8e-9b04-44a3c76b0462
+                      name: generate-orders
                   type:
                     slack:
                       channel: "#cron-alerts"
-                      token: "a-slack-bot-oauth-token"
+                      token: a-slack-bot-oauth-token
         "400":
           $ref: "#/components/responses/BadRequestError"
         "404":
@@ -842,20 +842,20 @@ paths:
     delete:
       tags:
         - Alert Configurations
-      summary: "Delete an alert configuration"
+      summary: Delete an alert configuration
       security:
         - bearerAuth: []
       parameters:
         - in: path
           name: alert_config_id
-          description: "The ID of the alert configuration to delete."
+          description: The ID of the alert configuration to delete.
           required: true
           schema:
             type: string
             format: uuid
       responses:
         "200":
-          description: "The alert configuration was deleted."
+          description: The alert configuration was deleted.
         "404":
           $ref: "#/components/responses/NotFoundError"
         "422":
@@ -878,7 +878,7 @@ paths:
       parameters:
         - in: path
           name: alert_config_id
-          description: "The ID of the alert configuration to trigger a test alert for"
+          description: The ID of the alert configuration to trigger a test alert for
           required: true
           schema:
             type: string
@@ -905,7 +905,7 @@ paths:
       parameters:
         - in: path
           name: monitor_id
-          description: "The ID of the Monitor of which to retrieve alert configurations for"
+          description: The ID of the Monitor of which to retrieve alert configurations for
           required: true
           schema:
             type: string
@@ -931,28 +931,28 @@ paths:
                 paging:
                   total: 2
                 data:
-                  - alert_config_id: "557360e7-277e-4821-bd56-e4137f35dcc0"
-                    name: "Slack alerts for lates"
+                  - alert_config_id: 557360e7-277e-4821-bd56-e4137f35dcc0
+                    name: Slack alerts for lates
                     active: true
                     on_late: true
                     on_error: false
                     monitor_ids:
-                      - "cfe88463-5c04-4b43-b10f-1f508963cc5d"
-                      - "e534a01a-4efe-4b8e-9b04-44a3c76b0462"
+                      - cfe88463-5c04-4b43-b10f-1f508963cc5d
+                      - e534a01a-4efe-4b8e-9b04-44a3c76b0462
                     type:
                       slack:
                         channel: "#cron-alerts"
-                        token: "a-slack-bot-oauth-token"
-                  - alert_config_id: "b1fd4478-46bd-4edd-adb2-5aa816784241"
-                    name: "Webhook alerts for errors"
+                        token: a-slack-bot-oauth-token
+                  - alert_config_id: b1fd4478-46bd-4edd-adb2-5aa816784241
+                    name: Webhook alerts for errors
                     active: true
                     on_late: false
                     on_error: true
                     monitor_ids:
-                      - "cfe88463-5c04-4b43-b10f-1f508963cc5d"
+                      - cfe88463-5c04-4b43-b10f-1f508963cc5d
                     type:
                       webhook:
-                        url: "http://example.com/errors/callback"
+                        url: http://example.com/errors/callback
         "400":
           $ref: "#/components/responses/BadRequestError"
         "404":
@@ -970,13 +970,13 @@ paths:
       parameters:
         - in: path
           name: monitor_id
-          description: "The ID of the Monitor to apply alert configurations to"
+          description: The ID of the Monitor to apply alert configurations to
           required: true
           schema:
             type: string
             format: uuid
       requestBody:
-        description: "The new alert configuration information."
+        description: The new alert configuration information.
         required: true
         content:
           application/json:
@@ -993,9 +993,9 @@ paths:
                   description: The IDs of the alert configurations to apply to the Monitor
             example:
               alert_config_ids:
-                - "be719a93-4b9c-496d-a8a2-ee2616d48db5"
-                - "ac24ebd6-3b51-42c6-9156-777b63fce709"
-                - "509ea633-8ec8-4ec5-9ae0-6492a7d0b984"
+                - be719a93-4b9c-496d-a8a2-ee2616d48db5
+                - ac24ebd6-3b51-42c6-9156-777b63fce709
+                - 509ea633-8ec8-4ec5-9ae0-6492a7d0b984
       responses:
         "201":
           description: The alert configurations were successfully applied to the Monitor.
@@ -1031,7 +1031,7 @@ paths:
             format: uuid
       responses:
         "200":
-          description: "The alert configuration was unapplied from the Monitor"
+          description: The alert configuration was unapplied from the Monitor
         "404":
           $ref: "#/components/responses/NotFoundError"
         "422":
@@ -1042,7 +1042,7 @@ paths:
 components:
   responses:
     BadRequestError:
-      description: "The request could not be understood by the server due to malformed syntax."
+      description: The request could not be understood by the server due to malformed syntax.
       content:
         application/json:
           schema:
@@ -1055,10 +1055,10 @@ components:
           example:
             error:
               code: 400
-              reason: "Bad request"
-              description: "The request could not be understood by the server due to malformed syntax."
+              reason: Bad request
+              description: The request could not be understood by the server due to malformed syntax.
     UnauthorizedError:
-      description: "The request requires user authentication."
+      description: The request requires user authentication.
       content:
         application/json:
           schema:
@@ -1071,10 +1071,10 @@ components:
           example:
             error:
               code: 401
-              reason: "Unauthorized"
-              description: "The request requires user authentication."
+              reason: Unauthorized
+              description: The request requires user authentication.
     NotFoundError:
-      description: "The requested resource could not be found."
+      description: The requested resource could not be found.
       content:
         application/json:
           schema:
@@ -1087,10 +1087,10 @@ components:
           example:
             error:
               code: 404
-              reason: "Not Found"
-              description: "The requested resource could not be found."
+              reason: Not Found
+              description: The requested resource could not be found.
     UnprocessableEntityError:
-      description: "The request was well-formed but was unable to be followed due to semantic errors."
+      description: The request was well-formed but was unable to be followed due to semantic errors.
       content:
         application/json:
           schema:
@@ -1103,10 +1103,10 @@ components:
           example:
             error:
               code: 422
-              reason: "nprocessable Entity"
-              description: "The request was well-formed but was unable to be followed due to semantic errors."
+              reason: Unprocessable Entity
+              description: The request was well-formed but was unable to be followed due to semantic errors.
     ServiceError:
-      description: "The server encountered an internal error while processing this request."
+      description: The server encountered an internal error while processing this request.
       content:
         application/json:
           schema:
@@ -1114,8 +1114,8 @@ components:
           example:
             error:
               code: 500
-              reason: "Internal Server Error"
-              description: "The server encountered an internal error while processing this request."
+              reason: Internal Server Error
+              description: The server encountered an internal error while processing this request.
   schemas:
     Monitor:
       description: A cronjob monitor
@@ -1247,7 +1247,7 @@ components:
           type: boolean
           description: Whether or not the job is in progress.
     MonitorInfo:
-      description: "Information required to create and modify Monitors"
+      description: Information required to create and modify Monitors
       type: object
       required:
         - name
@@ -1255,20 +1255,20 @@ components:
         - grace_duration
       properties:
         name:
-          description: "The name of the Monitor"
+          description: The name of the Monitor
           type: string
         expected_duration:
-          description: "The expected duration of the monitored job, in seconds"
+          description: The expected duration of the monitored job, in seconds
           type: integer
           format: int32
           minimum: 0
         grace_duration:
-          description: "The numbers of seconds of grace to give to the jobs duration"
+          description: The numbers of seconds of grace to give to the jobs duration
           type: integer
           format: int32
           minimum: 0
     ApiKey:
-      description: "An API key"
+      description: An API key
       type: object
       required:
         - api_key_id
@@ -1312,7 +1312,7 @@ components:
               type: string
               description: The name of the Monitor that was accessed
     AlertConfig:
-      description: "A configuration for an alert"
+      description: A configuration for an alert
       type: object
       required:
         - alert_config_id
@@ -1380,7 +1380,7 @@ components:
               type: string
               description: The Slack Bot OAuth token to use to send the Slack alert (via chat.postMessage)
     AlertConfigSummary:
-      description: "A configuration for an alert"
+      description: A configuration for an alert
       type: object
       required:
         - alert_config_id
@@ -1413,7 +1413,7 @@ components:
           enum:
             - slack
     Paging:
-      description: "Pagination information"
+      description: Pagination information
       type: object
       required:
         - total
@@ -1424,7 +1424,7 @@ components:
           minimum: 0
           description: The total number of entities in the response.
     Error:
-      description: "An error response"
+      description: An error response
       type: object
       required:
         - error
@@ -1432,7 +1432,7 @@ components:
         error:
           $ref: "#/components/schemas/ErrorInfo"
     ErrorInfo:
-      description: "Information about an error"
+      description: Information about an error
       type: object
       required:
         - code
