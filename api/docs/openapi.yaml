@@ -592,23 +592,13 @@ paths:
                     active: true
                     on_late: true
                     on_error: false
-                    monitor_ids:
-                      - cfe88463-5c04-4b43-b10f-1f508963cc5d
-                      - e534a01a-4efe-4b8e-9b04-44a3c76b0462
-                    type:
-                      slack:
-                        channel: "#cron-alerts"
-                        token: a-slack-bot-oauth-token
+                    type: slack
                   - alert_config_id: b1fd4478-46bd-4edd-adb2-5aa816784241
                     name: Webhook alerts for errors
                     active: true
                     on_late: false
                     on_error: true
-                    monitor_ids:
-                      - cfe88463-5c04-4b43-b10f-1f508963cc5d
-                    type:
-                      webhook:
-                        url: http://example.com/errors/callback
+                    type: webhook
         "400":
           $ref: "#/components/responses/BadRequestError"
         "500":
@@ -936,23 +926,13 @@ paths:
                     active: true
                     on_late: true
                     on_error: false
-                    monitor_ids:
-                      - cfe88463-5c04-4b43-b10f-1f508963cc5d
-                      - e534a01a-4efe-4b8e-9b04-44a3c76b0462
-                    type:
-                      slack:
-                        channel: "#cron-alerts"
-                        token: a-slack-bot-oauth-token
+                    type: slack
                   - alert_config_id: b1fd4478-46bd-4edd-adb2-5aa816784241
                     name: Webhook alerts for errors
                     active: true
                     on_late: false
                     on_error: true
-                    monitor_ids:
-                      - cfe88463-5c04-4b43-b10f-1f508963cc5d
-                    type:
-                      webhook:
-                        url: http://example.com/errors/callback
+                    type: webhook
         "400":
           $ref: "#/components/responses/BadRequestError"
         "404":
