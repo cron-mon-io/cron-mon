@@ -33,6 +33,9 @@ pub struct AlertConfigData {
 pub struct MonitorAlertConfigData {
     pub alert_config_id: Uuid,
     pub monitor_id: Uuid,
+    // Note that this column will be kept up to date with the `name` of the corresponding `monitor`
+    // record by the `monitor_name_update` trigger, added in the
+    // `2024-12-13-222551_add-name-to-monitor-alert-config` migration.
     pub monitor_name: String,
 }
 
