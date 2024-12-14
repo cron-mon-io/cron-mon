@@ -264,7 +264,7 @@ VALUES
 
 -- Monitor alert configs.
 INSERT INTO monitor_alert_config
-    (alert_config_id, monitor_id)
+    (alert_config_id, monitor_id, monitor_name)
 VALUES
-    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'c1bf0515-df39-448b-aa95-686360a33b36'),
-    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'f0b291fe-bd41-4787-bc2d-1329903f7a6a');
+    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'c1bf0515-df39-448b-aa95-686360a33b36', 'db-backup.py'),
+    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'f0b291fe-bd41-4787-bc2d-1329903f7a6a', 'generate-orders.sh');

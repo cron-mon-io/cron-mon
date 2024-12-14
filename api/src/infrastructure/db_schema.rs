@@ -62,6 +62,7 @@ diesel::table! {
     monitor_alert_config (alert_config_id, monitor_id) {
         alert_config_id -> Uuid,
         monitor_id -> Uuid,
+        monitor_name -> Varchar,
     }
 }
 
