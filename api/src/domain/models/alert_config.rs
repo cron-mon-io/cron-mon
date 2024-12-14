@@ -117,6 +117,14 @@ impl AlertConfig {
     }
 }
 
+impl AlertType {
+    pub fn to_string(&self) -> String {
+        match self {
+            AlertType::Slack(_) => "slack".to_owned(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -307,5 +315,14 @@ mod tests {
                     .to_string()
             ))
         );
+    }
+
+    fn test_alert_type_to_string() {
+        let alert_type = AlertType::Slack(SlackAlertConfig {
+            channel: "test-channel".to_string(),
+            token: "test-token".to_string(),
+        });
+
+        assert_eq!(alert_type.to_string(), "slack")
     }
 }
