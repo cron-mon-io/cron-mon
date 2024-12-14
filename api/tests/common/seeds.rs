@@ -193,22 +193,27 @@ pub fn alert_config_seeds() -> (
             MonitorAlertConfigData {
                 monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
                 alert_config_id: gen_uuid("fadd7266-648b-4102-8f85-c768655f4297"),
+                monitor_name: "db-backup.py".to_string(),
             },
             MonitorAlertConfigData {
                 monitor_id: gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a"),
                 alert_config_id: gen_uuid("3ba21f52-32c9-41dc-924d-d18d4fc0e81c"),
+                monitor_name: "generate-orders.sh".to_string(),
             },
             MonitorAlertConfigData {
                 monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
                 alert_config_id: gen_uuid("3ba21f52-32c9-41dc-924d-d18d4fc0e81c"),
+                monitor_name: "db-backup.py".to_string(),
             },
             MonitorAlertConfigData {
                 monitor_id: gen_uuid("cc6cf74e-b25d-4c8c-94a6-914e3f139c14"),
                 alert_config_id: gen_uuid("3ba21f52-32c9-41dc-924d-d18d4fc0e81c"),
+                monitor_name: "data-snapshot.py".to_string(),
             },
             MonitorAlertConfigData {
                 monitor_id: gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
                 alert_config_id: gen_uuid("8d307d12-4696-4801-bfb6-628f8f640864"),
+                monitor_name: "db-backup.py".to_string(),
             },
         ],
     )

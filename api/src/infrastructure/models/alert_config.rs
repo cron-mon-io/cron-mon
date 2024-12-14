@@ -1,7 +1,9 @@
 use diesel::prelude::*;
 use uuid::Uuid;
 
-use crate::domain::models::alert_config::{AlertConfig, AlertType, SlackAlertConfig};
+use crate::domain::models::alert_config::{
+    AlertConfig, AlertType, AppliedMonitor, SlackAlertConfig,
+};
 use crate::errors::Error;
 use crate::infrastructure::db_schema::{alert_config, monitor_alert_config, slack_alert_config};
 
@@ -31,6 +33,7 @@ pub struct AlertConfigData {
 pub struct MonitorAlertConfigData {
     pub alert_config_id: Uuid,
     pub monitor_id: Uuid,
+    pub monitor_name: String,
 }
 
 // Only used for writing data.
@@ -89,9 +92,12 @@ impl AlertConfigData {
                 }
                 _ => return Err(Error::InvalidAlertConfig("Unknown alert type".to_owned())),
             },
-            monitor_ids: monitor_alert_configs
+            monitors: monitor_alert_configs
                 .iter()
-                .map(|mac| mac.monitor_id)
+                .map(|mac| AppliedMonitor {
+                    monitor_id: mac.monitor_id,
+                    name: mac.monitor_name.clone(),
+                })
                 .collect(),
         })
     }
@@ -127,11 +133,12 @@ impl NewAlertConfigData {
                 on_error: alert_config.on_error,
             },
             alert_config
-                .monitor_ids
+                .monitors
                 .iter()
-                .map(|monitor_id| MonitorAlertConfigData {
+                .map(|monitor| MonitorAlertConfigData {
                     alert_config_id: alert_config.alert_config_id,
-                    monitor_id: *monitor_id,
+                    monitor_id: monitor.monitor_id,
+                    monitor_name: monitor.name.clone(),
                 })
                 .collect(),
             specific_data,
@@ -154,10 +161,12 @@ mod tests {
             MonitorAlertConfigData {
                 alert_config_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
                 monitor_id: gen_uuid("02d9fd94-48dc-40e5-b2fa-fa6b66eaf2ca"),
+                monitor_name: "foo-monitor".to_string(),
             },
             MonitorAlertConfigData {
                 alert_config_id: gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
                 monitor_id: gen_uuid("70810d10-1d86-4bde-b29d-b1f490528675"),
+                monitor_name: "bar-monitor".to_string(),
             },
         ];
         let alert_config_data = AlertConfigData {
@@ -191,10 +200,16 @@ mod tests {
             })
         );
         assert_eq!(
-            alert_config.monitor_ids,
+            alert_config.monitors,
             vec![
-                gen_uuid("02d9fd94-48dc-40e5-b2fa-fa6b66eaf2ca"),
-                gen_uuid("70810d10-1d86-4bde-b29d-b1f490528675")
+                AppliedMonitor {
+                    monitor_id: gen_uuid("02d9fd94-48dc-40e5-b2fa-fa6b66eaf2ca"),
+                    name: "foo-monitor".to_string()
+                },
+                AppliedMonitor {
+                    monitor_id: gen_uuid("70810d10-1d86-4bde-b29d-b1f490528675"),
+                    name: "bar-monitor".to_string()
+                }
             ]
         );
     }
@@ -258,9 +273,15 @@ mod tests {
                 channel: "test-channel".to_owned(),
                 token: "test-token".to_owned(),
             }),
-            monitor_ids: vec![
-                gen_uuid("02d9fd94-48dc-40e5-b2fa-fa6b66eaf2ca"),
-                gen_uuid("70810d10-1d86-4bde-b29d-b1f490528675"),
+            monitors: vec![
+                AppliedMonitor {
+                    monitor_id: gen_uuid("02d9fd94-48dc-40e5-b2fa-fa6b66eaf2ca"),
+                    name: "foo-monitor".to_string(),
+                },
+                AppliedMonitor {
+                    monitor_id: gen_uuid("70810d10-1d86-4bde-b29d-b1f490528675"),
+                    name: "bar-monitor".to_string(),
+                },
             ],
         };
 
