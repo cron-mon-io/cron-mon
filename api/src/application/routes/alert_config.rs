@@ -28,6 +28,7 @@ pub async fn list_alert_configs(pool: &State<DbPool>, jwt: Jwt) -> Result<Value,
             "active": ac.active,
             "on_late": ac.on_late,
             "on_error": ac.on_error,
+            "monitors": ac.monitors.len(),
             "type": ac.type_.to_string()
         }))
         .collect::<Value>(),

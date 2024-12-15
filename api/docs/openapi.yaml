@@ -592,12 +592,14 @@ paths:
                     active: true
                     on_late: true
                     on_error: false
+                    monitors: 2
                     type: slack
                   - alert_config_id: b1fd4478-46bd-4edd-adb2-5aa816784241
                     name: Webhook alerts for errors
                     active: true
                     on_late: false
                     on_error: true
+                    monitors: 1
                     type: webhook
         "400":
           $ref: "#/components/responses/BadRequestError"
@@ -926,12 +928,14 @@ paths:
                     active: true
                     on_late: true
                     on_error: false
+                    monitors: 2
                     type: slack
                   - alert_config_id: b1fd4478-46bd-4edd-adb2-5aa816784241
                     name: Webhook alerts for errors
                     active: true
                     on_late: false
                     on_error: true
+                    monitors: 1
                     type: webhook
         "400":
           $ref: "#/components/responses/BadRequestError"
@@ -1368,6 +1372,7 @@ components:
         - active
         - on_late
         - on_error
+        - monitors
         - type
       properties:
         alert_config_id:
@@ -1388,6 +1393,9 @@ components:
         on_error:
           type: boolean
           description: Whether or not the configured alerts should be sent for jobs that exhibit an error
+        monitors:
+          type: number
+          description: The number of Monitors this alert configuration is applied to
         type:
           type: string
           enum:
