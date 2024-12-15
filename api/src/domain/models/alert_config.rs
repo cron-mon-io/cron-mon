@@ -317,6 +317,7 @@ mod tests {
         );
     }
 
+    #[test]
     fn test_alert_type_to_string() {
         let alert_type = AlertType::Slack(SlackAlertConfig {
             channel: "test-channel".to_string(),
