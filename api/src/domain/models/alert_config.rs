@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -117,10 +119,10 @@ impl AlertConfig {
     }
 }
 
-impl AlertType {
-    pub fn to_string(&self) -> String {
+impl Display for AlertType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            AlertType::Slack(_) => "slack".to_owned(),
+            AlertType::Slack(_) => write!(f, "slack"),
         }
     }
 }
