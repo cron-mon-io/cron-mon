@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
+use crate::application::services::get_fetch_alert_configs_service;
 use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
 use crate::infrastructure::database::DbPool;
@@ -50,4 +51,31 @@ pub async fn get_alert_config(
     } else {
         Err(Error::AlertConfigNotFound(alert_config_id))
     }
+}
+
+#[rocket::get("/monitors/<monitor_id>/alert-configs")]
+pub async fn get_alert_configs_for_monitor(
+    pool: &State<DbPool>,
+    jwt: Jwt,
+    monitor_id: Uuid,
+) -> Result<Value, Error> {
+    let mut fetch_alert_configs = get_fetch_alert_configs_service(pool);
+
+    let alert_configs = fetch_alert_configs
+        .for_monitor(monitor_id, &jwt.tenant)
+        .await?;
+
+    Ok(json!({
+        "data": alert_configs.iter().map(|ac| json!({
+            "alert_config_id": ac.alert_config_id,
+            "name": ac.name,
+            "active": ac.active,
+            "on_late": ac.on_late,
+            "on_error": ac.on_error,
+            "monitors": ac.monitors.len(),
+            "type": ac.type_.to_string()
+        }))
+        .collect::<Value>(),
+        "paging": Paging { total: alert_configs.len() }
+    }))
 }
