@@ -242,7 +242,7 @@ mod tests {
                 "error": {
                     "code": 404,
                     "reason": "Alert Configuration Not Found",
-                    "description": "Failed to find alert configuratin with id \
+                    "description": "Failed to find alert configuration with id \
                                     'b6a32bd4-1d3e-4943-9150-a62aa84bc10a'"
                 }
             })

@@ -38,7 +38,7 @@ impl Display for Error {
             Self::AlertConfigNotFound(alert_config_id) => {
                 write!(
                     f,
-                    "Failed to alert configuration with id '{alert_config_id}'"
+                    "Failed to find alert configuration with id '{alert_config_id}'"
                 )
             }
             Self::JobAlreadyFinished(job_id) => {
