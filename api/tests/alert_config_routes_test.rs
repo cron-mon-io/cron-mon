@@ -117,6 +117,36 @@ async fn test_get_alert_config(#[future] infrastructure: Infrastructure) {
 
 #[rstest]
 #[tokio::test]
+async fn test_get_non_existent_alert_config(#[future] infrastructure: Infrastructure) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
+
+    let response = client
+        .get("/api/v1/alert-configs/f794d1bf-91ef-430b-8caa-44e5098f8270")
+        .header(create_auth_header("test-kid", "test-user", "foo"))
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::NotFound);
+    assert_eq!(response.content_type(), Some(ContentType::JSON));
+
+    let data = response.into_json::<Value>().await.unwrap();
+
+    assert_eq!(
+        data,
+        json!({
+            "error": {
+                "code": 404,
+                "reason": "Alert Configuration Not Found",
+                "description": "Failed to find alert configuration with id \
+                    'f794d1bf-91ef-430b-8caa-44e5098f8270'"
+            }
+        })
+    );
+}
+
+#[rstest]
+#[tokio::test]
 async fn test_list_alert_configs_for_monitor(#[future] infrastructure: Infrastructure) {
     let mut infra = infrastructure.await;
     let client = infra.test_api_client("test-kid").await;
@@ -166,6 +196,38 @@ async fn test_list_alert_configs_for_monitor(#[future] infrastructure: Infrastru
             ],
             "paging": {
                 "total": 3
+            }
+        })
+    );
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_list_alert_configs_for_non_existent_monitor(
+    #[future] infrastructure: Infrastructure,
+) {
+    let mut infra = infrastructure.await;
+    let client = infra.test_api_client("test-kid").await;
+
+    let response = client
+        .get("/api/v1/monitors/e9ec1c3c-5645-4b0a-9b49-fc7b1aa7b7ef/alert-configs")
+        .header(create_auth_header("test-kid", "test-user", "foo"))
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::NotFound);
+    assert_eq!(response.content_type(), Some(ContentType::JSON));
+
+    let data = response.into_json::<Value>().await.unwrap();
+
+    assert_eq!(
+        data,
+        json!({
+            "error": {
+                "code": 404,
+                "reason": "Monitor Not Found",
+                "description": "Failed to find monitor with id \
+                    'e9ec1c3c-5645-4b0a-9b49-fc7b1aa7b7ef'"
             }
         })
     );
