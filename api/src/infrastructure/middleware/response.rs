@@ -14,6 +14,7 @@ impl<'r> Responder<'r, 'static> for Error {
             Error::MonitorNotFound(_) => (Status::NotFound, "Monitor Not Found"),
             Error::ApiKeyNotFound(_) => (Status::NotFound, "API Key Not Found"),
             Error::JobNotFound(_, _) => (Status::NotFound, "Job Not Found"),
+            Error::AlertConfigNotFound(_) => (Status::NotFound, "Alert Configuration Not Found"),
             Error::JobAlreadyFinished(_) => (Status::BadRequest, "Job Already Finished"),
             Error::AlertConfigurationError(_) => {
                 (Status::InternalServerError, "Alert Configuration Error")
@@ -80,6 +81,13 @@ mod tests {
         ))
     }
 
+    #[rocket::get("/alert_config_not_found")]
+    fn alert_config_not_found() -> Result<(), Error> {
+        Err(Error::AlertConfigNotFound(gen_uuid(
+            "b6a32bd4-1d3e-4943-9150-a62aa84bc10a",
+        )))
+    }
+
     #[rocket::get("/job_already_finished")]
     fn job_already_finished() -> Result<(), Error> {
         Err(Error::JobAlreadyFinished(gen_uuid(
@@ -132,6 +140,7 @@ mod tests {
                 monitor_not_found,
                 key_not_found,
                 job_not_found,
+                alert_config_not_found,
                 job_already_finished,
                 alert_config_error,
                 invalid_monitor,
@@ -216,6 +225,25 @@ mod tests {
                     "description": "Failed to find job with id \
                                     '01a92c6c-6803-409d-b675-022fff62575a' in \
                                     Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3')"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_alert_config_not_found(test_client: Client) {
+        let response = test_client.get("/alert_config_not_found").dispatch();
+
+        assert_eq!(response.status(), Status::NotFound);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 404,
+                    "reason": "Alert Configuration Not Found",
+                    "description": "Failed to find alert configuration with id \
+                                    'b6a32bd4-1d3e-4943-9150-a62aa84bc10a'"
                 }
             })
         );

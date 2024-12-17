@@ -1,5 +1,6 @@
 pub mod create_monitor;
 pub mod delete_monitor;
+pub mod fetch_alert_configs;
 pub mod fetch_job;
 pub mod fetch_monitors;
 pub mod finish_job;
@@ -13,11 +14,13 @@ use crate::domain::models::monitor::Monitor;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::infrastructure::database::DbPool;
 use crate::infrastructure::notify::late_job_logger::LateJobNotifer;
+use crate::infrastructure::repositories::alert_config_repo::AlertConfigRepository;
 use crate::infrastructure::repositories::api_key_repo::ApiKeyRepository;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
 use create_monitor::CreateMonitorService;
 use delete_monitor::DeleteMonitorService;
+use fetch_alert_configs::FetchAlertConfigs;
 use fetch_job::FetchJobService;
 use fetch_monitors::FetchMonitorsService;
 use finish_job::FinishJobService;
@@ -45,6 +48,15 @@ pub fn get_fetch_monitors_service<'a>(
     FetchMonitorsService::new(
         MonitorRepository::new(pool),
         &order_monitors_by_last_started_job,
+    )
+}
+
+pub fn get_fetch_alert_configs_service(
+    pool: &DbPool,
+) -> FetchAlertConfigs<MonitorRepository, AlertConfigRepository> {
+    FetchAlertConfigs::new(
+        MonitorRepository::new(pool),
+        AlertConfigRepository::new(pool),
     )
 }
 

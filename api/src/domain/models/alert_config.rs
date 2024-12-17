@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -114,6 +116,14 @@ impl AlertConfig {
             .map(|monitor_info| monitor_info.monitor_id)
             .collect();
         monitor_ids.contains(&monitor.monitor_id)
+    }
+}
+
+impl Display for AlertType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AlertType::Slack(_) => write!(f, "slack"),
+        }
     }
 }
 
@@ -307,5 +317,15 @@ mod tests {
                     .to_string()
             ))
         );
+    }
+
+    #[test]
+    fn test_alert_type_to_string() {
+        let alert_type = AlertType::Slack(SlackAlertConfig {
+            channel: "test-channel".to_string(),
+            token: "test-token".to_string(),
+        });
+
+        assert_eq!(alert_type.to_string(), "slack")
     }
 }

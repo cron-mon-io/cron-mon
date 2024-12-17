@@ -9,6 +9,7 @@ pub enum Error {
     MonitorNotFound(Uuid),
     ApiKeyNotFound(Uuid),
     JobNotFound(Uuid, Uuid),
+    AlertConfigNotFound(Uuid),
     JobAlreadyFinished(Uuid),
     AlertConfigurationError(String),
     InvalidMonitor(String),
@@ -32,6 +33,12 @@ impl Display for Error {
                 write!(
                     f,
                     "Failed to find job with id '{job_id}' in Monitor('{monitor_id}')"
+                )
+            }
+            Self::AlertConfigNotFound(alert_config_id) => {
+                write!(
+                    f,
+                    "Failed to find alert configuration with id '{alert_config_id}'"
                 )
             }
             Self::JobAlreadyFinished(job_id) => {
