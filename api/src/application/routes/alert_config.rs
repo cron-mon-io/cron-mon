@@ -1,6 +1,5 @@
 use rocket;
 use rocket::State;
-use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
@@ -11,11 +10,6 @@ use crate::infrastructure::database::DbPool;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::alert_config_repo::AlertConfigRepository;
 use crate::infrastructure::repositories::Repository;
-
-#[derive(Deserialize)]
-pub struct GenerateKeyInfo {
-    pub name: String,
-}
 
 #[rocket::get("/alert-configs")]
 pub async fn list_alert_configs(pool: &State<DbPool>, jwt: Jwt) -> Result<Value, Error> {
