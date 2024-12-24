@@ -3,7 +3,7 @@ use async_trait::async_trait;
 #[cfg(test)]
 use mockall::automock;
 
-use crate::domain::models::api_key::ApiKey;
+use crate::domain::models::ApiKey;
 use crate::errors::Error;
 
 #[cfg_attr(test, automock)]

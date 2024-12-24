@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use test_utils::{gen_datetime, gen_uuid};
 
-use cron_mon_api::domain::models::monitor::Monitor;
+use cron_mon_api::domain::models::Monitor;
 use cron_mon_api::errors::Error;
 use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
 use cron_mon_api::infrastructure::repositories::monitor::GetWithLateJobs;

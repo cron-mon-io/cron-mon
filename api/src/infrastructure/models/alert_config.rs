@@ -1,9 +1,7 @@
 use diesel::prelude::*;
 use uuid::Uuid;
 
-use crate::domain::models::alert_config::{
-    AlertConfig, AlertType, AppliedMonitor, SlackAlertConfig,
-};
+use crate::domain::models::{AlertConfig, AlertType, AppliedMonitor, SlackAlertConfig};
 use crate::errors::Error;
 use crate::infrastructure::db_schema::{alert_config, monitor_alert_config, slack_alert_config};
 

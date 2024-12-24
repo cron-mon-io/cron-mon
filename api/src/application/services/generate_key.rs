@@ -2,7 +2,7 @@ use rand::distributions::Alphanumeric;
 use rand::Rng;
 use tracing::info;
 
-use crate::domain::models::api_key::ApiKey;
+use crate::domain::models::ApiKey;
 use crate::errors::Error;
 use crate::infrastructure::repositories::Repository;
 

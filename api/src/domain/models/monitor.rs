@@ -2,7 +2,7 @@ use chrono::Duration;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::domain::models::job::Job;
+use crate::domain::models::Job;
 use crate::errors::Error;
 
 /// The `Monitor` struct represents a Monitor for cron jobs and the like, and is ultimately the core
@@ -120,7 +120,7 @@ mod tests {
 
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use crate::domain::models::job::EndState;
+    use crate::domain::models::EndState;
 
     use super::{Error, Job, Monitor, Uuid};
 

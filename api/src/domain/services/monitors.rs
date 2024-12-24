@@ -1,7 +1,7 @@
 use chrono::offset::Utc;
 use chrono::TimeZone;
 
-use crate::domain::models::monitor::Monitor;
+use crate::domain::models::Monitor;
 
 /// Orders the monitors by the time of the last job that was started. Monitors that don't have any
 /// jobs yet should be at the end of the list.

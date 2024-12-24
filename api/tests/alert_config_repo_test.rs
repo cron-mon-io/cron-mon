@@ -5,9 +5,7 @@ use rstest::rstest;
 
 use test_utils::gen_uuid;
 
-use cron_mon_api::domain::models::alert_config::{
-    AlertConfig, AlertType, AppliedMonitor, SlackAlertConfig,
-};
+use cron_mon_api::domain::models::{AlertConfig, AlertType, AppliedMonitor, SlackAlertConfig};
 use cron_mon_api::errors::Error;
 use cron_mon_api::infrastructure::models::alert_config::NewAlertConfigData;
 use cron_mon_api::infrastructure::repositories::alert_config_repo::AlertConfigRepository;

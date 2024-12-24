@@ -1,7 +1,7 @@
 use tracing::info;
 use uuid::Uuid;
 
-use crate::domain::models::api_key::ApiKey;
+use crate::domain::models::ApiKey;
 use crate::errors::Error;
 use crate::infrastructure::repositories::Repository;
 

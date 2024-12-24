@@ -10,7 +10,7 @@ pub mod revoke_key;
 pub mod start_job;
 pub mod update_monitor;
 
-use crate::domain::models::monitor::Monitor;
+use crate::domain::models::Monitor;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::infrastructure::database::DbPool;
 use crate::infrastructure::notify::late_job_logger::LateJobNotifer;

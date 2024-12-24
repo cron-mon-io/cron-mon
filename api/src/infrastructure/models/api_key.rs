@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use uuid::Uuid;
 
-use crate::domain::models::api_key::ApiKey;
+use crate::domain::models::ApiKey;
 use crate::infrastructure::db_schema::api_key;
 
 // Note that we do not have a corresponding domain model for ApiKeyData, like we do for monitors and

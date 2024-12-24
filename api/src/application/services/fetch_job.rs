@@ -1,7 +1,6 @@
 use uuid::Uuid;
 
-use crate::domain::models::job::Job;
-use crate::domain::models::monitor::Monitor;
+use crate::domain::models::{Job, Monitor};
 use crate::errors::Error;
 use crate::infrastructure::repositories::Repository;
 
@@ -42,7 +41,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_uuid};
 
-    use crate::domain::models::job::EndState;
+    use crate::domain::models::EndState;
     use crate::infrastructure::repositories::MockRepository;
 
     use super::{Error, FetchJobService, Job, Monitor};

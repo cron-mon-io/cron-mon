@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use uuid::Uuid;
 
-use crate::domain::models::{job::Job, monitor::Monitor};
+use crate::domain::models::{Job, Monitor};
 use crate::errors::Error;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;

@@ -1,6 +1,6 @@
 use tracing::info;
 
-use crate::domain::models::monitor::Monitor;
+use crate::domain::models::Monitor;
 use crate::errors::Error;
 use crate::infrastructure::notify::NotifyLateJob;
 use crate::infrastructure::repositories::{monitor::GetWithLateJobs, Repository};
@@ -49,15 +49,12 @@ mod tests {
 
     use test_utils::{gen_relative_datetime, gen_uuid, logging::get_tracing_logs};
 
-    use crate::domain::models::{
-        job::{EndState, Job},
-        monitor::Monitor,
-    };
+    use crate::domain::models::{EndState, Job};
     use crate::errors::Error;
     use crate::infrastructure::notify::MockNotifyLateJob;
     use crate::infrastructure::repositories::{monitor::GetWithLateJobs, Repository};
 
-    use super::ProcessLateJobsService;
+    use super::*;
 
     mock! {
         pub MonitorRepo {}

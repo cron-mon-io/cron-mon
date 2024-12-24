@@ -7,7 +7,7 @@ use diesel_async::pooled_connection::deadpool::Object;
 use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use uuid::Uuid;
 
-use crate::domain::models::alert_config::AlertConfig;
+use crate::domain::models::AlertConfig;
 use crate::errors::Error;
 use crate::infrastructure::database::{get_connection, DbPool};
 use crate::infrastructure::db_schema::{alert_config, monitor_alert_config, slack_alert_config};

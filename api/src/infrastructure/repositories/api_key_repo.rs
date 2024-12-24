@@ -7,7 +7,7 @@ use diesel_async::AsyncConnection;
 use diesel_async::RunQueryDsl;
 use uuid::Uuid;
 
-use crate::domain::models::api_key::ApiKey;
+use crate::domain::models::ApiKey;
 use crate::errors::Error;
 use crate::infrastructure::database::{get_connection, DbPool};
 use crate::infrastructure::db_schema::api_key;

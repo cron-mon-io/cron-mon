@@ -4,7 +4,7 @@ use uuid::Uuid;
 #[cfg(test)]
 use mockall::automock;
 
-use crate::domain::models::alert_config::AlertConfig;
+use crate::domain::models::AlertConfig;
 use crate::errors::Error;
 
 #[cfg_attr(test, automock)]

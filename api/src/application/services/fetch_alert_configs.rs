@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::domain::models::{alert_config::AlertConfig, monitor::Monitor};
+use crate::domain::models::{AlertConfig, Monitor};
 use crate::errors::Error;
 use crate::infrastructure::repositories::{alert_configs::GetByMonitors, Repository};
 

@@ -3,7 +3,7 @@ use std::fmt::Display;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::domain::models::monitor::Monitor;
+use crate::domain::models::Monitor;
 use crate::errors::Error;
 
 /// A domain model representing user configuration for alerts.

@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use uuid::Uuid;
 
-use crate::domain::models::job::{EndState, Job};
+use crate::domain::models::{EndState, Job};
 use crate::errors::Error;
 use crate::infrastructure::db_schema::job;
 use crate::infrastructure::models::monitor::MonitorData;

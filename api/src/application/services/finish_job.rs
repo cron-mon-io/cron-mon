@@ -1,9 +1,7 @@
 use tracing::{error, info};
 use uuid::Uuid;
 
-use crate::domain::models::api_key::ApiKey;
-use crate::domain::models::job::Job;
-use crate::domain::models::monitor::Monitor;
+use crate::domain::models::{ApiKey, Job, Monitor};
 use crate::errors::Error;
 use crate::infrastructure::repositories::api_keys::GetByKey;
 use crate::infrastructure::repositories::Repository;

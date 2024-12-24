@@ -5,7 +5,7 @@ use rstest::rstest;
 
 use test_utils::gen_uuid;
 
-use cron_mon_api::domain::models::api_key::ApiKey;
+use cron_mon_api::domain::models::ApiKey;
 use cron_mon_api::infrastructure::repositories::api_key_repo::ApiKeyRepository;
 use cron_mon_api::infrastructure::repositories::api_keys::GetByKey;
 use cron_mon_api::infrastructure::repositories::Repository;

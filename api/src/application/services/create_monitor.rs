@@ -1,6 +1,6 @@
 use tracing::info;
 
-use crate::domain::models::monitor::Monitor;
+use crate::domain::models::Monitor;
 use crate::errors::Error;
 use crate::infrastructure::repositories::Repository;
 

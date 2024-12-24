@@ -1,6 +1,6 @@
 use tracing::info;
 
-use crate::domain::models::job::Job;
+use crate::domain::models::Job;
 use crate::errors::Error;
 use crate::infrastructure::notify::NotifyLateJob;
 
