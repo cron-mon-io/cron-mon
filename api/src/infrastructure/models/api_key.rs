@@ -61,7 +61,7 @@ mod tests {
     use pretty_assertions::assert_eq;
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use super::{ApiKey, ApiKeyData};
+    use super::*;
 
     #[test]
     fn test_from_api_key_data() {

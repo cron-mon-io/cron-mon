@@ -108,12 +108,11 @@ mod tests {
     use test_utils::logging::TracingLog;
     use test_utils::{gen_relative_datetime, gen_uuid};
 
-    use crate::domain::models::api_key::ApiKey;
-    use crate::domain::models::job::EndState;
+    use crate::domain::models::EndState;
     use crate::infrastructure::repositories::mock_api_key_repo::MockApiKeyRepo;
     use crate::infrastructure::repositories::MockRepository;
 
-    use super::{Error, FinishJobService, Job, Monitor};
+    use super::*;
 
     #[traced_test]
     #[tokio::test(start_paused = true)]

@@ -79,9 +79,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_uuid};
 
-    use crate::domain::models::job::Job;
-
-    use super::{JobData, Monitor, MonitorData};
+    use super::*;
 
     #[test]
     fn test_monitor_to_db_data() {

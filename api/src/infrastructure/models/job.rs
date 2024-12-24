@@ -56,7 +56,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_uuid};
 
-    use super::{EndState, Error, Job, JobData};
+    use super::*;
 
     #[test]
     fn test_job_data_into_job() {

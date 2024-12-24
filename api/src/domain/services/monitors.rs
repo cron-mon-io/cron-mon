@@ -34,10 +34,11 @@ mod tests {
 
     use rstest::*;
 
-    use crate::domain::models::job::{EndState, Job};
     use test_utils::{gen_datetime, gen_uuid};
 
-    use super::{order_monitors_by_last_started_job, Monitor};
+    use crate::domain::models::{EndState, Job};
+
+    use super::*;
 
     #[fixture]
     fn monitors() -> Vec<Monitor> {

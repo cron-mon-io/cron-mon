@@ -43,7 +43,7 @@ mod tests {
     use rocket::local::blocking::Client;
     use rstest::*;
 
-    use super::CORS;
+    use super::*;
 
     #[fixture]
     fn test_client() -> Client {

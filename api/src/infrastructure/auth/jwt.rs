@@ -139,10 +139,7 @@ mod tests {
 
     use test_utils::logging::get_tracing_logs;
 
-    use crate::errors::Error;
-    use crate::infrastructure::auth::{Jwt, JwtAuth};
-
-    use super::{Jwk, Jwks, JwtAuthService};
+    use super::*;
 
     #[traced_test]
     #[tokio::test]

@@ -139,7 +139,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_relative_datetime};
 
-    use super::{EndState, Error, Job, NaiveDateTime, Uuid};
+    use super::*;
 
     #[test]
     fn starting_jobs() {

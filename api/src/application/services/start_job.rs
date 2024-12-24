@@ -86,11 +86,10 @@ mod tests {
     use test_utils::gen_uuid;
     use test_utils::logging::TracingLog;
 
-    use crate::domain::models::api_key::ApiKey;
     use crate::infrastructure::repositories::mock_api_key_repo::MockApiKeyRepo;
     use crate::infrastructure::repositories::MockRepository;
 
-    use super::{Error, Monitor, StartJobService};
+    use super::*;
 
     #[traced_test]
     #[tokio::test]

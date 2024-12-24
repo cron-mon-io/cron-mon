@@ -44,7 +44,7 @@ mod tests {
     use crate::domain::models::EndState;
     use crate::infrastructure::repositories::MockRepository;
 
-    use super::{Error, FetchJobService, Job, Monitor};
+    use super::*;
 
     #[tokio::test]
     async fn test_fetch_job_service() {

@@ -46,10 +46,9 @@ mod tests {
 
     use test_utils::logging::TracingLog;
 
-    use crate::domain::models::monitor::Monitor;
     use crate::infrastructure::repositories::MockRepository;
 
-    use super::CreateMonitorService;
+    use super::*;
 
     #[traced_test]
     #[tokio::test]

@@ -32,7 +32,7 @@ mod tests {
 
     use crate::infrastructure::repositories::MockRepository;
 
-    use super::{FetchMonitorsService, Monitor};
+    use super::*;
 
     fn order_monitors(monitors: &mut [Monitor]) {
         monitors.sort_by(|lh_mon: &Monitor, rh_mon: &Monitor| lh_mon.name.cmp(&rh_mon.name));

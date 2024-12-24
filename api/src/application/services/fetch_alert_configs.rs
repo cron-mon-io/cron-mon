@@ -44,10 +44,8 @@ mod tests {
 
     use test_utils::gen_uuid;
 
-    use crate::{
-        domain::models::alert_config::{AlertType, AppliedMonitor, SlackAlertConfig},
-        infrastructure::repositories::{alert_configs::MockGetByMonitors, MockRepository},
-    };
+    use crate::domain::models::{AlertType, AppliedMonitor, SlackAlertConfig};
+    use crate::infrastructure::repositories::{alert_configs::MockGetByMonitors, MockRepository};
 
     use super::*;
 

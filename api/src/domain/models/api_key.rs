@@ -116,8 +116,7 @@ mod tests {
 
     use test_utils::{gen_datetime, gen_uuid};
 
-    use super::ApiKey;
-    use crate::domain::models::monitor::Monitor;
+    use super::*;
 
     #[test]
     fn test_hash_key() {

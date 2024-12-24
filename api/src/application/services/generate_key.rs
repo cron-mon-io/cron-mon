@@ -44,7 +44,7 @@ mod tests {
 
     use crate::infrastructure::repositories::MockRepository;
 
-    use super::{ApiKey, Error, GenerateKeyService};
+    use super::*;
 
     #[traced_test]
     #[tokio::test]

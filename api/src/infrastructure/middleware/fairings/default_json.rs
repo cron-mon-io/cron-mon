@@ -36,7 +36,7 @@ mod tests {
     use rstest::*;
     use serde_json::{json, Value};
 
-    use super::DefaultJSON;
+    use super::*;
 
     #[rocket::get("/foo")]
     fn foo() -> &'static str {

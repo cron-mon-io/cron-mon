@@ -122,7 +122,7 @@ mod tests {
 
     use crate::domain::models::EndState;
 
-    use super::{Error, Job, Monitor, Uuid};
+    use super::*;
 
     #[test]
     fn creating_new_monitors() {

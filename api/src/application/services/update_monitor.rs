@@ -64,7 +64,7 @@ mod tests {
 
     use crate::infrastructure::repositories::MockRepository;
 
-    use super::{Error, Monitor, UpdateMonitorService};
+    use super::*;
 
     #[traced_test]
     #[tokio::test]

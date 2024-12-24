@@ -52,7 +52,7 @@ mod tests {
 
     use test_utils::gen_uuid;
 
-    use super::Error;
+    use super::*;
 
     #[rocket::get("/repo_error")]
     fn repo_error() -> Result<(), Error> {
