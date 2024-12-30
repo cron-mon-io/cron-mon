@@ -12,6 +12,7 @@ pub struct Monitor {
     /// The unique identifier for the Monitor.
     pub monitor_id: Uuid,
     /// The tenant that the Monitor belongs to.
+    #[serde(skip_serializing)]
     pub tenant: String,
     /// The Monitor's name (typically the command or filename that the cronjob will invoke).
     pub name: String,

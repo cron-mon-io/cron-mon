@@ -14,6 +14,7 @@ pub struct AlertConfig {
     /// The name of the alert configuration.
     pub name: String,
     /// The tenant that the alert configuration belongs to.
+    #[serde(skip_serializing)]
     pub tenant: String,
     /// Whether the alert configuration is active.
     pub active: bool,
