@@ -15,8 +15,9 @@ use crate::infrastructure::models::alert_config::NewSlackAlertConfigData;
 use crate::infrastructure::models::alert_config::{
     AlertConfigData, MonitorAlertConfigData, NewAlertConfigData,
 };
-use crate::infrastructure::repositories::alert_configs::GetByMonitors;
 use crate::infrastructure::repositories::Repository;
+
+use super::GetByMonitors;
 
 macro_rules! build_polymorphic_query {
     () => {{

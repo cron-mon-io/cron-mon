@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::domain::models::{ApiKey, Job, Monitor};
 use crate::errors::Error;
-use crate::infrastructure::repositories::api_keys::GetByKey;
+use crate::infrastructure::repositories::api_key::GetByKey;
 use crate::infrastructure::repositories::Repository;
 
 pub struct FinishJobService<
@@ -109,7 +109,7 @@ mod tests {
     use test_utils::{gen_relative_datetime, gen_uuid};
 
     use crate::domain::models::EndState;
-    use crate::infrastructure::repositories::mock_api_key_repo::MockApiKeyRepo;
+    use crate::infrastructure::repositories::api_key::MockApiKeyRepo;
     use crate::infrastructure::repositories::MockRepository;
 
     use super::*;

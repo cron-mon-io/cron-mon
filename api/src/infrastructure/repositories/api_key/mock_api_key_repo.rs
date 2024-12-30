@@ -3,8 +3,9 @@ use mockall::mock;
 
 use crate::domain::models::ApiKey;
 use crate::errors::Error;
-use crate::infrastructure::repositories::api_keys::GetByKey;
 use crate::infrastructure::repositories::Repository;
+
+use super::GetByKey;
 
 mock! {
     pub ApiKeyRepo {}

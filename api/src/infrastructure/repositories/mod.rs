@@ -1,12 +1,6 @@
-pub mod alert_config_repo;
-pub mod alert_configs;
-pub mod api_key_repo;
-pub mod api_keys;
+pub mod alert_config;
+pub mod api_key;
 pub mod monitor;
-pub mod monitor_repo;
-
-#[cfg(test)]
-pub mod mock_api_key_repo;
 
 use std::marker::{Send, Sync};
 

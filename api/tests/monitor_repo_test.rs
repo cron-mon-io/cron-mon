@@ -9,8 +9,7 @@ use test_utils::{gen_datetime, gen_uuid};
 use cron_mon_api::domain::models::Monitor;
 use cron_mon_api::errors::Error;
 use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
-use cron_mon_api::infrastructure::repositories::monitor::GetWithLateJobs;
-use cron_mon_api::infrastructure::repositories::monitor_repo::MonitorRepository;
+use cron_mon_api::infrastructure::repositories::monitor::{GetWithLateJobs, MonitorRepository};
 use cron_mon_api::infrastructure::repositories::Repository;
 
 use common::{infrastructure, Infrastructure};

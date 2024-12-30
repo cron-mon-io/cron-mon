@@ -6,9 +6,9 @@ use crate::domain::models::Monitor;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::infrastructure::database::DbPool;
 use crate::infrastructure::notify::late_job_logger::LateJobNotifer;
-use crate::infrastructure::repositories::alert_config_repo::AlertConfigRepository;
-use crate::infrastructure::repositories::api_key_repo::ApiKeyRepository;
-use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
+use crate::infrastructure::repositories::alert_config::AlertConfigRepository;
+use crate::infrastructure::repositories::api_key::ApiKeyRepository;
+use crate::infrastructure::repositories::monitor::MonitorRepository;
 
 use alert_configs::FetchAlertConfigs;
 use api_keys::{GenerateKeyService, RevokeKeyService};

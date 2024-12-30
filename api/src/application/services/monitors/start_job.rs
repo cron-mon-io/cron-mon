@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::domain::models::{ApiKey, Job, Monitor};
 use crate::errors::Error;
-use crate::infrastructure::repositories::api_keys::GetByKey;
+use crate::infrastructure::repositories::api_key::GetByKey;
 use crate::infrastructure::repositories::Repository;
 
 pub struct StartJobService<
@@ -86,7 +86,7 @@ mod tests {
     use test_utils::gen_uuid;
     use test_utils::logging::TracingLog;
 
-    use crate::infrastructure::repositories::mock_api_key_repo::MockApiKeyRepo;
+    use crate::infrastructure::repositories::api_key::MockApiKeyRepo;
     use crate::infrastructure::repositories::MockRepository;
 
     use super::*;

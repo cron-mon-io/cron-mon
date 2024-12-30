@@ -8,7 +8,7 @@ use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
 use crate::infrastructure::database::DbPool;
 use crate::infrastructure::paging::Paging;
-use crate::infrastructure::repositories::alert_config_repo::AlertConfigRepository;
+use crate::infrastructure::repositories::alert_config::AlertConfigRepository;
 use crate::infrastructure::repositories::Repository;
 
 #[rocket::get("/alert-configs")]

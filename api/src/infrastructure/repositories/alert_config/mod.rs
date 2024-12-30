@@ -1,3 +1,5 @@
+pub mod alert_config_repo;
+
 use async_trait::async_trait;
 use uuid::Uuid;
 
@@ -6,6 +8,8 @@ use mockall::automock;
 
 use crate::domain::models::AlertConfig;
 use crate::errors::Error;
+
+pub use alert_config_repo::AlertConfigRepository;
 
 #[cfg_attr(test, automock)]
 #[async_trait]

@@ -10,7 +10,7 @@ use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
 use crate::infrastructure::database::DbPool;
 use crate::infrastructure::paging::Paging;
-use crate::infrastructure::repositories::api_key_repo::ApiKeyRepository;
+use crate::infrastructure::repositories::api_key::ApiKeyRepository;
 use crate::infrastructure::repositories::Repository;
 
 #[derive(Deserialize)]

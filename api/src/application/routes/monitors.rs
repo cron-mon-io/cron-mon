@@ -13,7 +13,7 @@ use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
 use crate::infrastructure::database::DbPool;
 use crate::infrastructure::paging::Paging;
-use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
+use crate::infrastructure::repositories::monitor::MonitorRepository;
 use crate::infrastructure::repositories::Repository;
 
 #[derive(Deserialize)]

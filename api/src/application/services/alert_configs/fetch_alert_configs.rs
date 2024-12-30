@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::domain::models::{AlertConfig, Monitor};
 use crate::errors::Error;
-use crate::infrastructure::repositories::{alert_configs::GetByMonitors, Repository};
+use crate::infrastructure::repositories::{alert_config::GetByMonitors, Repository};
 
 pub struct FetchAlertConfigs<Monitors: Repository<Monitor>, AlertConfigs: GetByMonitors> {
     monitor_repo: Monitors,
@@ -45,7 +45,7 @@ mod tests {
     use test_utils::gen_uuid;
 
     use crate::domain::models::{AlertType, AppliedMonitor, SlackAlertConfig};
-    use crate::infrastructure::repositories::{alert_configs::MockGetByMonitors, MockRepository};
+    use crate::infrastructure::repositories::{alert_config::MockGetByMonitors, MockRepository};
 
     use super::*;
 

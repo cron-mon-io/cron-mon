@@ -12,8 +12,9 @@ use crate::errors::Error;
 use crate::infrastructure::database::{get_connection, DbPool};
 use crate::infrastructure::db_schema::api_key;
 use crate::infrastructure::models::api_key::ApiKeyData;
-use crate::infrastructure::repositories::api_keys::GetByKey;
 use crate::infrastructure::repositories::Repository;
+
+use super::GetByKey;
 
 pub struct ApiKeyRepository<'a> {
     pool: &'a DbPool,
