@@ -14,6 +14,7 @@ pub struct AlertConfig {
     /// The name of the alert configuration.
     pub name: String,
     /// The tenant that the alert configuration belongs to.
+    #[serde(skip_serializing)]
     pub tenant: String,
     /// Whether the alert configuration is active.
     pub active: bool,
@@ -190,7 +191,6 @@ mod tests {
             json!({
                 "alert_config_id": "3867e53d-9c17-4ce9-b153-eff3d8c9edec",
                 "name": "test-name",
-                "tenant": "test-tenant",
                 "active": true,
                 "on_late": true,
                 "on_error": true,

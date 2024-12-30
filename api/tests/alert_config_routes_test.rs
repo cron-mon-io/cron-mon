@@ -86,7 +86,6 @@ async fn test_get_alert_config(#[future] infrastructure: Infrastructure) {
             "data": {
                 "alert_config_id": "3ba21f52-32c9-41dc-924d-d18d4fc0e81c",
                 "name": "Test Slack alert (for errors)",
-                "tenant": "foo",
                 "active": true,
                 "on_late": false,
                 "on_error": true,
