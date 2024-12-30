@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::domain::models::Monitor;
@@ -30,7 +30,7 @@ pub struct AlertConfig {
 }
 
 /// The different types of alerts that can be configured.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum AlertType {
     /// An alert that sends a Slack message.
     #[serde(rename = "slack")]
@@ -38,7 +38,7 @@ pub enum AlertType {
 }
 
 /// Slack-specifc configuration for alerts.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct SlackAlertConfig {
     /// The channel to send the alert to.
     pub channel: String,
