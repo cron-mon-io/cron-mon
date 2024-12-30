@@ -1,14 +1,6 @@
-pub mod create_monitor;
-pub mod delete_monitor;
-pub mod fetch_alert_configs;
-pub mod fetch_job;
-pub mod fetch_monitors;
-pub mod finish_job;
-pub mod generate_key;
-pub mod process_late_jobs;
-pub mod revoke_key;
-pub mod start_job;
-pub mod update_monitor;
+pub mod alert_configs;
+pub mod api_keys;
+pub mod monitors;
 
 use crate::domain::models::Monitor;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
@@ -18,17 +10,12 @@ use crate::infrastructure::repositories::alert_config_repo::AlertConfigRepositor
 use crate::infrastructure::repositories::api_key_repo::ApiKeyRepository;
 use crate::infrastructure::repositories::monitor_repo::MonitorRepository;
 
-use create_monitor::CreateMonitorService;
-use delete_monitor::DeleteMonitorService;
-use fetch_alert_configs::FetchAlertConfigs;
-use fetch_job::FetchJobService;
-use fetch_monitors::FetchMonitorsService;
-use finish_job::FinishJobService;
-use generate_key::GenerateKeyService;
-use process_late_jobs::ProcessLateJobsService;
-use revoke_key::RevokeKeyService;
-use start_job::StartJobService;
-use update_monitor::UpdateMonitorService;
+use alert_configs::FetchAlertConfigs;
+use api_keys::{GenerateKeyService, RevokeKeyService};
+use monitors::{
+    CreateMonitorService, DeleteMonitorService, FetchJobService, FetchMonitorsService,
+    FinishJobService, ProcessLateJobsService, StartJobService, UpdateMonitorService,
+};
 
 pub fn get_create_monitor_service(pool: &DbPool) -> CreateMonitorService<MonitorRepository> {
     CreateMonitorService::new(MonitorRepository::new(pool))
