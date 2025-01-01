@@ -78,6 +78,31 @@ impl AlertConfig {
         }
     }
 
+    /// Modify this alert config's details.
+    pub fn edit_details(
+        &mut self,
+        name: String,
+        active: bool,
+        on_late: bool,
+        on_error: bool,
+        type_: AlertType,
+    ) -> Result<(), Error> {
+        if std::mem::discriminant(&self.type_) != std::mem::discriminant(&type_) {
+            return Err(Error::AlertConfigurationError(format!(
+                "Cannot change alert type from '{}' to '{}'",
+                self.type_, type_
+            )));
+        }
+
+        self.name = name;
+        self.active = active;
+        self.on_late = on_late;
+        self.on_error = on_error;
+        self.type_ = type_;
+
+        Ok(())
+    }
+
     /// Associate a monitor with this alert configuration.
     pub fn associate_monitor(&mut self, monitor: &Monitor) -> Result<(), Error> {
         // Protect against duplicates.
@@ -208,6 +233,49 @@ mod tests {
                 ]
             })
         );
+    }
+
+    #[test]
+    fn test_edit_details() {
+        let mut alert_config = AlertConfig::new_slack_config(
+            "test-name".to_string(),
+            "test-tenant".to_string(),
+            true,
+            true,
+            true,
+            "test-channel".to_string(),
+            "test-token".to_string(),
+        );
+
+        let result = alert_config.edit_details(
+            "new-name".to_string(),
+            false,
+            false,
+            false,
+            AlertType::Slack(SlackAlertConfig {
+                channel: "new-channel".to_string(),
+                token: "new-token".to_string(),
+            }),
+        );
+
+        assert_eq!(result, Ok(()));
+        assert_eq!(&alert_config.name, "new-name");
+        assert!(!alert_config.active);
+        assert!(!alert_config.on_late);
+        assert!(!alert_config.on_error);
+        assert_eq!(
+            alert_config.type_,
+            AlertType::Slack(SlackAlertConfig {
+                channel: "new-channel".to_string(),
+                token: "new-token".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    #[ignore = "Only works with the 'slack' type for now"]
+    fn test_edit_details_fails_if_type_is_different() {
+        todo!()
     }
 
     #[test]
