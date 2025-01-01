@@ -1,15 +1,29 @@
 use rocket;
+use rocket::serde::json::Json;
 use rocket::State;
+use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use crate::application::services::get_fetch_alert_configs_service;
+use crate::application::services::{
+    get_create_alert_config_service, get_fetch_alert_configs_service,
+};
 use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
 use crate::infrastructure::database::DbPool;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::alert_config::AlertConfigRepository;
 use crate::infrastructure::repositories::Repository;
+
+#[derive(Deserialize)]
+pub struct AlertConfigData {
+    name: String,
+    active: bool,
+    on_late: bool,
+    on_error: bool,
+    #[serde(rename = "type")]
+    type_: Value,
+}
 
 #[rocket::get("/alert-configs")]
 pub async fn list_alert_configs(pool: &State<DbPool>, jwt: Jwt) -> Result<Value, Error> {
@@ -29,6 +43,28 @@ pub async fn list_alert_configs(pool: &State<DbPool>, jwt: Jwt) -> Result<Value,
         .collect::<Value>(),
         "paging": Paging { total: alert_configs.len() }
     }))
+}
+
+#[rocket::post("/alert-configs", data = "<new_alert_config>")]
+pub async fn create_alert_config(
+    pool: &State<DbPool>,
+    jwt: Jwt,
+    new_alert_config: Json<AlertConfigData>,
+) -> Result<Value, Error> {
+    let mut create_alert_config = get_create_alert_config_service(pool);
+
+    let alert_config = create_alert_config
+        .create_from_value(
+            &jwt.tenant,
+            &new_alert_config.name,
+            new_alert_config.active,
+            new_alert_config.on_late,
+            new_alert_config.on_error,
+            new_alert_config.type_.clone(),
+        )
+        .await?;
+
+    Ok(json!({"data": alert_config}))
 }
 
 #[rocket::get("/alert-configs/<alert_config_id>")]
