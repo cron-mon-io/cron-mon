@@ -8,14 +8,14 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.83"
 chrono = { version = "0.4", features = ["serde"]}
-clap = { version = "4.5.21", features = ["derive"] }
+clap = { version = "4.5.23", features = ["derive"] }
 diesel = { version = "2.1.6", features = ["chrono", "uuid", "postgres"] }
 diesel-async = { version = "0.4.1", features = ["deadpool", "postgres"] }
 diesel_migrations = { version = "2.1.0", features = ["postgres"] }
 jsonwebtoken = "9.3.0"
 moka = { version = "0.12.8", features = ["sync"] }
 rand = "0.8.5"
-reqwest = { version = "0.12.9", features = ["json"] }
+reqwest = { version = "0.12.12", features = ["json"] }
 rocket = { version = "0.5.1", features = ["json", "uuid"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -27,7 +27,7 @@ tracing-subscriber = { version = "0.3.19", features = ["json"] }
 uuid = { version = "1.11.0", features = ["v4", "serde", "fast-rng", "macro-diagnostics"] }
 
 [dev-dependencies]
-rstest = "0.22.0"
+rstest = "0.23.0"
 pretty_assertions = "1.4.1"
 test-utils = { path = "test_utils" }
 tracing-test = { version = "0.2.5", features = ["no-env-filter"] }
