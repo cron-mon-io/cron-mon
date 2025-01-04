@@ -5,6 +5,8 @@ use crate::domain::models::{AlertConfig, AlertType};
 use crate::errors::Error;
 use crate::infrastructure::repositories::Repository;
 
+use super::AlertConfigData;
+
 pub struct UpdateAlertConfigService<T: Repository<AlertConfig>> {
     repo: T,
 }
@@ -18,13 +20,9 @@ impl<T: Repository<AlertConfig>> UpdateAlertConfigService<T> {
         &mut self,
         alert_config_id: Uuid,
         tenant: &str,
-        new_name: &str,
-        new_active: bool,
-        new_on_late: bool,
-        new_on_error: bool,
-        new_data: serde_json::Value,
+        new_data: AlertConfigData,
     ) -> Result<AlertConfig, Error> {
-        let alert_type: AlertType = serde_json::from_value(new_data)
+        let alert_type: AlertType = serde_json::from_value(new_data.type_)
             .map_err(|error| Error::InvalidAlertConfig(error.to_string()))?;
 
         let mut alert_config = self
@@ -44,10 +42,10 @@ impl<T: Repository<AlertConfig>> UpdateAlertConfigService<T> {
         );
 
         alert_config.edit_details(
-            new_name.to_owned(),
-            new_active,
-            new_on_late,
-            new_on_error,
+            new_data.name.to_owned(),
+            new_data.active,
+            new_data.on_late,
+            new_data.on_error,
             alert_type,
         )?;
         self.repo.save(&alert_config).await?;
@@ -137,16 +135,18 @@ mod tests {
             .update_by_id(
                 gen_uuid("89c15477-0d01-4900-9042-177775e1b247"),
                 "tenant",
-                "new_name",
-                false,
-                false,
-                false,
-                serde_json::json!({
-                    "slack": {
-                        "channel": "new-channel",
-                        "token": "new-token"
-                    }
-                }),
+                AlertConfigData {
+                    name: "new_name".to_owned(),
+                    active: false,
+                    on_late: false,
+                    on_error: false,
+                    type_: serde_json::json!({
+                        "slack": {
+                            "channel": "new-channel",
+                            "token": "new-token"
+                        }
+                    }),
+                },
             )
             .await
             .unwrap();
@@ -207,16 +207,18 @@ mod tests {
             .update_by_id(
                 gen_uuid("89c15477-0d01-4900-9042-177775e1b247"),
                 "tenant",
-                "new_name",
-                false,
-                false,
-                false,
-                serde_json::json!({
-                    "slack": {
-                        "channel": "new-channel",
-                        "token": "new-token"
-                    }
-                }),
+                AlertConfigData {
+                    name: "new_name".to_owned(),
+                    active: false,
+                    on_late: false,
+                    on_error: false,
+                    type_: serde_json::json!({
+                        "slack": {
+                            "channel": "new-channel",
+                            "token": "new-token"
+                        }
+                    }),
+                },
             )
             .await;
 
@@ -250,16 +252,18 @@ mod tests {
             .update_by_id(
                 gen_uuid("89c15477-0d01-4900-9042-177775e1b247"),
                 "tenant",
-                "new_name",
-                false,
-                false,
-                false,
-                serde_json::json!({
-                    "slack": {
-                        "channel": "new-channel",
-                        "token": "new-token"
-                    }
-                }),
+                AlertConfigData {
+                    name: "new_name".to_owned(),
+                    active: false,
+                    on_late: false,
+                    on_error: false,
+                    type_: serde_json::json!({
+                        "slack": {
+                            "channel": "new-channel",
+                            "token": "new-token"
+                        }
+                    }),
+                },
             )
             .await;
 
@@ -290,16 +294,18 @@ mod tests {
             .update_by_id(
                 gen_uuid("89c15477-0d01-4900-9042-177775e1b247"),
                 "tenant",
-                "new_name",
-                false,
-                false,
-                false,
-                serde_json::json!({
-                    "slack": {
-                        "channel": "new-channel",
-                        "token": "new-token"
-                    }
-                }),
+                AlertConfigData {
+                    name: "new_name".to_owned(),
+                    active: false,
+                    on_late: false,
+                    on_error: false,
+                    type_: serde_json::json!({
+                        "slack": {
+                            "channel": "new-channel",
+                            "token": "new-token"
+                        }
+                    }),
+                },
             )
             .await;
 

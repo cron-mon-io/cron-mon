@@ -1,9 +1,10 @@
-use serde_json::Value;
 use tracing::info;
 
 use crate::domain::models::{AlertConfig, AlertType};
 use crate::errors::Error;
 use crate::infrastructure::repositories::Repository;
+
+use super::AlertConfigData;
 
 pub struct CreateAlertConfigService<T: Repository<AlertConfig>> {
     repo: T,
@@ -17,14 +18,9 @@ impl<T: Repository<AlertConfig>> CreateAlertConfigService<T> {
     pub async fn create_from_value(
         &mut self,
         tenant: &str,
-        name: &str,
-        active: bool,
-        on_late: bool,
-        on_error: bool,
-        data: Value,
+        data: AlertConfigData,
     ) -> Result<AlertConfig, Error> {
-        let alert_config =
-            self.create_alert_config(tenant, name, active, on_late, on_error, data)?;
+        let alert_config = self.create_alert_config(tenant, data)?;
         self.repo.save(&alert_config).await?;
 
         info!(
@@ -40,22 +36,18 @@ impl<T: Repository<AlertConfig>> CreateAlertConfigService<T> {
     fn create_alert_config(
         &mut self,
         tenant: &str,
-        name: &str,
-        active: bool,
-        on_late: bool,
-        on_error: bool,
-        data: Value,
+        data: AlertConfigData,
     ) -> Result<AlertConfig, Error> {
-        let alert_type: AlertType = serde_json::from_value(data)
+        let alert_type: AlertType = serde_json::from_value(data.type_)
             .map_err(|error| Error::InvalidAlertConfig(error.to_string()))?;
 
         match alert_type {
             AlertType::Slack(slack_data) => Ok(AlertConfig::new_slack_config(
-                name.to_owned(),
+                data.name.to_owned(),
                 tenant.to_owned(),
-                active,
-                on_late,
-                on_error,
+                data.active,
+                data.on_late,
+                data.on_error,
                 slack_data.channel.clone(),
                 slack_data.token.clone(),
             )),
@@ -101,16 +93,18 @@ mod tests {
         let alert_config = service
             .create_from_value(
                 "tenant",
-                "name",
-                true,
-                true,
-                true,
-                json!({
-                    "slack": {
-                        "channel": "channel",
-                        "token": "token"
-                    }
-                }),
+                AlertConfigData {
+                    name: "name".to_string(),
+                    active: true,
+                    on_late: true,
+                    on_error: true,
+                    type_: json!({
+                        "slack": {
+                            "channel": "channel",
+                            "token": "token"
+                        }
+                    }),
+                },
             )
             .await
             .unwrap();
@@ -154,15 +148,17 @@ mod tests {
         let result = service
             .create_from_value(
                 "tenant",
-                "name",
-                true,
-                true,
-                true,
-                json!({
-                    "ms-teams": {
-                        "group": "group",
-                    }
-                }),
+                AlertConfigData {
+                    name: "name".to_string(),
+                    active: true,
+                    on_late: true,
+                    on_error: true,
+                    type_: json!({
+                        "ms-teams": {
+                            "group": "group"
+                        }
+                    }),
+                },
             )
             .await;
 
@@ -185,16 +181,18 @@ mod tests {
         let result = service
             .create_from_value(
                 "tenant",
-                "name",
-                true,
-                true,
-                true,
-                json!({
-                    "slack": {
-                        "channel": "channel",
-                        "token": "token"
-                    }
-                }),
+                AlertConfigData {
+                    name: "name".to_string(),
+                    active: true,
+                    on_late: true,
+                    on_error: true,
+                    type_: json!({
+                        "slack": {
+                            "channel": "channel",
+                            "token": "token"
+                        }
+                    }),
+                },
             )
             .await;
 
