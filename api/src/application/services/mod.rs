@@ -10,7 +10,9 @@ use crate::infrastructure::repositories::alert_config::AlertConfigRepository;
 use crate::infrastructure::repositories::api_key::ApiKeyRepository;
 use crate::infrastructure::repositories::monitor::MonitorRepository;
 
-use alert_configs::{CreateAlertConfigService, DeleteAlertConfigService, FetchAlertConfigs};
+use alert_configs::{
+    CreateAlertConfigService, DeleteAlertConfigService, FetchAlertConfigs, UpdateAlertConfigService,
+};
 use api_keys::{GenerateKeyService, RevokeKeyService};
 use monitors::{
     CreateMonitorService, DeleteMonitorService, FetchJobService, FetchMonitorsService,
@@ -83,6 +85,12 @@ pub fn get_start_job_service(
     pool: &DbPool,
 ) -> StartJobService<MonitorRepository, ApiKeyRepository> {
     StartJobService::new(MonitorRepository::new(pool), ApiKeyRepository::new(pool))
+}
+
+pub fn get_update_alert_config_service(
+    pool: &DbPool,
+) -> UpdateAlertConfigService<AlertConfigRepository> {
+    UpdateAlertConfigService::new(AlertConfigRepository::new(pool))
 }
 
 pub fn get_update_monitor_service(pool: &DbPool) -> UpdateMonitorService<MonitorRepository> {
