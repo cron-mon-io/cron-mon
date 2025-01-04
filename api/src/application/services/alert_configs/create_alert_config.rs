@@ -85,9 +85,9 @@ mod tests {
             .withf(|ac: &AlertConfig| {
                 ac.tenant == "tenant"
                     && ac.name == "name"
-                    && ac.active == true
-                    && ac.on_late == true
-                    && ac.on_error == true
+                    && ac.active
+                    && ac.on_late
+                    && ac.on_error
                     && ac.type_
                         == AlertType::Slack(SlackAlertConfig {
                             channel: "channel".to_string(),
@@ -116,9 +116,9 @@ mod tests {
             .unwrap();
 
         assert_eq!(alert_config.name, "name");
-        assert_eq!(alert_config.active, true);
-        assert_eq!(alert_config.on_late, true);
-        assert_eq!(alert_config.on_error, true);
+        assert!(alert_config.active);
+        assert!(alert_config.on_late);
+        assert!(alert_config.on_error);
         assert_eq!(
             alert_config.type_,
             AlertType::Slack(SlackAlertConfig {
@@ -137,7 +137,7 @@ mod tests {
                 format!(
                     "Created new Alert Configuration - name: 'name', type: slack \
                         alert_config_id=\"{}\"",
-                    alert_config.alert_config_id.to_string()
+                    alert_config.alert_config_id
                 )
             );
             Ok(())
