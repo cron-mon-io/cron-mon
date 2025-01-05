@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::domain::models::Monitor;
@@ -14,6 +14,7 @@ pub struct AlertConfig {
     /// The name of the alert configuration.
     pub name: String,
     /// The tenant that the alert configuration belongs to.
+    #[serde(skip_serializing)]
     pub tenant: String,
     /// Whether the alert configuration is active.
     pub active: bool,
@@ -29,7 +30,7 @@ pub struct AlertConfig {
 }
 
 /// The different types of alerts that can be configured.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum AlertType {
     /// An alert that sends a Slack message.
     #[serde(rename = "slack")]
@@ -37,7 +38,7 @@ pub enum AlertType {
 }
 
 /// Slack-specifc configuration for alerts.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct SlackAlertConfig {
     /// The channel to send the alert to.
     pub channel: String,
@@ -75,6 +76,33 @@ impl AlertConfig {
             type_: AlertType::Slack(SlackAlertConfig { channel, token }),
             monitors: Vec::new(),
         }
+    }
+
+    /// Modify this alert config's details.
+    pub fn edit_details(
+        &mut self,
+        name: String,
+        active: bool,
+        on_late: bool,
+        on_error: bool,
+        type_: AlertType,
+    ) -> Result<(), Error> {
+        // TODO: Implement this check when we have more than one alert type. Commented out for now
+        // as it's unreachable as we only have 1 type.
+        // if std::mem::discriminant(&self.type_) != std::mem::discriminant(&type_) {
+        //     return Err(Error::AlertConfigurationError(format!(
+        //         "Cannot change alert type from '{}' to '{}'",
+        //         self.type_, type_
+        //     )));
+        // }
+
+        self.name = name;
+        self.active = active;
+        self.on_late = on_late;
+        self.on_error = on_error;
+        self.type_ = type_;
+
+        Ok(())
     }
 
     /// Associate a monitor with this alert configuration.
@@ -190,7 +218,6 @@ mod tests {
             json!({
                 "alert_config_id": "3867e53d-9c17-4ce9-b153-eff3d8c9edec",
                 "name": "test-name",
-                "tenant": "test-tenant",
                 "active": true,
                 "on_late": true,
                 "on_error": true,
@@ -208,6 +235,49 @@ mod tests {
                 ]
             })
         );
+    }
+
+    #[test]
+    fn test_edit_details() {
+        let mut alert_config = AlertConfig::new_slack_config(
+            "test-name".to_string(),
+            "test-tenant".to_string(),
+            true,
+            true,
+            true,
+            "test-channel".to_string(),
+            "test-token".to_string(),
+        );
+
+        let result = alert_config.edit_details(
+            "new-name".to_string(),
+            false,
+            false,
+            false,
+            AlertType::Slack(SlackAlertConfig {
+                channel: "new-channel".to_string(),
+                token: "new-token".to_string(),
+            }),
+        );
+
+        assert_eq!(result, Ok(()));
+        assert_eq!(&alert_config.name, "new-name");
+        assert!(!alert_config.active);
+        assert!(!alert_config.on_late);
+        assert!(!alert_config.on_error);
+        assert_eq!(
+            alert_config.type_,
+            AlertType::Slack(SlackAlertConfig {
+                channel: "new-channel".to_string(),
+                token: "new-token".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    #[ignore = "Only works with the 'slack' type for now"]
+    fn test_edit_details_fails_if_type_is_different() {
+        todo!()
     }
 
     #[test]
