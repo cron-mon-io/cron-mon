@@ -226,9 +226,8 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "Only works with the 'slack' type for now"]
     async fn test_update_alert_config_when_modifying_alert_config_fails() {
-        todo!()
+        // Nothing to do here for now as we only have 1 alert type.
     }
 
     #[tokio::test]
