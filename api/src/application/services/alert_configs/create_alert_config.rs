@@ -167,6 +167,12 @@ mod tests {
             result.unwrap_err().to_string(),
             "Invalid Alert Configuration: unknown variant `ms-teams`, expected `slack`"
         );
+
+        logs_assert(|logs| {
+            assert_eq!(logs.len(), 0);
+
+            Ok(())
+        });
     }
 
     #[traced_test]
@@ -201,5 +207,11 @@ mod tests {
             result.unwrap_err(),
             Error::RepositoryError("test error".to_string())
         );
+
+        logs_assert(|logs| {
+            assert_eq!(logs.len(), 0);
+
+            Ok(())
+        });
     }
 }
