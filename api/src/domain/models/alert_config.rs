@@ -87,12 +87,14 @@ impl AlertConfig {
         on_error: bool,
         type_: AlertType,
     ) -> Result<(), Error> {
-        if std::mem::discriminant(&self.type_) != std::mem::discriminant(&type_) {
-            return Err(Error::AlertConfigurationError(format!(
-                "Cannot change alert type from '{}' to '{}'",
-                self.type_, type_
-            )));
-        }
+        // TODO: Implement this check when we have more than one alert type. Commented out for now
+        // as it's unreachable as we only have 1 type.
+        // if std::mem::discriminant(&self.type_) != std::mem::discriminant(&type_) {
+        //     return Err(Error::AlertConfigurationError(format!(
+        //         "Cannot change alert type from '{}' to '{}'",
+        //         self.type_, type_
+        //     )));
+        // }
 
         self.name = name;
         self.active = active;
