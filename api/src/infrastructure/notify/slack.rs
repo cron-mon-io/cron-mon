@@ -68,7 +68,7 @@ pub struct LateJobMessage<'a> {
     pub job: &'a Job,
 }
 
-impl<'a> SlackMessageTemplate for LateJobMessage<'a> {
+impl SlackMessageTemplate for LateJobMessage<'_> {
     fn render_template(&self) -> SlackMessageContent {
         SlackMessageContent::new()
             .with_text(format!("Late '{}' job detected", self.monitor_name))

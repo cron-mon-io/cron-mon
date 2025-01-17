@@ -26,7 +26,7 @@ impl<Repo: GetWithLateJobs + Repository<Monitor>, Notifier: NotifyLateJob>
 
         for mon in monitors_with_late_jobs.as_mut_slice() {
             let monitor_name = mon.name.clone();
-            let monitor_id = mon.monitor_id.clone();
+            let monitor_id = mon.monitor_id;
             for late_job in mon.late_jobs() {
                 if !late_job.late_alert_sent {
                     self.notifier
