@@ -34,7 +34,7 @@ pub async fn get_job(
 }
 
 #[rocket::post("/monitors/<monitor_id>/jobs/start")]
-pub async fn start_job<'r>(
+pub async fn start_job(
     pool: &State<DbPool>,
     key: ApiKey,
     monitor_id: Uuid,
