@@ -171,6 +171,15 @@ pub fn alert_config_seeds() -> (
                 on_late: true,
                 on_error: true,
             },
+            NewAlertConfigData {
+                alert_config_id: gen_uuid("76725038-86a0-46d6-b97a-05735f71cb4f"),
+                name: "Test Slack alert".to_owned(),
+                tenant: "bar".to_owned(),
+                type_: "slack".to_owned(),
+                active: true,
+                on_late: true,
+                on_error: true,
+            },
         ],
         vec![
             NewSlackAlertConfigData {
