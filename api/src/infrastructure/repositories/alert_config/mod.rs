@@ -14,9 +14,9 @@ pub use alert_config_repo::AlertConfigRepository;
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait GetByMonitors {
-    async fn get_by_monitors(
+    async fn get_by_monitors<'a>(
         &mut self,
         monitor_ids: &[Uuid],
-        tenant: &str,
+        tenant: Option<&'a str>,
     ) -> Result<Vec<AlertConfig>, Error>;
 }

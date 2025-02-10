@@ -31,7 +31,7 @@ impl<Monitors: Repository<Monitor>, AlertConfigs: GetByMonitors>
         }
 
         self.alert_config_repo
-            .get_by_monitors(&[monitor_id], tenant)
+            .get_by_monitors(&[monitor_id], Some(tenant))
             .await
     }
 }
@@ -76,7 +76,7 @@ mod tests {
             .once()
             .withf(move |monitor_ids, tenant| {
                 monitor_ids == vec![gen_uuid("6fad996a-df7d-42a3-aaad-a5e7d101ac54")]
-                    && tenant == "tenant"
+                    && *tenant == Some("tenant")
             })
             .returning(move |_, _| {
                 Ok(vec![

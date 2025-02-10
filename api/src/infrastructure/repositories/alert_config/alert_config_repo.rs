@@ -130,7 +130,7 @@ impl<'a> AlertConfigRepository<'a> {
 
     async fn fetch_alert_configs(
         &mut self,
-        tenant: &str,
+        tenant: Option<&str>,
         monitor_ids: Option<&[Uuid]>,
     ) -> Result<Vec<AlertConfig>, Error> {
         let mut connection = get_connection(self.pool).await?;
@@ -138,8 +138,10 @@ impl<'a> AlertConfigRepository<'a> {
             .transaction::<(Vec<AlertConfigData>, Vec<MonitorAlertConfigData>), DieselError, _>(
                 |conn| {
                     Box::pin(async move {
-                        let query =
-                            build_polymorphic_query!().filter(alert_config::tenant.eq(tenant));
+                        let mut query = build_polymorphic_query!();
+                        if let Some(t) = tenant {
+                            query = query.filter(alert_config::tenant.eq(t));
+                        }
                         let alert_configs: Vec<AlertConfigData> =
                             if let Some(monitor_ids) = monitor_ids {
                                 query
@@ -182,10 +184,10 @@ impl<'a> AlertConfigRepository<'a> {
 #[async_trait]
 #[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> GetByMonitors for AlertConfigRepository<'a> {
-    async fn get_by_monitors(
+    async fn get_by_monitors<'b>(
         &mut self,
         monitor_ids: &[Uuid],
-        tenant: &str,
+        tenant: Option<&'b str>,
     ) -> Result<Vec<AlertConfig>, Error> {
         self.fetch_alert_configs(tenant, Some(monitor_ids)).await
     }
@@ -239,7 +241,7 @@ impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     }
 
     async fn all(&mut self, tenant: &str) -> Result<Vec<AlertConfig>, Error> {
-        self.fetch_alert_configs(tenant, None).await
+        self.fetch_alert_configs(Some(tenant), None).await
     }
 
     async fn save(&mut self, alert_config: &AlertConfig) -> Result<(), Error> {
