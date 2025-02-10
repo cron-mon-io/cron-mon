@@ -20,8 +20,25 @@ use uuid::Uuid;
 #[case(
     vec![
         gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
-        gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a")
+        gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a"),
+        // This monitor is on a different tenant, and we're only interested in the ones on "foo".
+        gen_uuid("cc6cf74e-b25d-4c8c-94a6-914e3f139c14")
     ],
+    Some("foo"),
+    vec![
+        "Test Slack alert (for errors)".to_owned(),
+        "Test Slack alert (for lates and errors)".to_owned(),
+        "Test Slack alert (for lates)".to_owned(),
+    ]
+)]
+#[case(
+    vec![
+        gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
+        gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a"),
+        // This monitor is on a different tenant, but we're not filtering by tenant.
+        gen_uuid("cc6cf74e-b25d-4c8c-94a6-914e3f139c14")
+    ],
+    None,
     vec![
         "Test Slack alert (for errors)".to_owned(),
         "Test Slack alert (for lates and errors)".to_owned(),
@@ -32,6 +49,7 @@ use uuid::Uuid;
     vec![
         gen_uuid("f0b291fe-bd41-4787-bc2d-1329903f7a6a")
     ],
+    Some("foo"),
     vec![
         "Test Slack alert (for errors)".to_owned()
     ]
@@ -39,13 +57,14 @@ use uuid::Uuid;
 #[tokio::test]
 async fn test_get_by_monitors(
     #[case] monitor_ids: Vec<Uuid>,
+    #[case] tenant: Option<&str>,
     #[case] alert_config_names: Vec<String>,
     #[future] infrastructure: Infrastructure,
 ) {
     let infra = infrastructure.await;
     let mut repo = AlertConfigRepository::new(&infra.pool);
 
-    let alert_configs = repo.get_by_monitors(&monitor_ids, "foo").await.unwrap();
+    let alert_configs = repo.get_by_monitors(&monitor_ids, tenant).await.unwrap();
 
     let names: Vec<String> = alert_configs
         .iter()
