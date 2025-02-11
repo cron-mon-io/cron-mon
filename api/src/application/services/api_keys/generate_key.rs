@@ -1,4 +1,4 @@
-use rand::distributions::Alphanumeric;
+use rand::distr::Alphanumeric;
 use rand::Rng;
 use tracing::info;
 
@@ -21,7 +21,7 @@ impl<T: Repository<ApiKey>> GenerateKeyService<T> {
             "Generating new API key - name: '{}'...", &name
         );
 
-        let key: String = rand::thread_rng()
+        let key: String = rand::rng()
             .sample_iter(&Alphanumeric)
             .take(32)
             .map(char::from)
