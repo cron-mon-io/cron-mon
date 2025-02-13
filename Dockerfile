@@ -19,7 +19,7 @@ RUN groupadd -g 1000 cron-mon && \
     mkdir /usr/bin/cron-mon && chown cron-mon:cron-mon /usr/bin/cron-mon
 WORKDIR /usr/bin/cron-mon
 
-RUN apt-get update && apt-get install libpq-dev -y \
+RUN apt-get update && apt-get install ca-certificates libpq-dev -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
