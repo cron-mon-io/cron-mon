@@ -30,8 +30,6 @@ pub fn order_monitors_by_last_started_job(monitors: &mut [Monitor]) {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
-
     use rstest::*;
 
     use test_utils::{gen_datetime, gen_uuid};
