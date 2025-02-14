@@ -16,6 +16,9 @@ impl<'r> Responder<'r, 'static> for Error {
             Error::JobNotFound(_, _) => (Status::NotFound, "Job Not Found"),
             Error::AlertConfigNotFound(_) => (Status::NotFound, "Alert Configuration Not Found"),
             Error::JobAlreadyFinished(_) => (Status::BadRequest, "Job Already Finished"),
+            Error::LateJobProcessFailure(_) => {
+                (Status::InternalServerError, "Late Job Process Failure")
+            }
             Error::AlertConfigurationError(_) => {
                 (Status::InternalServerError, "Alert Configuration Error")
             }
@@ -27,6 +30,7 @@ impl<'r> Responder<'r, 'static> for Error {
             Error::InvalidAlertConfig(_) => {
                 (Status::InternalServerError, "Invalid Alert Configuration")
             }
+            Error::NotifyError(_) => (Status::InternalServerError, "Notify Error"),
             Error::Unauthorized(_) => (Status::Unauthorized, "Unauthorized"),
             Error::AuthenticationError(_) => (Status::InternalServerError, "Authentication Error"),
         };
@@ -95,6 +99,13 @@ mod tests {
         )))
     }
 
+    #[rocket::get("/late_job_process_failure")]
+    fn late_job_process_failure() -> Result<(), Error> {
+        Err(Error::LateJobProcessFailure(
+            "something went wrong".to_string(),
+        ))
+    }
+
     #[rocket::get("/alert_config_error")]
     fn alert_config_error() -> Result<(), Error> {
         Err(Error::AlertConfigurationError(
@@ -117,6 +128,11 @@ mod tests {
         Err(Error::InvalidAlertConfig(
             "invalid alert config".to_string(),
         ))
+    }
+
+    #[rocket::get("/notify_error")]
+    fn notify_error() -> Result<(), Error> {
+        Err(Error::NotifyError("something went wrong".to_string()))
     }
 
     #[rocket::get("/unauthorized")]
@@ -142,10 +158,12 @@ mod tests {
                 job_not_found,
                 alert_config_not_found,
                 job_already_finished,
+                late_job_process_failure,
                 alert_config_error,
                 invalid_monitor,
                 invalid_job,
                 invalid_alert_config,
+                notify_error,
                 unauthorized,
                 auth_error
             ],
@@ -268,6 +286,24 @@ mod tests {
     }
 
     #[rstest]
+    fn test_late_job_process_failure(test_client: Client) {
+        let response = test_client.get("/late_job_process_failure").dispatch();
+
+        assert_eq!(response.status(), Status::InternalServerError);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 500,
+                    "reason": "Late Job Process Failure",
+                    "description": "Failed to process late job(s): something went wrong"
+                }
+            })
+        );
+    }
+
+    #[rstest]
     fn test_alert_config_error(test_client: Client) {
         let response = test_client.get("/alert_config_error").dispatch();
 
@@ -334,6 +370,24 @@ mod tests {
                     "code": 500,
                     "reason": "Invalid Alert Configuration",
                     "description": "Invalid Alert Configuration: invalid alert config"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_notify_error(test_client: Client) {
+        let response = test_client.get("/notify_error").dispatch();
+
+        assert_eq!(response.status(), Status::InternalServerError);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 500,
+                    "reason": "Notify Error",
+                    "description": "Failed to notify: something went wrong"
                 }
             })
         );
