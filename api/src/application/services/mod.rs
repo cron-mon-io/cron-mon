@@ -3,6 +3,7 @@ pub mod api_keys;
 pub mod monitors;
 
 use crate::domain::models::Monitor;
+use crate::domain::services::get_notifier::GetNotifierService;
 use crate::domain::services::monitors::order_monitors_by_last_started_job;
 use crate::infrastructure::database::DbPool;
 use crate::infrastructure::repositories::alert_config::AlertConfigRepository;
@@ -76,6 +77,7 @@ pub fn get_process_late_jobs_service(
     ProcessLateJobsService::new(
         MonitorRepository::new(pool),
         AlertConfigRepository::new(pool),
+        Box::new(GetNotifierService::new()),
     )
 }
 

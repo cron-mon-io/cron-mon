@@ -2,7 +2,7 @@ use tracing::info;
 use uuid::Uuid;
 
 use crate::domain::models::{AlertConfig, Monitor};
-use crate::domain::services::get_notifier::{GetNotifier, GetNotifierService};
+use crate::domain::services::get_notifier::GetNotifier;
 use crate::errors::Error;
 use crate::infrastructure::repositories::{
     alert_config::GetByMonitors, monitor::GetWithLateJobs, Repository,
@@ -20,14 +20,15 @@ pub struct ProcessLateJobsService<
 impl<MonitorRepo: GetWithLateJobs + Repository<Monitor>, AlertConfigRepo: GetByMonitors>
     ProcessLateJobsService<MonitorRepo, AlertConfigRepo>
 {
-    pub fn new(monitor_repo: MonitorRepo, alert_config_repo: AlertConfigRepo) -> Self {
+    pub fn new(
+        monitor_repo: MonitorRepo,
+        alert_config_repo: AlertConfigRepo,
+        get_notifier_service: Box<dyn GetNotifier + Sync + Send>,
+    ) -> Self {
         Self {
             monitor_repo,
             alert_config_repo,
-            // This is a closure rather than a regular method as it allows this to be testable.
-            // Since the attributes are all private, only this module (including the unit tests) can
-            // create an instance of ProcessLateJobsService outside of this factory method.
-            get_notifier_service: Box::new(GetNotifierService::new()),
+            get_notifier_service,
         }
     }
 
@@ -323,11 +324,11 @@ mod tests {
                 Box::new(mock_notifier) as Box<dyn NotifyLateJob + Sync + Send>
             });
 
-        let mut service = ProcessLateJobsService {
-            monitor_repo: mock_monitor_repo,
-            alert_config_repo: mock_alert_config_repo,
-            get_notifier_service: Box::new(mock_get_notifier),
-        };
+        let mut service = ProcessLateJobsService::new(
+            mock_monitor_repo,
+            mock_alert_config_repo,
+            Box::new(mock_get_notifier),
+        );
 
         let result = service.process_late_jobs().await;
         assert!(result.is_ok());
