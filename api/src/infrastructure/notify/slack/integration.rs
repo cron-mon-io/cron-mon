@@ -39,7 +39,7 @@ impl SlackNotifier {
                 message.render_template(),
             ))
             .await
-            .unwrap();
+            .map_err(|error| Error::NotifyError(error.to_string()))?;
 
         Ok(())
     }
