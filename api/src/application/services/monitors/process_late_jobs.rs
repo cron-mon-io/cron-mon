@@ -94,6 +94,7 @@ mod tests {
     use async_trait::async_trait;
     use mockall::{mock, predicate::*, Sequence};
     use rstest::{fixture, rstest};
+    use tracing::Level;
     use tracing_test::traced_test;
 
     use test_utils::{gen_relative_datetime, gen_uuid, logging::get_tracing_logs};
@@ -335,11 +336,21 @@ mod tests {
 
         logs_assert(|logs| {
             let logs = get_tracing_logs(logs);
-            assert_eq!(logs.len(), 2);
-            assert_eq!(logs[0].level, tracing::Level::INFO);
-            assert_eq!(logs[0].body, "Beginning check for late Jobs...");
-            assert_eq!(logs[1].level, tracing::Level::INFO);
-            assert_eq!(logs[1].body, "Check for late Jobs complete");
+
+            assert_eq!(
+                logs.iter().map(|log| log.level).collect::<Vec<Level>>(),
+                vec![Level::INFO, Level::INFO]
+            );
+            assert_eq!(
+                logs.iter()
+                    .map(|log| log.body.clone())
+                    .collect::<Vec<String>>(),
+                vec![
+                    "Beginning check for late Jobs...",
+                    "Check for late Jobs complete",
+                ]
+            );
+
             Ok(())
         });
     }
