@@ -11,10 +11,12 @@ pub enum Error {
     JobNotFound(Uuid, Uuid),
     AlertConfigNotFound(Uuid),
     JobAlreadyFinished(Uuid),
+    LateJobProcessFailure(String),
     AlertConfigurationError(String),
     InvalidMonitor(String),
     InvalidJob(String),
     InvalidAlertConfig(String),
+    NotifyError(String),
     Unauthorized(String),
     AuthenticationError(String),
 }
@@ -44,12 +46,16 @@ impl Display for Error {
             Self::JobAlreadyFinished(job_id) => {
                 write!(f, "Job('{job_id}') is already finished")
             }
+            Self::LateJobProcessFailure(reason) => {
+                write!(f, "Failed to process late job(s): {reason}")
+            }
             Self::AlertConfigurationError(reason) => {
                 write!(f, "Failed to configure alert: {reason}")
             }
             Self::InvalidMonitor(reason) => write!(f, "Invalid Monitor: {reason}"),
             Self::InvalidJob(reason) => write!(f, "Invalid Job: {reason}"),
             Self::InvalidAlertConfig(reason) => write!(f, "Invalid Alert Configuration: {reason}"),
+            Self::NotifyError(reason) => write!(f, "Failed to notify: {reason}"),
             Self::Unauthorized(reason) => write!(f, "Unauthorized: {reason}"),
             Self::AuthenticationError(reason) => write!(f, "Authentication error: {reason}"),
         }
