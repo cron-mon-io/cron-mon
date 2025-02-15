@@ -11,24 +11,28 @@ use crate::infrastructure::repositories::{
 pub struct ProcessLateJobsService<
     MonitorRepo: GetWithLateJobs + Repository<Monitor>,
     AlertConfigRepo: GetByMonitors,
+    NotifierFactory: GetNotifier,
 > {
     monitor_repo: MonitorRepo,
     alert_config_repo: AlertConfigRepo,
-    get_notifier_service: Box<dyn GetNotifier + Sync + Send>,
+    notifier_factory: NotifierFactory,
 }
 
-impl<MonitorRepo: GetWithLateJobs + Repository<Monitor>, AlertConfigRepo: GetByMonitors>
-    ProcessLateJobsService<MonitorRepo, AlertConfigRepo>
+impl<
+        MonitorRepo: GetWithLateJobs + Repository<Monitor>,
+        AlertConfigRepo: GetByMonitors,
+        NotifierFactory: GetNotifier,
+    > ProcessLateJobsService<MonitorRepo, AlertConfigRepo, NotifierFactory>
 {
     pub fn new(
         monitor_repo: MonitorRepo,
         alert_config_repo: AlertConfigRepo,
-        get_notifier_service: Box<dyn GetNotifier + Sync + Send>,
+        notifier_factory: NotifierFactory,
     ) -> Self {
         Self {
             monitor_repo,
             alert_config_repo,
-            get_notifier_service,
+            notifier_factory,
         }
     }
 
@@ -97,7 +101,7 @@ impl<MonitorRepo: GetWithLateJobs + Repository<Monitor>, AlertConfigRepo: GetByM
         let monitor_name = monitor.name.clone();
         for late_job in monitor.late_jobs() {
             for alert_config in &required_alert_configs {
-                let mut notifier = self.get_notifier_service.get_notifier(alert_config);
+                let mut notifier = self.notifier_factory.get_notifier(alert_config);
                 notifier
                     .notify_late_job(&monitor_id, &monitor_name, late_job)
                     .await?;
@@ -351,7 +355,7 @@ mod tests {
         let mut service = ProcessLateJobsService::new(
             mock_monitor_repo,
             mock_alert_config_repo,
-            Box::new(mock_get_notifier),
+            mock_get_notifier,
         );
 
         let result = service.process_late_jobs().await;
@@ -476,7 +480,7 @@ mod tests {
         let mut service = ProcessLateJobsService::new(
             mock_monitor_repo,
             mock_alert_config_repo,
-            Box::new(mock_get_notifier),
+            mock_get_notifier,
         );
 
         let result = service.process_late_jobs().await;

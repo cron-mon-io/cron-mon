@@ -73,11 +73,11 @@ pub fn get_generate_key_service(pool: &DbPool) -> GenerateKeyService<ApiKeyRepos
 
 pub fn get_process_late_jobs_service(
     pool: &DbPool,
-) -> ProcessLateJobsService<MonitorRepository, AlertConfigRepository> {
+) -> ProcessLateJobsService<MonitorRepository, AlertConfigRepository, GetNotifierService> {
     ProcessLateJobsService::new(
         MonitorRepository::new(pool),
         AlertConfigRepository::new(pool),
-        Box::new(GetNotifierService::new()),
+        GetNotifierService::new(),
     )
 }
 
