@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::domain::models::Job;
 use crate::errors::Error;
-use crate::infrastructure::notify::NotifyLateJob;
+use crate::infrastructure::notify::Notifier;
 
 use super::messages::LateJobMessage;
 
@@ -46,7 +46,7 @@ impl SlackNotifier {
 }
 
 #[async_trait]
-impl NotifyLateJob for SlackNotifier {
+impl Notifier for SlackNotifier {
     async fn notify_late_job(
         &mut self,
         monitor_id: &Uuid,
