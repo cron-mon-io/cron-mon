@@ -56,6 +56,7 @@ impl<T: Repository<AlertConfig>> CreateAlertConfigService<T> {
 }
 
 #[cfg(test)]
+#[cfg(not(coverage))]
 mod tests {
     use serde_json::json;
     use tracing::Level;
