@@ -55,19 +55,23 @@ impl<'a> GetWithErroneousJobs for MonitorRepository<'a> {
         let (monitor_datas, job_datas) = connection
             .transaction::<(Vec<MonitorData>, Vec<JobData>), DieselError, _>(|conn| {
                 Box::pin(async move {
-                    let in_progress_condition =
+                    let running_late_condition =
                         job::end_time.is_null().and(now.gt(job::max_end_time));
-                    let finished_condition = job::end_time
+                    let finished_late_condition = job::end_time
                         .is_not_null()
                         .and(job::end_time.assume_not_null().gt(job::max_end_time));
 
-                    // Get all late jobs.
+                    // Get all late and errored jobs.
                     let monitor_datas: Vec<MonitorData> = monitor::table
                         .inner_join(job::table)
                         .filter(
-                            job::late_alert_sent
+                            (job::late_alert_sent
                                 .eq(false)
-                                .and(in_progress_condition.or(finished_condition)),
+                                .and(running_late_condition.or(finished_late_condition)))
+                            .or(job::error_alert_sent
+                                .eq(false)
+                                .and(job::end_time.is_not_null())
+                                .and(job::succeeded.eq(false))),
                         )
                         .select(MonitorData::as_select())
                         .distinct_on(monitor::monitor_id)
