@@ -5,11 +5,11 @@ use crate::domain::models::{AlertConfig, Monitor};
 use crate::domain::services::get_notifier::GetNotifier;
 use crate::errors::Error;
 use crate::infrastructure::repositories::{
-    alert_config::GetByMonitors, monitor::GetWithLateJobs, Repository,
+    alert_config::GetByMonitors, monitor::GetWithErroneousJobs, Repository,
 };
 
 pub struct ProcessLateJobsService<
-    MonitorRepo: GetWithLateJobs + Repository<Monitor>,
+    MonitorRepo: GetWithErroneousJobs + Repository<Monitor>,
     AlertConfigRepo: GetByMonitors,
     NotifierFactory: GetNotifier,
 > {
@@ -19,7 +19,7 @@ pub struct ProcessLateJobsService<
 }
 
 impl<
-        MonitorRepo: GetWithLateJobs + Repository<Monitor>,
+        MonitorRepo: GetWithErroneousJobs + Repository<Monitor>,
         AlertConfigRepo: GetByMonitors,
         NotifierFactory: GetNotifier,
     > ProcessLateJobsService<MonitorRepo, AlertConfigRepo, NotifierFactory>
@@ -38,7 +38,7 @@ impl<
 
     pub async fn process_late_jobs(&mut self) -> Result<(), Error> {
         info!("Beginning check for late Jobs...");
-        let mut monitors_with_late_jobs = self.monitor_repo.get_with_late_jobs().await?;
+        let mut monitors_with_late_jobs = self.monitor_repo.get_with_erroneous_jobs().await?;
         let alert_configs = self
             .alert_config_repo
             .get_by_monitors(
@@ -138,8 +138,8 @@ mod tests {
         pub MonitorRepo {}
 
         #[async_trait]
-        impl GetWithLateJobs for MonitorRepo {
-            async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error>;
+        impl GetWithErroneousJobs for MonitorRepo {
+            async fn get_with_erroneous_jobs(&mut self) -> Result<Vec<Monitor>, Error>;
         }
 
         #[async_trait]
@@ -246,7 +246,7 @@ mod tests {
     ) {
         let mut mock_monitor_repo = MockMonitorRepo::new();
         mock_monitor_repo
-            .expect_get_with_late_jobs()
+            .expect_get_with_erroneous_jobs()
             .once()
             .returning(move || Ok(monitors.clone()));
 
@@ -391,7 +391,7 @@ mod tests {
     ) {
         let mut mock_monitor_repo = MockMonitorRepo::new();
         mock_monitor_repo
-            .expect_get_with_late_jobs()
+            .expect_get_with_erroneous_jobs()
             .once()
             .returning(move || Ok(monitors.clone()));
 

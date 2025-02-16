@@ -9,7 +9,9 @@ use test_utils::{gen_datetime, gen_uuid};
 use cron_mon_api::domain::models::Monitor;
 use cron_mon_api::errors::Error;
 use cron_mon_api::infrastructure::models::{job::JobData, monitor::MonitorData};
-use cron_mon_api::infrastructure::repositories::monitor::{GetWithLateJobs, MonitorRepository};
+use cron_mon_api::infrastructure::repositories::monitor::{
+    GetWithErroneousJobs, MonitorRepository,
+};
 use cron_mon_api::infrastructure::repositories::Repository;
 
 use common::{infrastructure, Infrastructure};
@@ -79,11 +81,11 @@ async fn test_get(#[future] infrastructure: Infrastructure) {
 
 #[rstest]
 #[tokio::test]
-async fn test_get_with_late_jobs(#[future] infrastructure: Infrastructure) {
+async fn test_get_with_erroneous_jobs(#[future] infrastructure: Infrastructure) {
     let infra = infrastructure.await;
     let mut repo = MonitorRepository::new(&infra.pool);
 
-    let monitors_with_late_jobs = repo.get_with_late_jobs().await.unwrap();
+    let monitors_with_late_jobs = repo.get_with_erroneous_jobs().await.unwrap();
     let mut names: Vec<String> = monitors_with_late_jobs
         .iter()
         .map(|monitor| monitor.name.clone())
