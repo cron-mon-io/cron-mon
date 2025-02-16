@@ -15,7 +15,7 @@ use crate::infrastructure::db_schema::job;
 use crate::infrastructure::db_schema::monitor;
 use crate::infrastructure::models::job::JobData;
 use crate::infrastructure::models::monitor::MonitorData;
-use crate::infrastructure::repositories::monitor::GetWithLateJobs;
+use crate::infrastructure::repositories::monitor::GetWithErroneousJobs;
 use crate::infrastructure::repositories::Repository;
 
 pub struct MonitorRepository<'a> {
@@ -45,8 +45,8 @@ impl<'a> MonitorRepository<'a> {
 
 #[async_trait]
 #[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
-impl<'a> GetWithLateJobs for MonitorRepository<'a> {
-    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
+impl<'a> GetWithErroneousJobs for MonitorRepository<'a> {
+    async fn get_with_erroneous_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
         let mut connection = get_connection(self.pool).await?;
         let (monitor_datas, job_datas) = connection
             .transaction::<(Vec<MonitorData>, Vec<JobData>), DieselError, _>(|conn| {

@@ -12,6 +12,6 @@ pub use repo::MonitorRepository;
 
 #[cfg_attr(test, automock)]
 #[async_trait]
-pub trait GetWithLateJobs {
-    async fn get_with_late_jobs(&mut self) -> Result<Vec<Monitor>, Error>;
+pub trait GetWithErroneousJobs {
+    async fn get_with_erroneous_jobs(&mut self) -> Result<Vec<Monitor>, Error>;
 }
