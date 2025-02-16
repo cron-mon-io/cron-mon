@@ -46,6 +46,10 @@ impl<'a> MonitorRepository<'a> {
 #[async_trait]
 #[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> GetWithErroneousJobs for MonitorRepository<'a> {
+    /// Get Monitors with jobs that are late or have finished with an error.
+    ///
+    /// Note that this method will not return Monitors that have erroneous jobs that have already
+    /// been alerted on.
     async fn get_with_erroneous_jobs(&mut self) -> Result<Vec<Monitor>, Error> {
         let mut connection = get_connection(self.pool).await?;
         let (monitor_datas, job_datas) = connection
