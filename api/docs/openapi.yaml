@@ -608,7 +608,7 @@ paths:
     post:
       tags:
         - Alert Configurations
-      summary: Createm a new alert configuration
+      summary: Create a new alert configuration
       security:
         - bearerAuth: []
       requestBody:

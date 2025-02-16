@@ -11,24 +11,28 @@ use crate::infrastructure::repositories::{
 pub struct ProcessLateJobsService<
     MonitorRepo: GetWithLateJobs + Repository<Monitor>,
     AlertConfigRepo: GetByMonitors,
+    NotifierFactory: GetNotifier,
 > {
     monitor_repo: MonitorRepo,
     alert_config_repo: AlertConfigRepo,
-    get_notifier_service: Box<dyn GetNotifier + Sync + Send>,
+    notifier_factory: NotifierFactory,
 }
 
-impl<MonitorRepo: GetWithLateJobs + Repository<Monitor>, AlertConfigRepo: GetByMonitors>
-    ProcessLateJobsService<MonitorRepo, AlertConfigRepo>
+impl<
+        MonitorRepo: GetWithLateJobs + Repository<Monitor>,
+        AlertConfigRepo: GetByMonitors,
+        NotifierFactory: GetNotifier,
+    > ProcessLateJobsService<MonitorRepo, AlertConfigRepo, NotifierFactory>
 {
     pub fn new(
         monitor_repo: MonitorRepo,
         alert_config_repo: AlertConfigRepo,
-        get_notifier_service: Box<dyn GetNotifier + Sync + Send>,
+        notifier_factory: NotifierFactory,
     ) -> Self {
         Self {
             monitor_repo,
             alert_config_repo,
-            get_notifier_service,
+            notifier_factory,
         }
     }
 
@@ -97,7 +101,7 @@ impl<MonitorRepo: GetWithLateJobs + Repository<Monitor>, AlertConfigRepo: GetByM
         let monitor_name = monitor.name.clone();
         for late_job in monitor.late_jobs() {
             for alert_config in &required_alert_configs {
-                let mut notifier = self.get_notifier_service.get_notifier(alert_config);
+                let mut notifier = self.notifier_factory.get_notifier(alert_config);
                 notifier
                     .notify_late_job(&monitor_id, &monitor_name, late_job)
                     .await?;
@@ -124,8 +128,8 @@ mod tests {
 
     use crate::domain::models::{AlertType, AppliedMonitor, EndState, Job, SlackAlertConfig};
     use crate::domain::services::get_notifier::MockGetNotifier;
-    use crate::infrastructure::notify::MockNotifyLateJob;
-    use crate::infrastructure::notify::NotifyLateJob;
+    use crate::infrastructure::notify::MockNotifier;
+    use crate::infrastructure::notify::Notifier;
     use crate::infrastructure::repositories::alert_config::MockGetByMonitors;
 
     use super::*;
@@ -301,7 +305,7 @@ mod tests {
             .once()
             .in_sequence(&mut sequence)
             .returning(|_| {
-                let mut mock_notifier = MockNotifyLateJob::new();
+                let mut mock_notifier = MockNotifier::new();
                 mock_notifier
                     .expect_notify_late_job()
                     .once()
@@ -311,14 +315,14 @@ mod tests {
                             && job.job_id == gen_uuid("01a92c6c-6803-409d-b675-022fff62575a")
                     })
                     .returning(|_, _, _| Ok(()));
-                Box::new(mock_notifier) as Box<dyn NotifyLateJob + Sync + Send>
+                Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
         mock_get_notifier
             .expect_get_notifier()
             .once()
             .in_sequence(&mut sequence)
             .returning(|_| {
-                let mut mock_notifier = MockNotifyLateJob::new();
+                let mut mock_notifier = MockNotifier::new();
                 mock_notifier
                     .expect_notify_late_job()
                     .once()
@@ -328,14 +332,14 @@ mod tests {
                             && job.job_id == gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0")
                     })
                     .returning(|_, _, _| Ok(()));
-                Box::new(mock_notifier) as Box<dyn NotifyLateJob + Sync + Send>
+                Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
         mock_get_notifier
             .expect_get_notifier()
             .once()
             .in_sequence(&mut sequence)
             .returning(|_| {
-                let mut mock_notifier = MockNotifyLateJob::new();
+                let mut mock_notifier = MockNotifier::new();
                 mock_notifier
                     .expect_notify_late_job()
                     .once()
@@ -345,13 +349,13 @@ mod tests {
                             && job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
                     })
                     .returning(|_, _, _| Ok(()));
-                Box::new(mock_notifier) as Box<dyn NotifyLateJob + Sync + Send>
+                Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
 
         let mut service = ProcessLateJobsService::new(
             mock_monitor_repo,
             mock_alert_config_repo,
-            Box::new(mock_get_notifier),
+            mock_get_notifier,
         );
 
         let result = service.process_late_jobs().await;
@@ -426,7 +430,7 @@ mod tests {
             .once()
             .in_sequence(&mut sequence)
             .returning(|_| {
-                let mut mock_notifier = MockNotifyLateJob::new();
+                let mut mock_notifier = MockNotifier::new();
                 mock_notifier
                     .expect_notify_late_job()
                     .once()
@@ -436,14 +440,14 @@ mod tests {
                             && job.job_id == gen_uuid("01a92c6c-6803-409d-b675-022fff62575a")
                     })
                     .returning(|_, _, _| Ok(()));
-                Box::new(mock_notifier) as Box<dyn NotifyLateJob + Sync + Send>
+                Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
         mock_get_notifier
             .expect_get_notifier()
             .once()
             .in_sequence(&mut sequence)
             .returning(|_| {
-                let mut mock_notifier = MockNotifyLateJob::new();
+                let mut mock_notifier = MockNotifier::new();
                 mock_notifier
                     .expect_notify_late_job()
                     .once()
@@ -453,14 +457,14 @@ mod tests {
                             && job.job_id == gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0")
                     })
                     .returning(|_, _, _| Err(Error::NotifyError("Failed to notify".to_owned())));
-                Box::new(mock_notifier) as Box<dyn NotifyLateJob + Sync + Send>
+                Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
         mock_get_notifier
             .expect_get_notifier()
             .once()
             .in_sequence(&mut sequence)
             .returning(|_| {
-                let mut mock_notifier = MockNotifyLateJob::new();
+                let mut mock_notifier = MockNotifier::new();
                 mock_notifier
                     .expect_notify_late_job()
                     .once()
@@ -470,13 +474,13 @@ mod tests {
                             && job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
                     })
                     .returning(|_, _, _| Ok(()));
-                Box::new(mock_notifier) as Box<dyn NotifyLateJob + Sync + Send>
+                Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
 
         let mut service = ProcessLateJobsService::new(
             mock_monitor_repo,
             mock_alert_config_repo,
-            Box::new(mock_get_notifier),
+            mock_get_notifier,
         );
 
         let result = service.process_late_jobs().await;

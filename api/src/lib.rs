@@ -53,6 +53,7 @@ pub fn rocket() -> Rocket<Build> {
                 alert_config::update_alert_config,
                 alert_config::delete_alert_config,
                 alert_config::get_alert_configs_for_monitor,
+                alert_config::test_alert_config,
             ],
         )
         .mount("/api/v1/docs", FileServer::from("./docs"))
