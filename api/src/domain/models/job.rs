@@ -80,6 +80,15 @@ impl Job {
         end_time > self.max_end_time
     }
 
+    /// Ascertain whether or not the Job has finished with an error.
+    pub fn errored(&self) -> bool {
+        if let Some(end_state) = &self.end_state {
+            !end_state.succeeded
+        } else {
+            false
+        }
+    }
+
     /// Get the duration of the Job, if it has finished.
     pub fn duration(&self) -> Option<u64> {
         self.end_state.as_ref().map(|end_state| {
@@ -236,6 +245,30 @@ mod tests {
         };
 
         assert_eq!(job.late(), expected_late);
+    }
+
+    #[rstest]
+    #[case::not_finished(None, false)]
+    #[case::finished_successfully(Some(true), false)]
+    #[case::finished_not_successfully(Some(false), true)]
+    fn checking_if_job_errored(
+        #[case] need_end_state: Option<bool>,
+        #[case] expected_errored: bool,
+    ) {
+        let job = Job {
+            job_id: Uuid::new_v4(),
+            start_time: gen_datetime("2024-04-20T20:30:30"),
+            max_end_time: gen_relative_datetime(0),
+            end_state: need_end_state.map(|succeeded| EndState {
+                end_time: gen_relative_datetime(0),
+                succeeded,
+                output: None,
+            }),
+            late_alert_sent: false,
+            error_alert_sent: false,
+        };
+
+        assert_eq!(job.errored(), expected_errored);
     }
 
     #[test]
