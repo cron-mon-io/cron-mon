@@ -59,6 +59,16 @@ impl Monitor {
         self.jobs.iter_mut().filter(|job| job.late()).collect()
     }
 
+    /// Retrieve jobs that are late or have finished with an error, that have pending alerts.
+    pub fn jobs_pending_alerts(&mut self) -> Vec<&mut Job> {
+        self.jobs
+            .iter_mut()
+            .filter(|job| {
+                (!job.late_alert_sent && job.late()) || (!job.error_alert_sent && job.errored())
+            })
+            .collect()
+    }
+
     /// Retrieve the most recently finished job.
     pub fn last_finished_job(&self) -> Option<&Job> {
         self.jobs.iter().find(|&job| !job.in_progress())
@@ -193,6 +203,153 @@ mod tests {
 
         let late_jobs_ids: Vec<Uuid> = mon.late_jobs().iter().map(|job| job.job_id).collect();
         assert_eq!(late_jobs_ids, expected_ids);
+    }
+
+    #[rstest]
+    #[case::happy_path(
+        vec![
+            Job {
+                job_id: gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(0),
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(-5),
+                    succeeded: true,
+                    output: None,
+                }),
+                late_alert_sent: false,
+                error_alert_sent: false,
+            },
+            Job {
+                job_id: gen_uuid("15904641-2d0e-4d27-8fd0-b130f0ab5aa9"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(5),
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
+            }
+        ],
+        vec![]
+    )]
+    #[case::one_late_job_pending(
+        vec![
+            Job {
+                job_id: gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(-5),
+                end_state: None,
+                late_alert_sent: false,
+                error_alert_sent: false,
+            },
+            Job {
+                job_id: gen_uuid("15904641-2d0e-4d27-8fd0-b130f0ab5aa9"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(-5),
+                end_state: None,
+                late_alert_sent: true,
+                error_alert_sent: false,
+            }
+        ],
+        vec![gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420")]
+    )]
+    #[case::one_errored_job_pending(
+        vec![
+            Job {
+                job_id: gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(0),
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(-5),
+                    succeeded: false,
+                    output: None,
+                }),
+                late_alert_sent: false,
+                error_alert_sent: false,
+            },
+            Job {
+                job_id: gen_uuid("15904641-2d0e-4d27-8fd0-b130f0ab5aa9"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(5),
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(-5),
+                    succeeded: false,
+                    output: None,
+                }),
+                late_alert_sent: false,
+                error_alert_sent: true,
+            }
+        ],
+        vec![
+            gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"),
+        ]
+    )]
+    #[case::one_errored_one_late_pending(
+        vec![
+            Job {
+                job_id: gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(0),
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(5),
+                    succeeded: true,
+                    output: None,
+                }),
+                late_alert_sent: false,
+                error_alert_sent: false,
+            },
+            Job {
+                job_id: gen_uuid("15904641-2d0e-4d27-8fd0-b130f0ab5aa9"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(0),
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(5),
+                    succeeded: true,
+                    output: None,
+                }),
+                late_alert_sent: true,
+                error_alert_sent: false,
+            },
+            Job {
+                job_id: gen_uuid("b1d00389-9c4e-43ab-9091-ae1be943629c"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(0),
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(-5),
+                    succeeded: false,
+                    output: None,
+                }),
+                late_alert_sent: false,
+                error_alert_sent: false,
+            },
+            Job {
+                job_id: gen_uuid("8e60869e-700e-4fa0-831b-31d37ab8f2ae"),
+                start_time: gen_relative_datetime(-200),
+                max_end_time: gen_relative_datetime(5),
+                end_state: Some(EndState {
+                    end_time: gen_relative_datetime(-5),
+                    succeeded: false,
+                    output: None,
+                }),
+                late_alert_sent: false,
+                error_alert_sent: true,
+            }
+        ],
+        vec![
+            gen_uuid("79192674-0e87-4f79-b988-0efd5ae76420"),
+            gen_uuid("b1d00389-9c4e-43ab-9091-ae1be943629c")
+        ]
+    )]
+    fn retrieving_jobs_with_pending_alerts(
+        #[case] jobs: Vec<Job>,
+        #[case] expected_ids: Vec<Uuid>,
+    ) {
+        let mut mon = Monitor::new("foo-tenant".to_owned(), "new-monitor".to_owned(), 200, 100);
+        mon.jobs = jobs;
+
+        let jobs_pending_alerts = mon.jobs_pending_alerts();
+
+        let jobs_ids: Vec<Uuid> = jobs_pending_alerts.iter().map(|job| job.job_id).collect();
+        assert_eq!(jobs_ids, expected_ids);
     }
 
     #[test]
