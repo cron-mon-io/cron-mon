@@ -14,10 +14,10 @@ pub struct LateJobMessage<'a> {
 impl SlackMessageTemplate for LateJobMessage<'_> {
     fn render_template(&self) -> SlackMessageContent {
         SlackMessageContent::new()
-            .with_text(format!("Late '{}' job detected", self.monitor_name))
+            .with_text(format!("Late '{}' job", self.monitor_name))
             .with_blocks(slack_blocks![
                 some_into(SlackHeaderBlock::new(pt!(
-                    "Late '{}' job detected",
+                    "Late '{}' job",
                     self.monitor_name
                 ))),
                 some_into(SlackSectionBlock::new().with_text(pt!(
@@ -27,7 +27,7 @@ impl SlackMessageTemplate for LateJobMessage<'_> {
                     self.job.max_end_time.format("%Y-%m-%d %H:%M:%S")
                 ))),
                 some_into(SlackSectionBlock::new().with_text(md!(
-                    "`monitor_id: {}`\n`job_id: {}`",
+                    "Monitor ID: `{}`\nJob ID: `{}`",
                     self.monitor_id,
                     self.job.job_id
                 )))
@@ -146,11 +146,11 @@ mod tests {
         assert_eq!(
             serde_json::to_value(message.render_template()).unwrap(),
             serde_json::json!({
-                "text": "Late 'generate-orders.sh' job detected",
+                "text": "Late 'generate-orders.sh' job",
                 "blocks": [
                     {
                         "text": {
-                            "text": "Late 'generate-orders.sh' job detected",
+                            "text": "Late 'generate-orders.sh' job",
                             "type": "plain_text"
                         },
                         "type": "header"
@@ -166,8 +166,8 @@ mod tests {
                     },
                     {
                         "text": {
-                            "text": "`monitor_id: c1bf0515-df39-448b-aa95-686360a33b36`\n`job_id: \
-                                8106bab7-d643-4ede-bd92-60c79f787344`",
+                            "text": "Monitor ID: `c1bf0515-df39-448b-aa95-686360a33b36`\nJob ID: \
+                                `8106bab7-d643-4ede-bd92-60c79f787344`",
                             "type": "mrkdwn"
                         },
                         "type": "section"
