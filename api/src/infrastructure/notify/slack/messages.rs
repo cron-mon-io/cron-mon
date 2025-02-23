@@ -35,6 +35,55 @@ impl SlackMessageTemplate for LateJobMessage<'_> {
     }
 }
 
+/// A message template for notifying that a job finished with an error
+#[derive(Debug, Clone)]
+pub struct ErroredJobMessage<'a> {
+    pub monitor_id: &'a Uuid,
+    pub monitor_name: &'a str,
+    pub job: &'a Job,
+}
+
+impl SlackMessageTemplate for ErroredJobMessage<'_> {
+    fn render_template(&self) -> SlackMessageContent {
+        // Unwrap is safe because we'll only ever call this on a job we know has finished (with an
+        // error).
+        let end_state = self.job.end_state.as_ref().unwrap();
+
+        let mut blocks: Vec<SlackBlock> = slack_blocks![
+            some_into(SlackHeaderBlock::new(pt!(
+                "Failed '{}' job",
+                self.monitor_name
+            ))),
+            some_into(SlackSectionBlock::new().with_text(pt!(
+                "Job failed at {}.",
+                end_state.end_time.format("%Y-%m-%d %H:%M:%S")
+            )))
+        ];
+
+        if let Some(output) = &end_state.output {
+            blocks.push(
+                SlackSectionBlock::new()
+                    .with_text(md!("Job output: `{}`", output))
+                    .into(),
+            );
+        }
+
+        blocks.push(
+            SlackSectionBlock::new()
+                .with_text(md!(
+                    "Monitor ID: `{}`\nJob ID: `{}`",
+                    self.monitor_id,
+                    self.job.job_id
+                ))
+                .into(),
+        );
+
+        SlackMessageContent::new()
+            .with_text(format!("Failed '{}' job", self.monitor_name))
+            .with_blocks(blocks)
+    }
+}
+
 /// A message template for testing alerts.
 #[derive(Debug, Clone)]
 pub struct TestMessage<'a> {
@@ -65,6 +114,7 @@ impl SlackMessageTemplate for TestMessage<'_> {
 // relatively simple and don't test the actual API calls, so they're not too brittle.
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
     use test_utils::{gen_datetime, gen_uuid};
 
     use crate::domain::models::{AlertConfig, AlertType, EndState, Job, SlackAlertConfig};
@@ -118,6 +168,67 @@ mod tests {
                         "text": {
                             "text": "`monitor_id: c1bf0515-df39-448b-aa95-686360a33b36`\n`job_id: \
                                 8106bab7-d643-4ede-bd92-60c79f787344`",
+                            "type": "mrkdwn"
+                        },
+                        "type": "section"
+                    }
+                ]
+            })
+        );
+    }
+
+    #[test]
+    fn test_errored_job_message() {
+        let monitor_id = gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36");
+        let job_id = gen_uuid("8106bab7-d643-4ede-bd92-60c79f787344");
+        let job = Job {
+            job_id,
+            start_time: gen_datetime("2024-05-01T00:30:00"),
+            max_end_time: gen_datetime("2024-05-01T01:10:00"),
+            end_state: Some(EndState {
+                end_time: gen_datetime("2024-05-01T00:49:00"),
+                succeeded: false,
+                output: Some("Error: failed to generate orders".to_owned()),
+            }),
+            late_alert_sent: false,
+            error_alert_sent: false,
+        };
+        let message = ErroredJobMessage {
+            monitor_id: &monitor_id,
+            monitor_name: "generate-orders.sh",
+            job: &job,
+        };
+
+        assert_eq!(
+            serde_json::to_value(message.render_template()).unwrap(),
+            serde_json::json!({
+                "text": "Failed 'generate-orders.sh' job",
+                "blocks": [
+                    {
+                        "text": {
+                            "text": "Failed 'generate-orders.sh' job",
+                            "type": "plain_text"
+                        },
+                        "type": "header"
+                    },
+                    {
+                        "text": {
+                            "text": "Job failed at 2024-05-01 00:49:00.",
+                            "type": "plain_text"
+                        },
+                        "type": "section"
+                    },
+                    {
+                        "text": {
+                            "text": "Job output: `Error: failed to generate orders`",
+                            "type": "mrkdwn"
+                        },
+                        "type": "section"
+                    },
+                    {
+                        "text": {
+                            "text": "Monitor ID: `c1bf0515-df39-448b-aa95-686360a33b36`\nJob ID: \
+                                `8106bab7-d643-4ede-bd92-60c79f787344`",
                             "type": "mrkdwn"
                         },
                         "type": "section"

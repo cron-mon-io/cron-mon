@@ -6,7 +6,7 @@ use crate::domain::models::{AlertConfig, Job};
 use crate::errors::Error;
 use crate::infrastructure::notify::Notifier;
 
-use super::messages::{LateJobMessage, TestMessage};
+use super::messages::{ErroredJobMessage, LateJobMessage, TestMessage};
 
 /// Slack notifier for late jobs.
 ///
@@ -57,6 +57,20 @@ impl Notifier for SlackNotifier {
             monitor_id,
             monitor_name,
             job: late_job,
+        })
+        .await
+    }
+
+    async fn notify_errored_job(
+        &mut self,
+        monitor_id: &Uuid,
+        monitor_name: &str,
+        errored_job: &Job,
+    ) -> Result<(), Error> {
+        self.send_message(ErroredJobMessage {
+            monitor_id,
+            monitor_name,
+            job: errored_job,
         })
         .await
     }
