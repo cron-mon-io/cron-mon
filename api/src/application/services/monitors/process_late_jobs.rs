@@ -1,7 +1,7 @@
 use tracing::{error, info};
 use uuid::Uuid;
 
-use crate::domain::models::{AlertConfig, Monitor};
+use crate::domain::models::{AlertConfig, Job, Monitor};
 use crate::domain::services::get_notifier::GetNotifier;
 use crate::errors::Error;
 use crate::infrastructure::repositories::{
@@ -94,22 +94,57 @@ impl<
             .filter(|alert_config| alert_config.is_associated_with_monitor(monitor))
             .collect();
 
-        let has_alert_configs = !required_alert_configs.is_empty();
-
         // Get jobs to alert on.
         let monitor_id = monitor.monitor_id;
         let monitor_name = monitor.name.clone();
-        for late_job in monitor.late_jobs() {
-            for alert_config in &required_alert_configs {
+        let jobs_pending_alerts = monitor.jobs_pending_alerts();
+        for job in jobs_pending_alerts {
+            self.alert_late(&monitor_id, &monitor_name, job, &required_alert_configs)
+                .await?;
+            self.alert_errored(&monitor_id, &monitor_name, job, &required_alert_configs)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn alert_late(
+        &self,
+        monitor_id: &Uuid,
+        monitor_name: &str,
+        job: &mut Job,
+        alert_configs: &[&AlertConfig],
+    ) -> Result<(), Error> {
+        if !alert_configs.is_empty() && !job.late_alert_sent && job.late() {
+            for alert_config in alert_configs {
                 let mut notifier = self.notifier_factory.get_notifier(alert_config);
                 notifier
-                    .notify_late_job(&monitor_id, &monitor_name, late_job)
+                    .notify_late_job(&monitor_id, &monitor_name, job)
                     .await?;
             }
 
-            if has_alert_configs {
-                late_job.late_alert_sent = true;
+            job.late_alert_sent = true;
+        }
+
+        Ok(())
+    }
+
+    pub async fn alert_errored(
+        &self,
+        monitor_id: &Uuid,
+        monitor_name: &str,
+        job: &mut Job,
+        alert_configs: &[&AlertConfig],
+    ) -> Result<(), Error> {
+        if !alert_configs.is_empty() && !job.error_alert_sent && job.errored() {
+            for alert_config in alert_configs {
+                let mut notifier = self.notifier_factory.get_notifier(alert_config);
+                notifier
+                    .notify_errored_job(&monitor_id, &monitor_name, job)
+                    .await?;
             }
+
+            job.error_alert_sent = true;
         }
 
         Ok(())
@@ -199,14 +234,28 @@ mod tests {
                 name: "get-pending-orders | generate invoices".to_owned(),
                 expected_duration: 21_600,
                 grace_duration: 1_800,
-                jobs: vec![Job {
-                    job_id: gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
-                    start_time: gen_relative_datetime(-30_000),
-                    max_end_time: gen_relative_datetime(-6_600),
-                    end_state: None,
-                    late_alert_sent: false,
-                    error_alert_sent: false,
-                }],
+                jobs: vec![
+                    Job {
+                        job_id: gen_uuid("7baa4872-4e55-410a-9b3d-1f4b5bef1f04"),
+                        start_time: gen_relative_datetime(-22_500),
+                        max_end_time: gen_relative_datetime(900),
+                        end_state: Some(EndState {
+                            end_time: gen_relative_datetime(0),
+                            succeeded: false,
+                            output: Some("Failed to connect to database".to_owned()),
+                        }),
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    },
+                    Job {
+                        job_id: gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
+                        start_time: gen_relative_datetime(-30_000),
+                        max_end_time: gen_relative_datetime(-6_600),
+                        end_state: None,
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    },
+                ],
             },
         ]
     }
@@ -276,10 +325,17 @@ mod tests {
             .times(1)
             .withf(|monitor| {
                 monitor.monitor_id == gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
-                    && monitor.jobs.iter().any(|job| {
-                        job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
-                            && job.late_alert_sent
-                    })
+                    && monitor
+                        .jobs
+                        .iter()
+                        .filter(|job| {
+                            (job.job_id == gen_uuid("7baa4872-4e55-410a-9b3d-1f4b5bef1f04")
+                                && job.error_alert_sent)
+                                || (job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
+                                    && job.late_alert_sent)
+                        })
+                        .count()
+                        == 2
             })
             .returning(|_| Ok(()));
 
@@ -330,6 +386,23 @@ mod tests {
                         monitor_id == &gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
                             && name == "background-task.sh"
                             && job.job_id == gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0")
+                    })
+                    .returning(|_, _, _| Ok(()));
+                Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
+            });
+        mock_get_notifier
+            .expect_get_notifier()
+            .once()
+            .in_sequence(&mut sequence)
+            .returning(|_| {
+                let mut mock_notifier = MockNotifier::new();
+                mock_notifier
+                    .expect_notify_errored_job()
+                    .once()
+                    .withf(move |monitor_id, name, job| {
+                        monitor_id == &gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
+                            && name == "get-pending-orders | generate invoices"
+                            && job.job_id == gen_uuid("7baa4872-4e55-410a-9b3d-1f4b5bef1f04")
                     })
                     .returning(|_, _, _| Ok(()));
                 Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
