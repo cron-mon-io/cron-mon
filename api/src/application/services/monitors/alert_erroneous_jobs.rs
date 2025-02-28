@@ -131,7 +131,7 @@ impl<
             for alert_config in alert_configs {
                 let mut notifier = self.notifier_factory.get_notifier(alert_config);
                 notifier
-                    .notify_late_job(&monitor_id, &monitor_name, job)
+                    .notify_late_job(monitor_id, monitor_name, job)
                     .await?;
             }
 
@@ -152,7 +152,7 @@ impl<
             for alert_config in alert_configs {
                 let mut notifier = self.notifier_factory.get_notifier(alert_config);
                 notifier
-                    .notify_errored_job(&monitor_id, &monitor_name, job)
+                    .notify_errored_job(monitor_id, monitor_name, job)
                     .await?;
             }
 
