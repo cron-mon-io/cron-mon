@@ -486,16 +486,25 @@ mod tests {
             .once()
             .returning(move || Ok(monitors.clone()));
 
-        // We don't save the 1st monitor as we fail to notify, and we fail to save the 2nd monitor.
+        // We fail to save the 1st monitor, and we don't save the 2nd monitor as we fail to notify.
         mock_monitor_repo
             .expect_save()
             .times(1)
             .withf(|monitor| {
-                monitor.monitor_id == gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
-                    && monitor.jobs.iter().any(|job| {
-                        job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
-                            && job.late_alert_sent
-                    })
+                monitor.monitor_id == gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
+                    && monitor
+                        .jobs
+                        .iter()
+                        .filter(|job| {
+                            [
+                                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                                gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
+                            ]
+                            .contains(&job.job_id)
+                                && job.late_alert_sent
+                        })
+                        .count()
+                        == 2
             })
             .returning(|_| Err(Error::RepositoryError("Failed to save".to_owned())));
 
@@ -512,8 +521,8 @@ mod tests {
             .returning(move |_, _| Ok(alert_configs.clone()));
 
         // Setup a sequence of expected calls to the mock GetNotifier. We have to do this since
-        // the AlertErroneousJobsService instantiates a fresh Notifier for each late job, meaning we
-        // can't setup our test expectations on a single instance.
+        // the AlertErroneousJobsService instantiates a fresh Notifier for each erroneous job,
+        // meaning we can't setup our test expectations on a single instance.
         let mut sequence = Sequence::new();
         let mut mock_get_notifier = MockGetNotifier::new();
         mock_get_notifier
@@ -547,7 +556,7 @@ mod tests {
                             && name == "background-task.sh"
                             && job.job_id == gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0")
                     })
-                    .returning(|_, _, _| Err(Error::NotifyError("Failed to notify".to_owned())));
+                    .returning(|_, _, _| Ok(()));
                 Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
         mock_get_notifier
@@ -557,14 +566,14 @@ mod tests {
             .returning(|_| {
                 let mut mock_notifier = MockNotifier::new();
                 mock_notifier
-                    .expect_notify_late_job()
+                    .expect_notify_errored_job()
                     .once()
                     .withf(move |monitor_id, name, job| {
                         monitor_id == &gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
                             && name == "get-pending-orders | generate invoices"
-                            && job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
+                            && job.job_id == gen_uuid("7baa4872-4e55-410a-9b3d-1f4b5bef1f04")
                     })
-                    .returning(|_, _, _| Ok(()));
+                    .returning(|_, _, _| Err(Error::NotifyError("Failed to notify".to_owned())));
                 Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
 
