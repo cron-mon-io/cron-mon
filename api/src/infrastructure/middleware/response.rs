@@ -16,7 +16,7 @@ impl<'r> Responder<'r, 'static> for Error {
             Error::JobNotFound(_, _) => (Status::NotFound, "Job Not Found"),
             Error::AlertConfigNotFound(_) => (Status::NotFound, "Alert Configuration Not Found"),
             Error::JobAlreadyFinished(_) => (Status::BadRequest, "Job Already Finished"),
-            Error::LateJobProcessFailure(_) => {
+            Error::ErroneousJobAlertFailure(_) => {
                 (Status::InternalServerError, "Late Job Process Failure")
             }
             Error::AlertConfigurationError(_) => {
@@ -101,7 +101,7 @@ mod tests {
 
     #[rocket::get("/late_job_process_failure")]
     fn late_job_process_failure() -> Result<(), Error> {
-        Err(Error::LateJobProcessFailure(
+        Err(Error::ErroneousJobAlertFailure(
             "something went wrong".to_string(),
         ))
     }

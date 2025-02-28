@@ -79,7 +79,7 @@ impl<
         let result = if failed_monitors.is_empty() {
             Ok(())
         } else {
-            Err(Error::LateJobProcessFailure(format!(
+            Err(Error::ErroneousJobAlertFailure(format!(
                 "Failed to process erroneous Jobs for Monitors: {:?}",
                 failed_monitors
             )))
