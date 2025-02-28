@@ -16,8 +16,8 @@ use alert_configs::{
 };
 use api_keys::{GenerateKeyService, RevokeKeyService};
 use monitors::{
-    CreateMonitorService, DeleteMonitorService, FetchJobService, FetchMonitorsService,
-    FinishJobService, ProcessLateJobsService, StartJobService, UpdateMonitorService,
+    AlertErroneousJobsService, CreateMonitorService, DeleteMonitorService, FetchJobService,
+    FetchMonitorsService, FinishJobService, StartJobService, UpdateMonitorService,
 };
 
 pub fn get_create_alert_config_service(
@@ -72,10 +72,10 @@ pub fn get_generate_key_service(pool: &DbPool) -> GenerateKeyService<ApiKeyRepos
     GenerateKeyService::new(ApiKeyRepository::new(pool))
 }
 
-pub fn get_process_late_jobs_service(
+pub fn get_alert_erroneous_jobs_service(
     pool: &DbPool,
-) -> ProcessLateJobsService<MonitorRepository, AlertConfigRepository, GetNotifierService> {
-    ProcessLateJobsService::new(
+) -> AlertErroneousJobsService<MonitorRepository, AlertConfigRepository, GetNotifierService> {
+    AlertErroneousJobsService::new(
         MonitorRepository::new(pool),
         AlertConfigRepository::new(pool),
         GetNotifierService::new(),

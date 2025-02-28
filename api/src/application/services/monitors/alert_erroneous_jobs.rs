@@ -8,7 +8,7 @@ use crate::infrastructure::repositories::{
     alert_config::GetByMonitors, monitor::GetWithErroneousJobs, Repository,
 };
 
-pub struct ProcessLateJobsService<
+pub struct AlertErroneousJobsService<
     MonitorRepo: GetWithErroneousJobs + Repository<Monitor>,
     AlertConfigRepo: GetByMonitors,
     NotifierFactory: GetNotifier,
@@ -22,7 +22,7 @@ impl<
         MonitorRepo: GetWithErroneousJobs + Repository<Monitor>,
         AlertConfigRepo: GetByMonitors,
         NotifierFactory: GetNotifier,
-    > ProcessLateJobsService<MonitorRepo, AlertConfigRepo, NotifierFactory>
+    > AlertErroneousJobsService<MonitorRepo, AlertConfigRepo, NotifierFactory>
 {
     pub fn new(
         monitor_repo: MonitorRepo,
@@ -36,7 +36,7 @@ impl<
         }
     }
 
-    pub async fn process_late_jobs(&mut self) -> Result<(), Error> {
+    pub async fn send_pending_alerts(&mut self) -> Result<(), Error> {
         info!("Beginning check for late Jobs...");
         let mut monitors_with_late_jobs = self.monitor_repo.get_with_erroneous_jobs().await?;
         info!(
@@ -298,7 +298,7 @@ mod tests {
     #[rstest]
     #[traced_test]
     #[tokio::test(start_paused = true)]
-    async fn test_process_late_jobs_service(
+    async fn test_send_pending_alerts_service(
         monitors: Vec<Monitor>,
         alert_configs: Vec<AlertConfig>,
     ) {
@@ -361,7 +361,7 @@ mod tests {
             .returning(move |_, _| Ok(alert_configs.clone()));
 
         // Setup a sequence of expected calls to the mock GetNotifier. We have to do this since
-        // the ProcessLateJobsService instantiates a fresh Notifier for each late job, meaning we
+        // the AlertErroneousJobsService instantiates a fresh Notifier for each late job, meaning we
         // can't setup our test expectations on a single instance.
         let mut sequence = Sequence::new();
         let mut mock_get_notifier = MockGetNotifier::new();
@@ -434,13 +434,13 @@ mod tests {
                 Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
 
-        let mut service = ProcessLateJobsService::new(
+        let mut service = AlertErroneousJobsService::new(
             mock_monitor_repo,
             mock_alert_config_repo,
             mock_get_notifier,
         );
 
-        let result = service.process_late_jobs().await;
+        let result = service.send_pending_alerts().await;
         assert!(result.is_ok());
 
         logs_assert(|logs| {
@@ -476,7 +476,7 @@ mod tests {
     #[rstest]
     #[traced_test]
     #[tokio::test(start_paused = true)]
-    async fn test_process_late_jobs_service_with_failure(
+    async fn test_send_pending_alerts_service_with_failure(
         monitors: Vec<Monitor>,
         alert_configs: Vec<AlertConfig>,
     ) {
@@ -512,7 +512,7 @@ mod tests {
             .returning(move |_, _| Ok(alert_configs.clone()));
 
         // Setup a sequence of expected calls to the mock GetNotifier. We have to do this since
-        // the ProcessLateJobsService instantiates a fresh Notifier for each late job, meaning we
+        // the AlertErroneousJobsService instantiates a fresh Notifier for each late job, meaning we
         // can't setup our test expectations on a single instance.
         let mut sequence = Sequence::new();
         let mut mock_get_notifier = MockGetNotifier::new();
@@ -568,13 +568,13 @@ mod tests {
                 Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
 
-        let mut service = ProcessLateJobsService::new(
+        let mut service = AlertErroneousJobsService::new(
             mock_monitor_repo,
             mock_alert_config_repo,
             mock_get_notifier,
         );
 
-        let result = service.process_late_jobs().await;
+        let result = service.send_pending_alerts().await;
         assert!(result.is_err());
 
         logs_assert(|logs| {
