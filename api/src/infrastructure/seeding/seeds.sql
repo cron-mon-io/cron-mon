@@ -52,7 +52,7 @@ VALUES
         FALSE,
         'Could not connect to database',
         FALSE,
-        TRUE
+        False
     ),
     (
         '0d66d5ec-d5b7-4f35-ab06-5e82ec17da66',
