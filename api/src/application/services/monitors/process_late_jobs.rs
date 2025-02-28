@@ -39,6 +39,10 @@ impl<
     pub async fn process_late_jobs(&mut self) -> Result<(), Error> {
         info!("Beginning check for late Jobs...");
         let mut monitors_with_late_jobs = self.monitor_repo.get_with_erroneous_jobs().await?;
+        info!(
+            "Found {} monitors with erroneous jobs",
+            monitors_with_late_jobs.len()
+        );
         let alert_configs = self
             .alert_config_repo
             .get_by_monitors(
@@ -98,6 +102,11 @@ impl<
         let monitor_id = monitor.monitor_id;
         let monitor_name = monitor.name.clone();
         let jobs_pending_alerts = monitor.jobs_pending_alerts();
+        info!(
+            "Found {} jobs pending alerts in monitor {}",
+            jobs_pending_alerts.len(),
+            monitor_name
+        );
         for job in jobs_pending_alerts {
             self.alert_late(&monitor_id, &monitor_name, job, &required_alert_configs)
                 .await?;
@@ -439,7 +448,13 @@ mod tests {
 
             assert_eq!(
                 logs.iter().map(|log| log.level).collect::<Vec<Level>>(),
-                vec![Level::INFO, Level::INFO]
+                vec![
+                    Level::INFO,
+                    Level::INFO,
+                    Level::INFO,
+                    Level::INFO,
+                    Level::INFO
+                ]
             );
             assert_eq!(
                 logs.iter()
@@ -447,6 +462,9 @@ mod tests {
                     .collect::<Vec<String>>(),
                 vec![
                     "Beginning check for late Jobs...",
+                    "Found 2 monitors with erroneous jobs",
+                    "Found 2 jobs pending alerts in monitor background-task.sh",
+                    "Found 2 jobs pending alerts in monitor get-pending-orders | generate invoices",
                     "Check for late Jobs complete",
                 ]
             );
@@ -564,7 +582,15 @@ mod tests {
 
             assert_eq!(
                 logs.iter().map(|log| log.level).collect::<Vec<Level>>(),
-                vec![Level::INFO, Level::ERROR, Level::ERROR, Level::INFO]
+                vec![
+                    Level::INFO,
+                    Level::INFO,
+                    Level::INFO,
+                    Level::ERROR,
+                    Level::INFO,
+                    Level::ERROR,
+                    Level::INFO
+                ]
             );
             assert_eq!(
                 logs.iter()
@@ -572,8 +598,11 @@ mod tests {
                     .collect::<Vec<String>>(),
                 vec![
                     "Beginning check for late Jobs...",
+                    "Found 2 monitors with erroneous jobs",
+                    "Found 2 jobs pending alerts in monitor background-task.sh",
                     "Error notifying late jobs: NotifyError(\"Failed to notify\") \
                         monitor_id=41ebffb4-a188-48e9-8ec1-61380085cde3",
+                    "Found 1 jobs pending alerts in monitor get-pending-orders | generate invoices",
                     "Error saving monitor: RepositoryError(\"Failed to save\") \
                         monitor_id=841bdefb-e45c-4361-a8cb-8d247f4a088b",
                     "Check for late Jobs complete",
