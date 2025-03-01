@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.86"
 chrono = { version = "0.4", features = ["serde"]}
-clap = { version = "4.5.28", features = ["derive"] }
+clap = { version = "4.5.31", features = ["derive"] }
 diesel = { version = "2.1.6", features = ["chrono", "uuid", "postgres"] }
 diesel-async = { version = "0.4.1", features = ["deadpool", "postgres"] }
 diesel_migrations = { version = "2.1.0", features = ["postgres"] }
@@ -21,11 +21,11 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.10.8"
 signal-hook = "0.3.17"
-slack-morphism = { version = "2.6.0", features = ["hyper"] }
+slack-morphism = { version = "2.10.0", features = ["hyper"] }
 tokio = { version = "1.43.0", features = ["test-util"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["json"] }
-uuid = { version = "1.13.1", features = ["v4", "serde", "fast-rng", "macro-diagnostics"] }
+uuid = { version = "1.15.1", features = ["v4", "serde", "fast-rng", "macro-diagnostics"] }
 
 [dev-dependencies]
 rstest = "0.24.0"
@@ -34,7 +34,7 @@ test-utils = { path = "test_utils" }
 tracing-test = { version = "0.2.5", features = ["no-env-filter"] }
 wiremock = "0.6.2"
 mockall = "0.13.1"
-testcontainers = "0.23.2"
+testcontainers = "0.23.3"
 testcontainers-modules = { version = "0.11.6", features = ["postgres"] }
 
 [[bin]]
