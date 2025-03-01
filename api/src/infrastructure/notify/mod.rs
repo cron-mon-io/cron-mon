@@ -21,6 +21,14 @@ pub trait Notifier {
         late_job: &Job,
     ) -> Result<(), Error>;
 
+    /// Notify that a job has errored.
+    async fn notify_errored_job(
+        &mut self,
+        monitor_id: &Uuid,
+        monitor_name: &str,
+        errored_job: &Job,
+    ) -> Result<(), Error>;
+
     /// Send a test notification.
     async fn test_notification(
         &mut self,

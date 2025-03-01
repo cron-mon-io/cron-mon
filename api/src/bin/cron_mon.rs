@@ -8,7 +8,7 @@ use std::sync::Arc;
 use clap::{Args, Parser, Subcommand};
 
 use cron_mon_api::application::services::{
-    get_create_monitor_service, get_process_late_jobs_service,
+    get_alert_erroneous_jobs_service, get_create_monitor_service,
 };
 use cron_mon_api::infrastructure::database::{create_connection_pool, run_migrations};
 use cron_mon_api::infrastructure::logging::init_logging;
@@ -73,9 +73,9 @@ async fn main() {
             run_periodically(args.interval, || async move {
                 match create_connection_pool() {
                     Ok(pool) => {
-                        let mut service = get_process_late_jobs_service(&pool);
+                        let mut service = get_alert_erroneous_jobs_service(&pool);
 
-                        if let Err(error) = service.process_late_jobs().await {
+                        if let Err(error) = service.send_pending_alerts().await {
                             error!("Error processing late jobs: {:?}", error);
                         }
                     }

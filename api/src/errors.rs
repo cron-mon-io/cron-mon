@@ -11,7 +11,7 @@ pub enum Error {
     JobNotFound(Uuid, Uuid),
     AlertConfigNotFound(Uuid),
     JobAlreadyFinished(Uuid),
-    LateJobProcessFailure(String),
+    ErroneousJobAlertFailure(String),
     AlertConfigurationError(String),
     InvalidMonitor(String),
     InvalidJob(String),
@@ -46,7 +46,7 @@ impl Display for Error {
             Self::JobAlreadyFinished(job_id) => {
                 write!(f, "Job('{job_id}') is already finished")
             }
-            Self::LateJobProcessFailure(reason) => {
+            Self::ErroneousJobAlertFailure(reason) => {
                 write!(f, "Failed to process late job(s): {reason}")
             }
             Self::AlertConfigurationError(reason) => {

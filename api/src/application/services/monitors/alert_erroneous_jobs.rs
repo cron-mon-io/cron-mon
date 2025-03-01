@@ -1,14 +1,14 @@
 use tracing::{error, info};
 use uuid::Uuid;
 
-use crate::domain::models::{AlertConfig, Monitor};
+use crate::domain::models::{AlertConfig, Job, Monitor};
 use crate::domain::services::get_notifier::GetNotifier;
 use crate::errors::Error;
 use crate::infrastructure::repositories::{
     alert_config::GetByMonitors, monitor::GetWithErroneousJobs, Repository,
 };
 
-pub struct ProcessLateJobsService<
+pub struct AlertErroneousJobsService<
     MonitorRepo: GetWithErroneousJobs + Repository<Monitor>,
     AlertConfigRepo: GetByMonitors,
     NotifierFactory: GetNotifier,
@@ -22,7 +22,7 @@ impl<
         MonitorRepo: GetWithErroneousJobs + Repository<Monitor>,
         AlertConfigRepo: GetByMonitors,
         NotifierFactory: GetNotifier,
-    > ProcessLateJobsService<MonitorRepo, AlertConfigRepo, NotifierFactory>
+    > AlertErroneousJobsService<MonitorRepo, AlertConfigRepo, NotifierFactory>
 {
     pub fn new(
         monitor_repo: MonitorRepo,
@@ -36,13 +36,17 @@ impl<
         }
     }
 
-    pub async fn process_late_jobs(&mut self) -> Result<(), Error> {
-        info!("Beginning check for late Jobs...");
-        let mut monitors_with_late_jobs = self.monitor_repo.get_with_erroneous_jobs().await?;
+    pub async fn send_pending_alerts(&mut self) -> Result<(), Error> {
+        info!("Beginning check for erroneous Jobs...");
+        let mut monitors_with_erroneous_jobs = self.monitor_repo.get_with_erroneous_jobs().await?;
+        info!(
+            "Found {} Monitors with erroneous Jobs",
+            monitors_with_erroneous_jobs.len()
+        );
         let alert_configs = self
             .alert_config_repo
             .get_by_monitors(
-                &monitors_with_late_jobs
+                &monitors_with_erroneous_jobs
                     .iter()
                     .map(|mon| mon.monitor_id)
                     .collect::<Vec<Uuid>>(),
@@ -51,13 +55,13 @@ impl<
             .await?;
 
         let mut failed_monitors = Vec::new();
-        for monitor in monitors_with_late_jobs.as_mut_slice() {
-            if let Err(error) = self.notify_late_jobs(monitor, &alert_configs).await {
+        for monitor in monitors_with_erroneous_jobs.as_mut_slice() {
+            if let Err(error) = self.notify_erroneous_jobs(monitor, &alert_configs).await {
                 // If we fail to notify then we just want to log the error and continue to the next
                 // monitor.
                 error!(
                     monitor_id = ?monitor.monitor_id,
-                    "Error notifying late jobs: {:?}", error
+                    "Error notifying erroneous Jobs: {:?}", error
                 );
                 failed_monitors.push(monitor.monitor_id.to_string());
                 continue;
@@ -66,24 +70,26 @@ impl<
             if let Err(error) = self.monitor_repo.save(monitor).await {
                 error!(
                     monitor_id = ?monitor.monitor_id,
-                    "Error saving monitor: {:?}", error
+                    "Error saving Monitor: {:?}", error
                 );
                 failed_monitors.push(monitor.monitor_id.to_string());
             }
         }
 
-        info!("Check for late Jobs complete");
-        if failed_monitors.is_empty() {
+        let result = if failed_monitors.is_empty() {
             Ok(())
         } else {
-            Err(Error::LateJobProcessFailure(format!(
-                "Failed to process late jobs for monitors: {:?}",
+            Err(Error::ErroneousJobAlertFailure(format!(
+                "Failed to process erroneous Jobs for Monitors: {:?}",
                 failed_monitors
             )))
-        }
+        };
+        info!("Check for erroneous Jobs complete");
+
+        result
     }
 
-    async fn notify_late_jobs(
+    async fn notify_erroneous_jobs(
         &self,
         monitor: &mut Monitor,
         alert_configs: &[AlertConfig],
@@ -94,22 +100,63 @@ impl<
             .filter(|alert_config| alert_config.is_associated_with_monitor(monitor))
             .collect();
 
-        let has_alert_configs = !required_alert_configs.is_empty();
-
         // Get jobs to alert on.
         let monitor_id = monitor.monitor_id;
         let monitor_name = monitor.name.clone();
-        for late_job in monitor.late_jobs() {
-            for alert_config in &required_alert_configs {
+        let jobs_pending_alerts = monitor.jobs_pending_alerts();
+        info!(
+            monitor_id = ?monitor_id,
+            "Found {} Jobs pending alerts in Monitor '{}'",
+            jobs_pending_alerts.len(),
+            monitor_name
+        );
+        for job in jobs_pending_alerts {
+            self.alert_late(&monitor_id, &monitor_name, job, &required_alert_configs)
+                .await?;
+            self.alert_errored(&monitor_id, &monitor_name, job, &required_alert_configs)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn alert_late(
+        &self,
+        monitor_id: &Uuid,
+        monitor_name: &str,
+        job: &mut Job,
+        alert_configs: &[&AlertConfig],
+    ) -> Result<(), Error> {
+        if !alert_configs.is_empty() && !job.late_alert_sent && job.late() {
+            for alert_config in alert_configs {
                 let mut notifier = self.notifier_factory.get_notifier(alert_config);
                 notifier
-                    .notify_late_job(&monitor_id, &monitor_name, late_job)
+                    .notify_late_job(monitor_id, monitor_name, job)
                     .await?;
             }
 
-            if has_alert_configs {
-                late_job.late_alert_sent = true;
+            job.late_alert_sent = true;
+        }
+
+        Ok(())
+    }
+
+    pub async fn alert_errored(
+        &self,
+        monitor_id: &Uuid,
+        monitor_name: &str,
+        job: &mut Job,
+        alert_configs: &[&AlertConfig],
+    ) -> Result<(), Error> {
+        if !alert_configs.is_empty() && !job.error_alert_sent && job.errored() {
+            for alert_config in alert_configs {
+                let mut notifier = self.notifier_factory.get_notifier(alert_config);
+                notifier
+                    .notify_errored_job(monitor_id, monitor_name, job)
+                    .await?;
             }
+
+            job.error_alert_sent = true;
         }
 
         Ok(())
@@ -199,14 +246,28 @@ mod tests {
                 name: "get-pending-orders | generate invoices".to_owned(),
                 expected_duration: 21_600,
                 grace_duration: 1_800,
-                jobs: vec![Job {
-                    job_id: gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
-                    start_time: gen_relative_datetime(-30_000),
-                    max_end_time: gen_relative_datetime(-6_600),
-                    end_state: None,
-                    late_alert_sent: false,
-                    error_alert_sent: false,
-                }],
+                jobs: vec![
+                    Job {
+                        job_id: gen_uuid("7baa4872-4e55-410a-9b3d-1f4b5bef1f04"),
+                        start_time: gen_relative_datetime(-22_500),
+                        max_end_time: gen_relative_datetime(900),
+                        end_state: Some(EndState {
+                            end_time: gen_relative_datetime(0),
+                            succeeded: false,
+                            output: Some("Failed to connect to database".to_owned()),
+                        }),
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    },
+                    Job {
+                        job_id: gen_uuid("9d90c314-5120-400e-bf03-e6363689f985"),
+                        start_time: gen_relative_datetime(-30_000),
+                        max_end_time: gen_relative_datetime(-6_600),
+                        end_state: None,
+                        late_alert_sent: false,
+                        error_alert_sent: false,
+                    },
+                ],
             },
         ]
     }
@@ -240,7 +301,7 @@ mod tests {
     #[rstest]
     #[traced_test]
     #[tokio::test(start_paused = true)]
-    async fn test_process_late_jobs_service(
+    async fn test_send_pending_alerts_service(
         monitors: Vec<Monitor>,
         alert_configs: Vec<AlertConfig>,
     ) {
@@ -250,7 +311,7 @@ mod tests {
             .once()
             .returning(move || Ok(monitors.clone()));
 
-        // Make sure that the late alert sent flag is set on the correct jobs.
+        // Make sure that the alert-sent flags are set on the correct jobs.
         mock_monitor_repo
             .expect_save()
             .times(1)
@@ -276,10 +337,17 @@ mod tests {
             .times(1)
             .withf(|monitor| {
                 monitor.monitor_id == gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
-                    && monitor.jobs.iter().any(|job| {
-                        job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
-                            && job.late_alert_sent
-                    })
+                    && monitor
+                        .jobs
+                        .iter()
+                        .filter(|job| {
+                            (job.job_id == gen_uuid("7baa4872-4e55-410a-9b3d-1f4b5bef1f04")
+                                && job.error_alert_sent)
+                                || (job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
+                                    && job.late_alert_sent)
+                        })
+                        .count()
+                        == 2
             })
             .returning(|_| Ok(()));
 
@@ -296,8 +364,8 @@ mod tests {
             .returning(move |_, _| Ok(alert_configs.clone()));
 
         // Setup a sequence of expected calls to the mock GetNotifier. We have to do this since
-        // the ProcessLateJobsService instantiates a fresh Notifier for each late job, meaning we
-        // can't setup our test expectations on a single instance.
+        // the AlertErroneousJobsService instantiates a fresh Notifier for each erroneous job,
+        // meaning we can't setup our test expectations on a single instance.
         let mut sequence = Sequence::new();
         let mut mock_get_notifier = MockGetNotifier::new();
         mock_get_notifier
@@ -341,6 +409,23 @@ mod tests {
             .returning(|_| {
                 let mut mock_notifier = MockNotifier::new();
                 mock_notifier
+                    .expect_notify_errored_job()
+                    .once()
+                    .withf(move |monitor_id, name, job| {
+                        monitor_id == &gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
+                            && name == "get-pending-orders | generate invoices"
+                            && job.job_id == gen_uuid("7baa4872-4e55-410a-9b3d-1f4b5bef1f04")
+                    })
+                    .returning(|_, _, _| Ok(()));
+                Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
+            });
+        mock_get_notifier
+            .expect_get_notifier()
+            .once()
+            .in_sequence(&mut sequence)
+            .returning(|_| {
+                let mut mock_notifier = MockNotifier::new();
+                mock_notifier
                     .expect_notify_late_job()
                     .once()
                     .withf(move |monitor_id, name, job| {
@@ -352,13 +437,13 @@ mod tests {
                 Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
 
-        let mut service = ProcessLateJobsService::new(
+        let mut service = AlertErroneousJobsService::new(
             mock_monitor_repo,
             mock_alert_config_repo,
             mock_get_notifier,
         );
 
-        let result = service.process_late_jobs().await;
+        let result = service.send_pending_alerts().await;
         assert!(result.is_ok());
 
         logs_assert(|logs| {
@@ -366,15 +451,26 @@ mod tests {
 
             assert_eq!(
                 logs.iter().map(|log| log.level).collect::<Vec<Level>>(),
-                vec![Level::INFO, Level::INFO]
+                vec![
+                    Level::INFO,
+                    Level::INFO,
+                    Level::INFO,
+                    Level::INFO,
+                    Level::INFO
+                ]
             );
             assert_eq!(
                 logs.iter()
                     .map(|log| log.body.clone())
                     .collect::<Vec<String>>(),
                 vec![
-                    "Beginning check for late Jobs...",
-                    "Check for late Jobs complete",
+                    "Beginning check for erroneous Jobs...",
+                    "Found 2 Monitors with erroneous Jobs",
+                    "Found 2 Jobs pending alerts in Monitor 'background-task.sh' \
+                        monitor_id=41ebffb4-a188-48e9-8ec1-61380085cde3",
+                    "Found 2 Jobs pending alerts in Monitor 'get-pending-orders | generate invoices' \
+                        monitor_id=841bdefb-e45c-4361-a8cb-8d247f4a088b",
+                    "Check for erroneous Jobs complete",
                 ]
             );
 
@@ -385,7 +481,7 @@ mod tests {
     #[rstest]
     #[traced_test]
     #[tokio::test(start_paused = true)]
-    async fn test_process_late_jobs_service_with_failure(
+    async fn test_send_pending_alerts_service_with_failure(
         monitors: Vec<Monitor>,
         alert_configs: Vec<AlertConfig>,
     ) {
@@ -395,16 +491,25 @@ mod tests {
             .once()
             .returning(move || Ok(monitors.clone()));
 
-        // We don't save the 1st monitor as we fail to notify, and we fail to save the 2nd monitor.
+        // We fail to save the 1st monitor, and we don't save the 2nd monitor as we fail to notify.
         mock_monitor_repo
             .expect_save()
             .times(1)
             .withf(|monitor| {
-                monitor.monitor_id == gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
-                    && monitor.jobs.iter().any(|job| {
-                        job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
-                            && job.late_alert_sent
-                    })
+                monitor.monitor_id == gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")
+                    && monitor
+                        .jobs
+                        .iter()
+                        .filter(|job| {
+                            [
+                                gen_uuid("01a92c6c-6803-409d-b675-022fff62575a"),
+                                gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0"),
+                            ]
+                            .contains(&job.job_id)
+                                && job.late_alert_sent
+                        })
+                        .count()
+                        == 2
             })
             .returning(|_| Err(Error::RepositoryError("Failed to save".to_owned())));
 
@@ -421,8 +526,8 @@ mod tests {
             .returning(move |_, _| Ok(alert_configs.clone()));
 
         // Setup a sequence of expected calls to the mock GetNotifier. We have to do this since
-        // the ProcessLateJobsService instantiates a fresh Notifier for each late job, meaning we
-        // can't setup our test expectations on a single instance.
+        // the AlertErroneousJobsService instantiates a fresh Notifier for each erroneous job,
+        // meaning we can't setup our test expectations on a single instance.
         let mut sequence = Sequence::new();
         let mut mock_get_notifier = MockGetNotifier::new();
         mock_get_notifier
@@ -456,7 +561,7 @@ mod tests {
                             && name == "background-task.sh"
                             && job.job_id == gen_uuid("3b9f5a89-ebc2-49bf-a9dd-61f52f7a3fa0")
                     })
-                    .returning(|_, _, _| Err(Error::NotifyError("Failed to notify".to_owned())));
+                    .returning(|_, _, _| Ok(()));
                 Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
         mock_get_notifier
@@ -466,24 +571,24 @@ mod tests {
             .returning(|_| {
                 let mut mock_notifier = MockNotifier::new();
                 mock_notifier
-                    .expect_notify_late_job()
+                    .expect_notify_errored_job()
                     .once()
                     .withf(move |monitor_id, name, job| {
                         monitor_id == &gen_uuid("841bdefb-e45c-4361-a8cb-8d247f4a088b")
                             && name == "get-pending-orders | generate invoices"
-                            && job.job_id == gen_uuid("9d90c314-5120-400e-bf03-e6363689f985")
+                            && job.job_id == gen_uuid("7baa4872-4e55-410a-9b3d-1f4b5bef1f04")
                     })
-                    .returning(|_, _, _| Ok(()));
+                    .returning(|_, _, _| Err(Error::NotifyError("Failed to notify".to_owned())));
                 Box::new(mock_notifier) as Box<dyn Notifier + Sync + Send>
             });
 
-        let mut service = ProcessLateJobsService::new(
+        let mut service = AlertErroneousJobsService::new(
             mock_monitor_repo,
             mock_alert_config_repo,
             mock_get_notifier,
         );
 
-        let result = service.process_late_jobs().await;
+        let result = service.send_pending_alerts().await;
         assert!(result.is_err());
 
         logs_assert(|logs| {
@@ -491,19 +596,32 @@ mod tests {
 
             assert_eq!(
                 logs.iter().map(|log| log.level).collect::<Vec<Level>>(),
-                vec![Level::INFO, Level::ERROR, Level::ERROR, Level::INFO]
+                vec![
+                    Level::INFO,
+                    Level::INFO,
+                    Level::INFO,
+                    Level::ERROR,
+                    Level::INFO,
+                    Level::ERROR,
+                    Level::INFO
+                ]
             );
             assert_eq!(
                 logs.iter()
                     .map(|log| log.body.clone())
                     .collect::<Vec<String>>(),
                 vec![
-                    "Beginning check for late Jobs...",
-                    "Error notifying late jobs: NotifyError(\"Failed to notify\") \
+                    "Beginning check for erroneous Jobs...",
+                    "Found 2 Monitors with erroneous Jobs",
+                    "Found 2 Jobs pending alerts in Monitor 'background-task.sh' \
                         monitor_id=41ebffb4-a188-48e9-8ec1-61380085cde3",
-                    "Error saving monitor: RepositoryError(\"Failed to save\") \
+                    "Error saving Monitor: RepositoryError(\"Failed to save\") \
+                        monitor_id=41ebffb4-a188-48e9-8ec1-61380085cde3",
+                    "Found 2 Jobs pending alerts in Monitor 'get-pending-orders | generate invoices' \
                         monitor_id=841bdefb-e45c-4361-a8cb-8d247f4a088b",
-                    "Check for late Jobs complete",
+                    "Error notifying erroneous Jobs: NotifyError(\"Failed to notify\") \
+                        monitor_id=841bdefb-e45c-4361-a8cb-8d247f4a088b",
+                    "Check for erroneous Jobs complete"
                 ]
             );
 
