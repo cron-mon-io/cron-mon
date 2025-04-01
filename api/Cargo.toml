@@ -6,29 +6,29 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "0.1.86"
+async-trait = "0.1.88"
 chrono = { version = "0.4", features = ["serde"]}
-clap = { version = "4.5.31", features = ["derive"] }
+clap = { version = "4.5.34", features = ["derive"] }
 diesel = { version = "2.1.6", features = ["chrono", "uuid", "postgres"] }
 diesel-async = { version = "0.4.1", features = ["deadpool", "postgres"] }
 diesel_migrations = { version = "2.1.0", features = ["postgres"] }
 jsonwebtoken = "9.3.1"
 moka = { version = "0.12.10", features = ["sync"] }
 rand = "0.9.0"
-reqwest = { version = "0.12.12", features = ["json"] }
+reqwest = { version = "0.12.15", features = ["json"] }
 rocket = { version = "0.5.1", features = ["json", "uuid"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.10.8"
 signal-hook = "0.3.17"
-slack-morphism = { version = "2.10.0", features = ["hyper"] }
-tokio = { version = "1.43.0", features = ["test-util"] }
+slack-morphism = { version = "2.10.1", features = ["hyper"] }
+tokio = { version = "1.44.1", features = ["test-util"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["json"] }
-uuid = { version = "1.15.1", features = ["v4", "serde", "fast-rng", "macro-diagnostics"] }
+uuid = { version = "1.16.0", features = ["v4", "serde", "fast-rng", "macro-diagnostics"] }
 
 [dev-dependencies]
-rstest = "0.24.0"
+rstest = "0.25.0"
 pretty_assertions = "1.4.1"
 test-utils = { path = "test_utils" }
 tracing-test = { version = "0.2.5", features = ["no-env-filter"] }
