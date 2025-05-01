@@ -5,6 +5,11 @@ services:
     container_name: cron-mon-api
     ports:
       - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     command: ./cron-mon api
     networks:
       - default
@@ -15,6 +20,11 @@ services:
     container_name: cron-mon-api-debug
     ports:
       - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     command: cargo run --bin cron-mon -- api
     networks:
       - default
