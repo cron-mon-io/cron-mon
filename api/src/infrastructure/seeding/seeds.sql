@@ -252,12 +252,26 @@ VALUES
         TRUE,
         TRUE,
         FALSE
+    ),
+    (
+        'f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1c',
+        'cron-mon',
+        'Slack Alert for errors',
+        'slack',
+        TRUE,
+        FALSE,
+        TRUE
     );
 INSERT INTO slack_alert_config
     (alert_config_id, slack_channel, slack_bot_oauth_token)
 VALUES
     (
         'f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b',
+        :'slack_channel',
+        :'slack_token'
+    ),
+    (
+        'f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1c',
         :'slack_channel',
         :'slack_token'
     );
@@ -267,4 +281,6 @@ INSERT INTO monitor_alert_config
     (alert_config_id, monitor_id, monitor_name)
 VALUES
     ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'c1bf0515-df39-448b-aa95-686360a33b36', 'db-backup.py'),
-    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'f0b291fe-bd41-4787-bc2d-1329903f7a6a', 'generate-orders.sh');
+    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'f0b291fe-bd41-4787-bc2d-1329903f7a6a', 'generate-orders.sh'),
+    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 'a04376e2-0fb5-4949-9744-7c5d0a50b411', 'init-philanges'),
+    ('f1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1c', 'c1bf0515-df39-448b-aa95-686360a33b36', 'db-backup.py');
