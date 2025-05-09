@@ -3,17 +3,18 @@ use uuid::Uuid;
 
 use crate::domain::models::{AlertConfig, Monitor};
 use crate::errors::Error;
+use crate::infrastructure::repositories::alert_config::GetByIDs;
 use crate::infrastructure::repositories::Repository;
 
 pub struct MonitorAssociationService<
     MonitorRepo: Repository<Monitor>,
-    AlertConfigRepo: Repository<AlertConfig>,
+    AlertConfigRepo: Repository<AlertConfig> + GetByIDs,
 > {
     monitor_repo: MonitorRepo,
     alert_config_repo: AlertConfigRepo,
 }
 
-impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig>>
+impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig> + GetByIDs>
     MonitorAssociationService<MonitorRepo, AlertConfigRepo>
 {
     pub fn new(monitor_repo: MonitorRepo, alert_config_repo: AlertConfigRepo) -> Self {
@@ -86,7 +87,8 @@ impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig>>
 
 #[cfg(test)]
 mod tests {
-    use mockall::predicate::*;
+    use async_trait::async_trait;
+    use mockall::{mock, predicate::*};
     use rstest::{fixture, rstest};
     use tracing::Level;
     use tracing_test::traced_test;
@@ -97,6 +99,27 @@ mod tests {
     use crate::infrastructure::repositories::MockRepository;
 
     use super::*;
+
+    mock! {
+        pub AlertConfigRepo {}
+
+        #[async_trait]
+        impl GetByIDs for AlertConfigRepo {
+            async fn get_by_ids<'a>(
+                &mut self, ids: &[Uuid], tenant: Option<&'a str>
+            ) -> Result<Vec<AlertConfig>, Error>;
+        }
+
+        #[async_trait]
+        impl Repository<AlertConfig> for AlertConfigRepo {
+            async fn get(
+                &mut self, alert_config_id: uuid::Uuid, tenant: &str
+            ) -> Result<Option<AlertConfig>, Error>;
+            async fn all(&mut self, tenant: &str) -> Result<Vec<AlertConfig>, Error>;
+            async fn delete(&mut self, alert_config: &AlertConfig) -> Result<(), Error>;
+            async fn save(&mut self, alert_config: &AlertConfig) -> Result<(), Error>;
+        }
+    }
 
     #[fixture]
     fn monitors() -> Vec<Monitor> {
@@ -172,7 +195,7 @@ mod tests {
             )
             .returning(move |_, _| Ok(Some(monitors[0].clone())));
 
-        let mut mock_alert_config_repo = MockRepository::new();
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
         mock_alert_config_repo
             .expect_get()
             .with(
@@ -225,7 +248,7 @@ mod tests {
             .returning(move |_, _| Ok(None));
 
         // Since we couldn't find the monitor, we shouldn't call the alert config repo.
-        let mut mock_alert_config_repo = MockRepository::new();
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
         mock_alert_config_repo.expect_get().never();
         mock_alert_config_repo.expect_save().never();
 
@@ -267,7 +290,7 @@ mod tests {
             )
             .returning(move |_, _| Ok(Some(monitors[0].clone())));
 
-        let mut mock_alert_config_repo = MockRepository::new();
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
         mock_alert_config_repo
             .expect_get()
             .once()
@@ -321,7 +344,7 @@ mod tests {
             )
             .returning(move |_, _| Ok(Some(monitors[0].clone())));
 
-        let mut mock_alert_config_repo = MockRepository::new();
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
         mock_alert_config_repo
             .expect_get()
             .once()
@@ -390,7 +413,7 @@ mod tests {
             )
             .returning(move |_, _| Ok(Some(monitors[0].clone())));
 
-        let mut mock_alert_config_repo = MockRepository::new();
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
         mock_alert_config_repo
             .expect_get()
             .once()
@@ -456,7 +479,7 @@ mod tests {
             .returning(move |_, _| Err(Error::RepositoryError("test error".to_string())));
 
         // Since we couldn't find the monitor, we shouldn't call the alert config repo.
-        let mut mock_alert_config_repo = MockRepository::new();
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
         mock_alert_config_repo.expect_get().never();
         mock_alert_config_repo.expect_save().never();
 
@@ -496,7 +519,7 @@ mod tests {
             )
             .returning(move |_, _| Ok(Some(monitors[0].clone())));
 
-        let mut mock_alert_config_repo = MockRepository::new();
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
         mock_alert_config_repo
             .expect_get()
             .once()
