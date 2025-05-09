@@ -20,3 +20,13 @@ pub trait GetByMonitors {
         tenant: Option<&'a str>,
     ) -> Result<Vec<AlertConfig>, Error>;
 }
+
+#[cfg_attr(test, automock)]
+#[async_trait]
+pub trait GetByIDs {
+    async fn get_by_ids<'a>(
+        &mut self,
+        ids: &[Uuid],
+        tenant: Option<&'a str>,
+    ) -> Result<Vec<AlertConfig>, Error>;
+}
