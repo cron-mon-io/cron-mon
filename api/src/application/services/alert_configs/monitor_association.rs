@@ -26,11 +26,46 @@ impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig> 
 
     pub async fn associate_alerts(
         &mut self,
-        _tenant: &str,
-        _monitor_id: Uuid,
-        _alert_config_ids: &[Uuid],
+        tenant: &str,
+        monitor_id: Uuid,
+        alert_config_ids: &[Uuid],
     ) -> Result<(), Error> {
-        todo!()
+        let monitor = self.get_monitor(tenant, monitor_id).await?;
+
+        let mut alert_configs = self
+            .alert_config_repo
+            .get_by_ids(alert_config_ids, Some(tenant))
+            .await?;
+
+        // We want to collect all failures so we can log them, rather than fail on the first error
+        let failures = alert_configs
+            .iter_mut()
+            .filter_map(|alert_config| {
+                if let Err(error) = alert_config.associate_monitor(&monitor) {
+                    Some((error, alert_config.alert_config_id))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        if !failures.is_empty() {
+            error!(
+                monitor_id = monitor_id.to_string(),
+                alert_config_ids = ?failures.iter().map(|(_, id)| id).collect::<Vec<_>>(),
+                errors = ?failures.iter().map(|(error, _)| error).collect::<Vec<_>>(),
+                "Error associating Monitor with AlertConfig(s)"
+            );
+            return Err(Error::AlertConfigurationError(
+                "Failed to associate Monitor with AlertConfig(s)".to_string(),
+            ));
+        }
+
+        for alert_config in alert_configs {
+            self.save_alert_config(&alert_config).await?;
+        }
+
+        Ok(())
     }
 
     pub async fn disassociate_alert(
