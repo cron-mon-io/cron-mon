@@ -34,7 +34,7 @@ impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig> 
 
         let mut alert_configs = self
             .alert_config_repo
-            .get_by_ids(alert_config_ids, Some(tenant))
+            .get_by_ids(alert_config_ids, tenant)
             .await?;
 
         // We want to collect all failures so we can log them, rather than fail on the first error
@@ -140,8 +140,8 @@ mod tests {
 
         #[async_trait]
         impl GetByIDs for AlertConfigRepo {
-            async fn get_by_ids<'a>(
-                &mut self, ids: &[Uuid], tenant: Option<&'a str>
+            async fn get_by_ids(
+                &mut self, ids: &[Uuid], tenant: &str
             ) -> Result<Vec<AlertConfig>, Error>;
         }
 

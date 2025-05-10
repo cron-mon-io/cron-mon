@@ -24,9 +24,5 @@ pub trait GetByMonitors {
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait GetByIDs {
-    async fn get_by_ids<'a>(
-        &mut self,
-        ids: &[Uuid],
-        tenant: Option<&'a str>,
-    ) -> Result<Vec<AlertConfig>, Error>;
+    async fn get_by_ids(&mut self, ids: &[Uuid], tenant: &str) -> Result<Vec<AlertConfig>, Error>;
 }
