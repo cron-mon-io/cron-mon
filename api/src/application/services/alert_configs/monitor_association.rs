@@ -213,7 +213,78 @@ mod tests {
                     token: "foo-token".to_owned(),
                 }),
             },
+            AlertConfig {
+                alert_config_id: gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+                tenant: "foo-tenant".to_owned(),
+                name: "Slack Alert for lates and errors".to_owned(),
+                active: true,
+                on_late: true,
+                on_error: true,
+                monitors: vec![],
+                type_: AlertType::Slack(SlackAlertConfig {
+                    channel: "bar-channel".to_owned(),
+                    token: "bar-token".to_owned(),
+                }),
+            },
         ]
+    }
+
+    #[rstest]
+    #[traced_test]
+    #[tokio::test]
+    async fn test_associating_alerts(monitors: Vec<Monitor>, alert_configs: Vec<AlertConfig>) {
+        let mut mock_monitor_repo = MockRepository::new();
+        mock_monitor_repo
+            .expect_get()
+            .once()
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("foo-tenant"),
+            )
+            .returning(move |_, _| Ok(Some(monitors[0].clone())));
+
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
+        mock_alert_config_repo
+            .expect_get_by_ids()
+            .once()
+            .with(
+                eq([
+                    gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b"),
+                    gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+                ]),
+                eq("foo-tenant"),
+            )
+            .returning(move |_, _| Ok(alert_configs[1..].to_vec()));
+
+        mock_alert_config_repo
+            .expect_save()
+            .times(2)
+            .withf(|alert_config: &AlertConfig| {
+                alert_config.alert_config_id == gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b")
+                    || alert_config.alert_config_id
+                        == gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b")
+            })
+            .returning(|_| Ok(()));
+
+        let mut service = MonitorAssociationService::new(mock_monitor_repo, mock_alert_config_repo);
+        let result = service
+            .associate_alerts(
+                "foo-tenant",
+                gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                &[
+                    gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b"),
+                    gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+                ],
+            )
+            .await;
+        assert!(result.is_ok());
+
+        logs_assert(|logs| {
+            // Shouldn't have logged any errors (or anything for that matter).
+            assert_eq!(logs.len(), 0);
+
+            Ok(())
+        });
     }
 
     #[rstest]
@@ -259,6 +330,52 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
+
+        logs_assert(|logs| {
+            // Shouldn't have logged any errors (or anything for that matter).
+            assert_eq!(logs.len(), 0);
+
+            Ok(())
+        });
+    }
+
+    #[rstest]
+    #[traced_test]
+    #[tokio::test]
+    async fn test_associating_alerts_monitor_not_found() {
+        let mut mock_monitor_repo = MockRepository::new();
+        mock_monitor_repo
+            .expect_get()
+            .once()
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("foo-tenant"),
+            )
+            .returning(move |_, _| Ok(None));
+
+        // Since we couldn't find the monitor, we shouldn't call the alert config repo.
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
+        mock_alert_config_repo.expect_get().never();
+        mock_alert_config_repo.expect_save().never();
+
+        let mut service = MonitorAssociationService::new(mock_monitor_repo, mock_alert_config_repo);
+        let result = service
+            .associate_alerts(
+                "foo-tenant",
+                gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                &[
+                    gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b"),
+                    gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+                ],
+            )
+            .await;
+
+        assert_eq!(
+            result,
+            Err(Error::MonitorNotFound(gen_uuid(
+                "41ebffb4-a188-48e9-8ec1-61380085cde3"
+            )))
+        );
 
         logs_assert(|logs| {
             // Shouldn't have logged any errors (or anything for that matter).
