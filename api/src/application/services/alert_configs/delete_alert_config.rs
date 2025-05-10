@@ -19,7 +19,7 @@ impl<T: Repository<AlertConfig>> DeleteAlertConfigService<T> {
             .repo
             .get(alert_config_id, tenant)
             .await?
-            .ok_or(Error::AlertConfigNotFound(alert_config_id))?;
+            .ok_or(Error::AlertConfigNotFound(vec![alert_config_id]))?;
 
         self.repo.delete(&alert_config).await?;
         info!(
@@ -119,7 +119,10 @@ mod tests {
         let mut service = DeleteAlertConfigService::new(mock);
         let result = service.delete_by_id(non_existent_id, "tenant").await;
 
-        assert_eq!(result, Err(Error::AlertConfigNotFound(non_existent_id)));
+        assert_eq!(
+            result,
+            Err(Error::AlertConfigNotFound(vec![non_existent_id]))
+        );
 
         logs_assert(|logs| {
             assert_eq!(logs.len(), 0);

@@ -80,7 +80,7 @@ impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig> 
             .alert_config_repo
             .get(alert_config_id, tenant)
             .await?
-            .ok_or_else(|| Error::AlertConfigNotFound(alert_config_id))?;
+            .ok_or_else(|| Error::AlertConfigNotFound(vec![alert_config_id]))?;
 
         alert_config
             .disassociate_monitor(&monitor)
@@ -466,9 +466,9 @@ mod tests {
 
         assert_eq!(
             result,
-            Err(Error::AlertConfigNotFound(gen_uuid(
+            Err(Error::AlertConfigNotFound(vec![gen_uuid(
                 "f1b1b1b1-1b1b-4b1b-8b1b-1b1b1b1b1b1b"
-            )))
+            )]))
         );
 
         logs_assert(|logs| {

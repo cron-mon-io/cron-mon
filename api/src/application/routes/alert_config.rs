@@ -65,7 +65,7 @@ pub async fn get_alert_config(
     if let Some(ac) = alert_config {
         Ok(json!({"data": ac}))
     } else {
-        Err(Error::AlertConfigNotFound(alert_config_id))
+        Err(Error::AlertConfigNotFound(vec![alert_config_id]))
     }
 }
 

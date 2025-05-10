@@ -85,11 +85,19 @@ mod tests {
         ))
     }
 
-    #[rocket::get("/alert_config_not_found")]
-    fn alert_config_not_found() -> Result<(), Error> {
-        Err(Error::AlertConfigNotFound(gen_uuid(
+    #[rocket::get("/single_alert_config_not_found")]
+    fn single_alert_config_not_found() -> Result<(), Error> {
+        Err(Error::AlertConfigNotFound(vec![gen_uuid(
             "b6a32bd4-1d3e-4943-9150-a62aa84bc10a",
-        )))
+        )]))
+    }
+
+    #[rocket::get("/multiple_alert_config_not_found")]
+    fn multiple_alert_config_not_found() -> Result<(), Error> {
+        Err(Error::AlertConfigNotFound(vec![
+            gen_uuid("b6a32bd4-1d3e-4943-9150-a62aa84bc10a"),
+            gen_uuid("b6a32bd4-1d3e-4943-9150-a62aa84bc10b"),
+        ]))
     }
 
     #[rocket::get("/job_already_finished")]
@@ -156,7 +164,8 @@ mod tests {
                 monitor_not_found,
                 key_not_found,
                 job_not_found,
-                alert_config_not_found,
+                single_alert_config_not_found,
+                multiple_alert_config_not_found,
                 job_already_finished,
                 late_job_process_failure,
                 alert_config_error,
@@ -249,8 +258,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_alert_config_not_found(test_client: Client) {
-        let response = test_client.get("/alert_config_not_found").dispatch();
+    fn test_single_alert_config_not_found(test_client: Client) {
+        let response = test_client.get("/single_alert_config_not_found").dispatch();
 
         assert_eq!(response.status(), Status::NotFound);
         assert_eq!(response.content_type(), Some(ContentType::JSON));
@@ -262,6 +271,28 @@ mod tests {
                     "reason": "Alert Configuration Not Found",
                     "description": "Failed to find alert configuration with id \
                                     'b6a32bd4-1d3e-4943-9150-a62aa84bc10a'"
+                }
+            })
+        );
+    }
+
+    #[rstest]
+    fn test_multiple_alert_config_not_found(test_client: Client) {
+        let response = test_client
+            .get("/multiple_alert_config_not_found")
+            .dispatch();
+
+        assert_eq!(response.status(), Status::NotFound);
+        assert_eq!(response.content_type(), Some(ContentType::JSON));
+        assert_eq!(
+            response.into_json::<Value>().unwrap(),
+            json!({
+                "error": {
+                    "code": 404,
+                    "reason": "Alert Configuration Not Found",
+                    "description": "Failed to find alert configurations with ids \
+                                    '[b6a32bd4-1d3e-4943-9150-a62aa84bc10a, \
+                                      b6a32bd4-1d3e-4943-9150-a62aa84bc10b]'"
                 }
             })
         );

@@ -39,7 +39,7 @@ impl<AlertConfigRepo: Repository<AlertConfig>, NotifierFactory: GetNotifier>
             .alert_config_repo
             .get(alert_config_id, tenant)
             .await?
-            .ok_or(Error::AlertConfigNotFound(alert_config_id))?;
+            .ok_or(Error::AlertConfigNotFound(vec![alert_config_id]))?;
 
         let mut notifier = self.notifier_factory.get_notifier(&alert_config);
         notifier.test_notification(&alert_config, user).await?;
@@ -213,7 +213,10 @@ mod tests {
         let result = service
             .for_alert_config(alert_config_id, "foo-tenant", "Joe Bloggs")
             .await;
-        assert_eq!(result, Err(Error::AlertConfigNotFound(alert_config_id)));
+        assert_eq!(
+            result,
+            Err(Error::AlertConfigNotFound(vec![alert_config_id]))
+        );
 
         logs_assert(|logs| {
             let logs = TracingLog::from_logs(logs);

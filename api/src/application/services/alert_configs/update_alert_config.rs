@@ -29,7 +29,7 @@ impl<T: Repository<AlertConfig>> UpdateAlertConfigService<T> {
             .repo
             .get(alert_config_id, tenant)
             .await?
-            .ok_or(Error::AlertConfigNotFound(alert_config_id))?;
+            .ok_or(Error::AlertConfigNotFound(vec![alert_config_id]))?;
 
         // We want to log the original and new values of the alert configuration, so we take the
         // original values herebefore modifying the alert configuration.
@@ -222,7 +222,10 @@ mod tests {
             )
             .await;
 
-        assert_eq!(result, Err(Error::AlertConfigNotFound(alert_config_id)));
+        assert_eq!(
+            result,
+            Err(Error::AlertConfigNotFound(vec![alert_config_id]))
+        );
     }
 
     #[tokio::test]
