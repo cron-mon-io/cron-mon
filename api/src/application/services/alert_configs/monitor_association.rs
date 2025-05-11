@@ -54,9 +54,14 @@ impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig> 
                 errors = ?failures.iter().map(|(error, _)| error).collect::<Vec<_>>(),
                 "Error associating Monitor with AlertConfig(s)"
             );
-            return Err(Error::AlertConfigurationError(
-                "Failed to associate Monitor with AlertConfig(s)".to_string(),
-            ));
+            return Err(Error::AlertConfigurationError(format!(
+                "Failed to associate Monitor with AlertConfig(s): {}",
+                failures
+                    .iter()
+                    .map(|(error, ac_id)| format!("{}: {}", ac_id, error.to_string()))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )));
         }
 
         for alert_config in alert_configs {
@@ -718,8 +723,83 @@ mod tests {
     #[rstest]
     #[traced_test]
     #[tokio::test]
-    async fn test_associating_associated_alert() {
-        todo!()
+    async fn test_associating_associated_alert(
+        monitors: Vec<Monitor>,
+        alert_configs: Vec<AlertConfig>,
+    ) {
+        let mut mock_monitor_repo = MockRepository::new();
+        mock_monitor_repo
+            .expect_get()
+            .once()
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("foo-tenant"),
+            )
+            .returning(move |_, _| Ok(Some(monitors[0].clone())));
+
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
+
+        mock_alert_config_repo
+            .expect_get_by_ids()
+            .once()
+            .with(
+                eq([
+                    gen_uuid("f1b1b1b1-1b1b-4b1b-8b1b-1b1b1b1b1b1b"),
+                    gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b"),
+                ]),
+                eq("foo-tenant"),
+            )
+            .returning(move |_, _| Ok(alert_configs[..2].to_vec()));
+
+        // Since we couldn't associate one of the alert config, we shouldn't call the save method.
+        mock_alert_config_repo.expect_save().never();
+
+        let mut service = MonitorAssociationService::new(mock_monitor_repo, mock_alert_config_repo);
+        let result = service
+            .associate_alerts(
+                "foo-tenant",
+                gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                &[
+                    gen_uuid("f1b1b1b1-1b1b-4b1b-8b1b-1b1b1b1b1b1b"),
+                    gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b"),
+                ],
+            )
+            .await;
+
+        assert_eq!(
+            result,
+            Err(Error::AlertConfigurationError(
+                "Failed to associate Monitor with AlertConfig(s): \
+                    f1b1b1b1-1b1b-4b1b-8b1b-1b1b1b1b1b1b: \
+                        Failed to configure alert: \
+                            Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') is already associated \
+                            with Alert Configuration('f1b1b1b1-1b1b-4b1b-8b1b-1b1b1b1b1b1b')"
+                    .to_string()
+            ))
+        );
+
+        logs_assert(|logs| {
+            // Should have logged an error.
+            let logs = get_tracing_logs(logs);
+            assert_eq!(logs.len(), 1);
+
+            let log = &logs[0];
+            assert_eq!(log.level, Level::ERROR);
+            assert_eq!(
+                log.body,
+                "Error associating Monitor with AlertConfig(s) \
+                    monitor_id=\"41ebffb4-a188-48e9-8ec1-61380085cde3\" \
+                    alert_config_ids=[f1b1b1b1-1b1b-4b1b-8b1b-1b1b1b1b1b1b] \
+                    errors=[\
+                        AlertConfigurationError(\"\
+                            Monitor('41ebffb4-a188-48e9-8ec1-61380085cde3') is already associated \
+                            with Alert Configuration('f1b1b1b1-1b1b-4b1b-8b1b-1b1b1b1b1b1b')\
+                        \")\
+                    ]"
+            );
+
+            Ok(())
+        });
     }
 
     #[rstest]
