@@ -58,7 +58,7 @@ impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig> 
                 "Failed to associate Monitor with AlertConfig(s): {}",
                 failures
                     .iter()
-                    .map(|(error, ac_id)| format!("{}: {}", ac_id, error.to_string()))
+                    .map(|(error, ac_id)| format!("{}: {}", ac_id, error))
                     .collect::<Vec<_>>()
                     .join(", ")
             )));
@@ -104,9 +104,9 @@ impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig> 
 
     async fn get_monitor(&mut self, tenant: &str, monitor_id: Uuid) -> Result<Monitor, Error> {
         self.monitor_repo
-            .get(monitor_id, &tenant)
+            .get(monitor_id, tenant)
             .await?
-            .ok_or_else(|| Error::MonitorNotFound(monitor_id))
+            .ok_or(Error::MonitorNotFound(monitor_id))
     }
 
     async fn get_alert_configs(
@@ -347,7 +347,7 @@ mod tests {
             .once()
             .withf(|alert_config: &AlertConfig| {
                 alert_config.alert_config_id == gen_uuid("f1b1b1b1-1b1b-4b1b-8b1b-1b1b1b1b1b1b")
-                    && alert_config.monitors.len() == 0
+                    && alert_config.monitors.is_empty()
             })
             .returning(|_| Ok(()));
 
@@ -683,7 +683,7 @@ mod tests {
             .once()
             .withf(|alert_config: &AlertConfig| {
                 alert_config.alert_config_id == gen_uuid("f1b1b1b1-1b1b-4b1b-8b1b-1b1b1b1b1b1b")
-                    && alert_config.monitors.len() == 0
+                    && alert_config.monitors.is_empty()
             })
             .returning(|_| Err(Error::RepositoryError("test error".to_string())));
 
