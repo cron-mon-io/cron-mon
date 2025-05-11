@@ -1,6 +1,8 @@
 use tracing::error;
 use uuid::Uuid;
 
+use std::collections::HashSet;
+
 use crate::domain::models::{AlertConfig, Monitor};
 use crate::errors::Error;
 use crate::infrastructure::repositories::alert_config::GetByIDs;
@@ -31,11 +33,7 @@ impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig> 
         alert_config_ids: &[Uuid],
     ) -> Result<(), Error> {
         let monitor = self.get_monitor(tenant, monitor_id).await?;
-
-        let mut alert_configs = self
-            .alert_config_repo
-            .get_by_ids(alert_config_ids, tenant)
-            .await?;
+        let mut alert_configs = self.get_alert_configs(alert_config_ids, tenant).await?;
 
         // We want to collect all failures so we can log them, rather than fail on the first error
         let failures = alert_configs
@@ -104,6 +102,34 @@ impl<MonitorRepo: Repository<Monitor>, AlertConfigRepo: Repository<AlertConfig> 
             .get(monitor_id, &tenant)
             .await?
             .ok_or_else(|| Error::MonitorNotFound(monitor_id))
+    }
+
+    async fn get_alert_configs(
+        &mut self,
+        alert_config_ids: &[Uuid],
+        tenant: &str,
+    ) -> Result<Vec<AlertConfig>, Error> {
+        let alert_configs = self
+            .alert_config_repo
+            .get_by_ids(alert_config_ids, tenant)
+            .await?;
+
+        let retrieved_ids: HashSet<_> = alert_configs
+            .iter()
+            .map(|alert_config| alert_config.alert_config_id)
+            .collect();
+
+        let missing_ids: Vec<_> = alert_config_ids
+            .iter()
+            .filter(|alert_config_id| !retrieved_ids.contains(alert_config_id))
+            .cloned()
+            .collect();
+
+        if !missing_ids.is_empty() {
+            Err(Error::AlertConfigNotFound(missing_ids))
+        } else {
+            Ok(alert_configs)
+        }
     }
 
     async fn save_alert_config(&mut self, alert_config: &AlertConfig) -> Result<(), Error> {
