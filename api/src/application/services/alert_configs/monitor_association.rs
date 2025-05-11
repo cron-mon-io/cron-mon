@@ -457,6 +457,66 @@ mod tests {
     #[rstest]
     #[traced_test]
     #[tokio::test]
+    async fn test_associating_alerts_alert_config_not_found(
+        monitors: Vec<Monitor>,
+        alert_configs: Vec<AlertConfig>,
+    ) {
+        let mut mock_monitor_repo = MockRepository::new();
+        mock_monitor_repo
+            .expect_get()
+            .once()
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("foo-tenant"),
+            )
+            .returning(move |_, _| Ok(Some(monitors[0].clone())));
+
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
+        mock_alert_config_repo
+            .expect_get_by_ids()
+            .once()
+            .with(
+                eq([
+                    gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b"),
+                    gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+                ]),
+                eq("foo-tenant"),
+            )
+            .returning(move |_, _| Ok(vec![alert_configs[1].clone()]));
+
+        // Since we couldn't find the alert config, we shouldn't call the save method.
+        mock_alert_config_repo.expect_save().never();
+
+        let mut service = MonitorAssociationService::new(mock_monitor_repo, mock_alert_config_repo);
+        let result = service
+            .associate_alerts(
+                "foo-tenant",
+                gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                &[
+                    gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b"),
+                    gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+                ],
+            )
+            .await;
+
+        assert_eq!(
+            result,
+            Err(Error::AlertConfigNotFound(vec![gen_uuid(
+                "f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"
+            )]))
+        );
+
+        logs_assert(|logs| {
+            // Shouldn't have logged any errors (or anything for that matter).
+            assert_eq!(logs.len(), 0);
+
+            Ok(())
+        });
+    }
+
+    #[rstest]
+    #[traced_test]
+    #[tokio::test]
     async fn test_disassociating_alerts_alert_config_not_found(monitors: Vec<Monitor>) {
         let mut mock_monitor_repo = MockRepository::new();
         mock_monitor_repo
@@ -500,6 +560,87 @@ mod tests {
         logs_assert(|logs| {
             // Shouldn't have logged any errors (or anything for that matter).
             assert_eq!(logs.len(), 0);
+
+            Ok(())
+        });
+    }
+
+    #[rstest]
+    #[traced_test]
+    #[tokio::test]
+    async fn test_associating_alerts_alert_config_save_error(
+        monitors: Vec<Monitor>,
+        alert_configs: Vec<AlertConfig>,
+    ) {
+        let mut mock_monitor_repo = MockRepository::new();
+        mock_monitor_repo
+            .expect_get()
+            .once()
+            .with(
+                eq(gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3")),
+                eq("foo-tenant"),
+            )
+            .returning(move |_, _| Ok(Some(monitors[0].clone())));
+
+        let mut mock_alert_config_repo = MockAlertConfigRepo::new();
+        mock_alert_config_repo
+            .expect_get_by_ids()
+            .once()
+            .with(
+                eq([
+                    gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b"),
+                    gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+                ]),
+                eq("foo-tenant"),
+            )
+            .returning(move |_, _| Ok(alert_configs[1..].to_vec()));
+
+        mock_alert_config_repo
+            .expect_save()
+            .once()
+            .withf(|alert_config: &AlertConfig| {
+                alert_config.alert_config_id == gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b")
+            })
+            .returning(|_| Ok(()));
+        mock_alert_config_repo
+            .expect_save()
+            .once()
+            .withf(|alert_config: &AlertConfig| {
+                alert_config.alert_config_id == gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b")
+            })
+            .returning(|_| Err(Error::RepositoryError("test error".to_string())));
+
+        let mut service = MonitorAssociationService::new(mock_monitor_repo, mock_alert_config_repo);
+        let result = service
+            .associate_alerts(
+                "foo-tenant",
+                gen_uuid("41ebffb4-a188-48e9-8ec1-61380085cde3"),
+                &[
+                    gen_uuid("f2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b"),
+                    gen_uuid("f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+                ],
+            )
+            .await;
+
+        assert_eq!(
+            result,
+            Err(Error::RepositoryError(
+                "Failed to read or write data: test error".to_string()
+            ))
+        );
+
+        logs_assert(|logs| {
+            // Should have logged an error.
+            let logs = get_tracing_logs(logs);
+            assert_eq!(logs.len(), 1);
+
+            let log = &logs[0];
+            assert_eq!(log.level, Level::ERROR);
+            assert_eq!(
+                log.body,
+                "Error saving AlertConfig: RepositoryError(\"test error\") \
+                    alert_config_id=f3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b"
+            );
 
             Ok(())
         });
@@ -572,6 +713,13 @@ mod tests {
 
             Ok(())
         });
+    }
+
+    #[rstest]
+    #[traced_test]
+    #[tokio::test]
+    async fn test_associating_associated_alert() {
+        todo!()
     }
 
     #[rstest]
