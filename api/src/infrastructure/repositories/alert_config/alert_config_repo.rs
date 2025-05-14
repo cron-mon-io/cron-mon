@@ -17,7 +17,7 @@ use crate::infrastructure::models::alert_config::{
 };
 use crate::infrastructure::repositories::Repository;
 
-use super::GetByMonitors;
+use super::{GetByIDs, GetByMonitors};
 
 macro_rules! build_polymorphic_query {
     () => {{
@@ -40,6 +40,11 @@ macro_rules! build_polymorphic_query {
             .distinct()
             .into_boxed()
     }};
+}
+
+enum FilterableIds<'a> {
+    AlertConfigIds(&'a [Uuid]),
+    MonitorIds(&'a [Uuid]),
 }
 
 pub struct AlertConfigRepository<'a> {
@@ -131,7 +136,7 @@ impl<'a> AlertConfigRepository<'a> {
     async fn fetch_alert_configs(
         &mut self,
         tenant: Option<&str>,
-        monitor_ids: Option<&[Uuid]>,
+        filterable_ids: Option<FilterableIds<'_>>,
     ) -> Result<Vec<AlertConfig>, Error> {
         let mut connection = get_connection(self.pool).await?;
         let (alert_config_datas, monitor_alert_config_datas) = connection
@@ -142,20 +147,33 @@ impl<'a> AlertConfigRepository<'a> {
                         if let Some(t) = tenant {
                             query = query.filter(alert_config::tenant.eq(t));
                         }
-                        let alert_configs: Vec<AlertConfigData> =
-                            if let Some(monitor_ids) = monitor_ids {
-                                query
-                                    .inner_join(
-                                        monitor_alert_config::table
-                                            .on(monitor_alert_config::alert_config_id
-                                                .eq(alert_config::alert_config_id)),
-                                    )
-                                    .filter(monitor_alert_config::monitor_id.eq_any(monitor_ids))
-                                    .load(conn)
-                                    .await?
-                            } else {
-                                query.load(conn).await?
-                            };
+                        let alert_configs: Vec<AlertConfigData> = if let Some(filterable_ids) =
+                            filterable_ids
+                        {
+                            match filterable_ids {
+                                FilterableIds::AlertConfigIds(ids) => {
+                                    query
+                                        .filter(alert_config::alert_config_id.eq_any(ids))
+                                        .load(conn)
+                                        .await?
+                                }
+                                FilterableIds::MonitorIds(monitor_ids) => {
+                                    query
+                                        .inner_join(
+                                            monitor_alert_config::table
+                                                .on(monitor_alert_config::alert_config_id
+                                                    .eq(alert_config::alert_config_id)),
+                                        )
+                                        .filter(
+                                            monitor_alert_config::monitor_id.eq_any(monitor_ids),
+                                        )
+                                        .load(conn)
+                                        .await?
+                                }
+                            }
+                        } else {
+                            query.load(conn).await?
+                        };
 
                         let monitor_alert_configs =
                             MonitorAlertConfigData::belonging_to(&alert_configs)
@@ -189,7 +207,8 @@ impl<'a> GetByMonitors for AlertConfigRepository<'a> {
         monitor_ids: &[Uuid],
         tenant: Option<&'b str>,
     ) -> Result<Vec<AlertConfig>, Error> {
-        self.fetch_alert_configs(tenant, Some(monitor_ids)).await
+        self.fetch_alert_configs(tenant, Some(FilterableIds::MonitorIds(monitor_ids)))
+            .await
     }
 }
 
