@@ -214,6 +214,15 @@ impl<'a> GetByMonitors for AlertConfigRepository<'a> {
 
 #[async_trait]
 #[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
+impl<'a> GetByIDs for AlertConfigRepository<'a> {
+    async fn get_by_ids(&mut self, ids: &[Uuid], tenant: &str) -> Result<Vec<AlertConfig>, Error> {
+        self.fetch_alert_configs(Some(tenant), Some(FilterableIds::AlertConfigIds(ids)))
+            .await
+    }
+}
+
+#[async_trait]
+#[allow(clippy::needless_lifetimes)] // This is needed for the lifetime of the pool
 impl<'a> Repository<AlertConfig> for AlertConfigRepository<'a> {
     async fn get(
         &mut self,
