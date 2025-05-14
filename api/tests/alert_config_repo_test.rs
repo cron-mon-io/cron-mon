@@ -9,7 +9,7 @@ use cron_mon_api::domain::models::{AlertConfig, AlertType, AppliedMonitor, Slack
 use cron_mon_api::errors::Error;
 use cron_mon_api::infrastructure::models::alert_config::NewAlertConfigData;
 use cron_mon_api::infrastructure::repositories::alert_config::{
-    AlertConfigRepository, GetByMonitors,
+    AlertConfigRepository, GetByIDs, GetByMonitors,
 };
 use cron_mon_api::infrastructure::repositories::Repository;
 
@@ -65,6 +65,53 @@ async fn test_get_by_monitors(
     let mut repo = AlertConfigRepository::new(&infra.pool);
 
     let alert_configs = repo.get_by_monitors(&monitor_ids, tenant).await.unwrap();
+
+    let names: Vec<String> = alert_configs
+        .iter()
+        .map(|alert_config| alert_config.name.clone())
+        .collect();
+
+    assert_eq!(names, alert_config_names);
+}
+
+#[rstest]
+#[case(
+    "foo",
+    vec![gen_uuid("fadd7266-648b-4102-8f85-c768655f4297")],
+    vec!["Test Slack alert (for lates)".to_owned()]
+)]
+#[case(
+    "not-foo",
+    vec![
+        gen_uuid("fadd7266-648b-4102-8f85-c768655f4297"),
+        gen_uuid("c1bf0515-df39-448b-aa95-686360a33b36"),
+    ],
+    vec![]
+)]
+#[case(
+    "foo",
+    vec![
+        gen_uuid("3ba21f52-32c9-41dc-924d-d18d4fc0e81c"),
+        gen_uuid("8d307d12-4696-4801-bfb6-628f8f640864"),
+        gen_uuid("fadd7266-648b-4102-8f85-c768655f4297"),
+    ],
+    vec![
+        "Test Slack alert (for errors)".to_owned(),
+        "Test Slack alert (for lates and errors)".to_owned(),
+        "Test Slack alert (for lates)".to_owned(),
+    ]
+)]
+#[tokio::test]
+async fn test_get_by_ids(
+    #[case] tenant: &str,
+    #[case] alert_config_ids: Vec<Uuid>,
+    #[case] alert_config_names: Vec<String>,
+    #[future] infrastructure: Infrastructure,
+) {
+    let infra = infrastructure.await;
+    let mut repo = AlertConfigRepository::new(&infra.pool);
+
+    let alert_configs = repo.get_by_ids(&alert_config_ids, tenant).await.unwrap();
 
     let names: Vec<String> = alert_configs
         .iter()
