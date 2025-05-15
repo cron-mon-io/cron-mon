@@ -1,6 +1,6 @@
 use rocket;
 use rocket::serde::json::Json;
-use rocket::State;
+use rocket::{response::status::NoContent, State};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
@@ -116,14 +116,14 @@ pub async fn associate_alert_configs(
     jwt: Jwt,
     monitor_id: Uuid,
     alert_config_ids: Json<MonitorAssociationData>,
-) -> Result<(), Error> {
+) -> Result<NoContent, Error> {
     let mut service = get_monitor_association_service(pool);
 
     service
         .associate_alerts(&jwt.tenant, monitor_id, &alert_config_ids.alert_config_ids)
         .await?;
 
-    Ok(())
+    Ok(NoContent)
 }
 
 #[rocket::delete("/monitors/<monitor_id>/alert-configs/<alert_config_id>")]
@@ -132,12 +132,12 @@ pub async fn disassociate_alert_config(
     jwt: Jwt,
     monitor_id: Uuid,
     alert_config_id: Uuid,
-) -> Result<(), Error> {
+) -> Result<NoContent, Error> {
     let mut service = get_monitor_association_service(pool);
 
     service
         .disassociate_alert(&jwt.tenant, monitor_id, alert_config_id)
         .await?;
 
-    Ok(())
+    Ok(NoContent)
 }
