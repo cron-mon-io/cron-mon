@@ -1,15 +1,17 @@
 use rocket;
 use rocket::http::Status;
+use rocket::response::status::NoContent;
 use rocket::serde::json::Json;
 use rocket::State;
+use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
 use crate::application::services::alert_configs::AlertConfigData;
 use crate::application::services::{
     get_create_alert_config_service, get_delete_alert_config_service,
-    get_fetch_alert_configs_service, get_test_alert_config_service,
-    get_update_alert_config_service,
+    get_fetch_alert_configs_service, get_monitor_association_service,
+    get_test_alert_config_service, get_update_alert_config_service,
 };
 use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
@@ -17,6 +19,11 @@ use crate::infrastructure::database::DbPool;
 use crate::infrastructure::paging::Paging;
 use crate::infrastructure::repositories::alert_config::AlertConfigRepository;
 use crate::infrastructure::repositories::Repository;
+
+#[derive(Deserialize)]
+pub struct MonitorAssociationData {
+    alert_config_ids: Vec<Uuid>,
+}
 
 #[rocket::get("/alert-configs")]
 pub async fn list_alert_configs(pool: &State<DbPool>, jwt: Jwt) -> Result<Value, Error> {
@@ -142,4 +149,36 @@ pub async fn get_alert_configs_for_monitor(
         .collect::<Value>(),
         "paging": Paging { total: alert_configs.len() }
     }))
+}
+
+#[rocket::post("/monitors/<monitor_id>/alert-configs", data = "<alert_config_ids>")]
+pub async fn associate_alert_configs(
+    pool: &State<DbPool>,
+    jwt: Jwt,
+    monitor_id: Uuid,
+    alert_config_ids: Json<MonitorAssociationData>,
+) -> Result<NoContent, Error> {
+    let mut service = get_monitor_association_service(pool);
+
+    service
+        .associate_alerts(&jwt.tenant, monitor_id, &alert_config_ids.alert_config_ids)
+        .await?;
+
+    Ok(NoContent)
+}
+
+#[rocket::delete("/monitors/<monitor_id>/alert-configs/<alert_config_id>")]
+pub async fn disassociate_alert_config(
+    pool: &State<DbPool>,
+    jwt: Jwt,
+    monitor_id: Uuid,
+    alert_config_id: Uuid,
+) -> Result<NoContent, Error> {
+    let mut service = get_monitor_association_service(pool);
+
+    service
+        .disassociate_alert(&jwt.tenant, monitor_id, alert_config_id)
+        .await?;
+
+    Ok(NoContent)
 }

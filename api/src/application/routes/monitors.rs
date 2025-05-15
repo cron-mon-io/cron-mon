@@ -1,13 +1,13 @@
 use rocket;
 use rocket::serde::json::Json;
-use rocket::{response::status::NoContent, State};
+use rocket::State;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
 use crate::application::services::{
     get_create_monitor_service, get_delete_monitor_service, get_fetch_monitors_service,
-    get_monitor_association_service, get_update_monitor_service,
+    get_update_monitor_service,
 };
 use crate::errors::Error;
 use crate::infrastructure::auth::Jwt;
@@ -21,11 +21,6 @@ pub struct MonitorData {
     name: String,
     expected_duration: i32,
     grace_duration: i32,
-}
-
-#[derive(Deserialize)]
-pub struct MonitorAssociationData {
-    alert_config_ids: Vec<Uuid>,
 }
 
 #[rocket::get("/monitors")]
@@ -108,36 +103,4 @@ pub async fn update_monitor(
         .await?;
 
     Ok(json!({"data": mon}))
-}
-
-#[rocket::post("/monitors/<monitor_id>/alert-configs", data = "<alert_config_ids>")]
-pub async fn associate_alert_configs(
-    pool: &State<DbPool>,
-    jwt: Jwt,
-    monitor_id: Uuid,
-    alert_config_ids: Json<MonitorAssociationData>,
-) -> Result<NoContent, Error> {
-    let mut service = get_monitor_association_service(pool);
-
-    service
-        .associate_alerts(&jwt.tenant, monitor_id, &alert_config_ids.alert_config_ids)
-        .await?;
-
-    Ok(NoContent)
-}
-
-#[rocket::delete("/monitors/<monitor_id>/alert-configs/<alert_config_id>")]
-pub async fn disassociate_alert_config(
-    pool: &State<DbPool>,
-    jwt: Jwt,
-    monitor_id: Uuid,
-    alert_config_id: Uuid,
-) -> Result<NoContent, Error> {
-    let mut service = get_monitor_association_service(pool);
-
-    service
-        .disassociate_alert(&jwt.tenant, monitor_id, alert_config_id)
-        .await?;
-
-    Ok(NoContent)
 }
