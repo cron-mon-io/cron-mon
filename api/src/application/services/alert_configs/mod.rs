@@ -10,6 +10,7 @@ use serde::Deserialize;
 pub use create_alert_config::CreateAlertConfigService;
 pub use delete_alert_config::DeleteAlertConfigService;
 pub use fetch_alert_configs::FetchAlertConfigs;
+pub use monitor_association::MonitorAssociationService;
 pub use test_alert_config::TestAlertConfigService;
 pub use update_alert_config::UpdateAlertConfigService;
 

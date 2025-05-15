@@ -41,6 +41,8 @@ pub fn rocket() -> Rocket<Build> {
                 monitors::get_monitor,
                 monitors::delete_monitor,
                 monitors::update_monitor,
+                monitors::associate_alert_configs,
+                monitors::disassociate_alert_config,
                 jobs::get_job,
                 jobs::start_job,
                 jobs::finish_job,

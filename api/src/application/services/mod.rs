@@ -11,8 +11,8 @@ use crate::infrastructure::repositories::api_key::ApiKeyRepository;
 use crate::infrastructure::repositories::monitor::MonitorRepository;
 
 use alert_configs::{
-    CreateAlertConfigService, DeleteAlertConfigService, FetchAlertConfigs, TestAlertConfigService,
-    UpdateAlertConfigService,
+    CreateAlertConfigService, DeleteAlertConfigService, FetchAlertConfigs,
+    MonitorAssociationService, TestAlertConfigService, UpdateAlertConfigService,
 };
 use api_keys::{GenerateKeyService, RevokeKeyService};
 use monitors::{
@@ -79,6 +79,15 @@ pub fn get_alert_erroneous_jobs_service(
         MonitorRepository::new(pool),
         AlertConfigRepository::new(pool),
         GetNotifierService::new(),
+    )
+}
+
+pub fn get_monitor_association_service(
+    pool: &DbPool,
+) -> MonitorAssociationService<MonitorRepository, AlertConfigRepository> {
+    MonitorAssociationService::new(
+        MonitorRepository::new(pool),
+        AlertConfigRepository::new(pool),
     )
 }
 
