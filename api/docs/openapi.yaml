@@ -981,7 +981,7 @@ paths:
                 - ac24ebd6-3b51-42c6-9156-777b63fce709
                 - 509ea633-8ec8-4ec5-9ae0-6492a7d0b984
       responses:
-        "201":
+        "204":
           description: The alert configurations were successfully applied to the Monitor.
         "400":
           $ref: "#/components/responses/BadRequestError"
@@ -1014,7 +1014,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        "204":
           description: The alert configuration was unapplied from the Monitor
         "404":
           $ref: "#/components/responses/NotFoundError"

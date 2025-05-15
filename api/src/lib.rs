@@ -47,6 +47,8 @@ pub fn rocket() -> Rocket<Build> {
                 api_keys::list_api_keys,
                 api_keys::generate_key,
                 api_keys::revoke_key,
+                alert_config::associate_alert_configs,
+                alert_config::disassociate_alert_config,
                 alert_config::list_alert_configs,
                 alert_config::create_alert_config,
                 alert_config::get_alert_config,

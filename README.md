@@ -25,8 +25,6 @@ CronMon is designed around _Monitors_ and _Jobs_. A Monitor is responsible for m
 
 CronMon is comprised of two key components; a RESTful API for creating and managing Monitors, and recording their Jobs; and a microservice that detects when jobs are late and notifies the owner of the Monitor.
 
-> Note that CronMon currently doesn't have the ability to notify when Jobs are late, but this is coming soon.
-
 There is also a frontend application for CronMon, which you'll find at https://github.com/cron-mon-io/cron-mon-app.
 
 ## Getting started
