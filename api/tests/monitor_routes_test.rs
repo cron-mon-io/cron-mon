@@ -293,7 +293,7 @@ async fn test_modify_monitor_when_monitor_does_not_exist(#[future] infrastructur
 }
 
 #[rstest]
-#[case("c1bf0515-df39-448b-aa95-686360a33b36", Status::Ok, -1)]
+#[case("c1bf0515-df39-448b-aa95-686360a33b36", Status::NoContent, -1)]
 #[case("cc6cf74e-b25d-4c8c-94a6-914e3f139c14", Status::NotFound, 0)]
 #[tokio::test]
 async fn test_delete_monitor_deletes(

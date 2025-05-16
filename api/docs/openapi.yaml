@@ -263,7 +263,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        "204":
           description: The Monitor was deleted.
         "404":
           $ref: "#/components/responses/NotFoundError"
@@ -549,7 +549,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        "204":
           description: The API Key was deleted.
         "404":
           $ref: "#/components/responses/NotFoundError"
@@ -846,7 +846,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        "204":
           description: The alert configuration was deleted.
         "404":
           $ref: "#/components/responses/NotFoundError"
@@ -876,8 +876,8 @@ paths:
             type: string
             format: uuid
       responses:
-        "201":
-          description: The retrieved alert configuration.
+        "204":
+          description: The test alert was sent.
         "400":
           $ref: "#/components/responses/BadRequestError"
         "404":

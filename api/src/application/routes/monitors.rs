@@ -1,4 +1,5 @@
 use rocket;
+use rocket::response::status::NoContent;
 use rocket::serde::json::Json;
 use rocket::State;
 use serde::Deserialize;
@@ -77,10 +78,16 @@ pub async fn get_monitor(pool: &State<DbPool>, jwt: Jwt, monitor_id: Uuid) -> Re
 }
 
 #[rocket::delete("/monitors/<monitor_id>")]
-pub async fn delete_monitor(pool: &State<DbPool>, jwt: Jwt, monitor_id: Uuid) -> Result<(), Error> {
+pub async fn delete_monitor(
+    pool: &State<DbPool>,
+    jwt: Jwt,
+    monitor_id: Uuid,
+) -> Result<NoContent, Error> {
     let mut service = get_delete_monitor_service(pool);
 
-    service.delete_by_id(monitor_id, &jwt.tenant).await
+    service.delete_by_id(monitor_id, &jwt.tenant).await?;
+
+    Ok(NoContent)
 }
 
 #[rocket::patch("/monitors/<monitor_id>", data = "<updated_monitor>")]
