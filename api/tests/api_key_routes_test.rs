@@ -107,7 +107,7 @@ async fn test_delete_api_key(#[future] infrastructure: Infrastructure) {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), Status::NoContent);
 
     // We should now have 1 key in the database.
     let response = client

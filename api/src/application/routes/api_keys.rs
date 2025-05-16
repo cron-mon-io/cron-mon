@@ -1,4 +1,5 @@
 use rocket;
+use rocket::response::status::NoContent;
 use rocket::serde::json::Json;
 use rocket::State;
 use serde::Deserialize;
@@ -42,9 +43,9 @@ pub async fn generate_key(
 }
 
 #[rocket::delete("/keys/<key_id>")]
-pub async fn revoke_key(pool: &State<DbPool>, jwt: Jwt, key_id: Uuid) -> Result<(), Error> {
+pub async fn revoke_key(pool: &State<DbPool>, jwt: Jwt, key_id: Uuid) -> Result<NoContent, Error> {
     let mut service = get_revoke_key_service(pool);
     service.revoke_key(key_id, &jwt.tenant).await?;
 
-    Ok(())
+    Ok(NoContent)
 }

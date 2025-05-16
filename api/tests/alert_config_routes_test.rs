@@ -331,7 +331,7 @@ async fn test_modify_alert_config_when_alert_config_does_not_exist(
 }
 
 #[rstest]
-#[case("3ba21f52-32c9-41dc-924d-d18d4fc0e81c", Status::Ok, -1)]
+#[case("3ba21f52-32c9-41dc-924d-d18d4fc0e81c", Status::NoContent, -1)]
 #[case("cc6cf74e-b25d-4c8c-94a6-914e3f139c14", Status::NotFound, 0)]
 #[tokio::test]
 async fn test_delete_monitor_deletes(

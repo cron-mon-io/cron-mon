@@ -1,5 +1,4 @@
 use rocket;
-use rocket::http::Status;
 use rocket::response::status::NoContent;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -101,12 +100,14 @@ pub async fn delete_alert_config(
     pool: &State<DbPool>,
     jwt: Jwt,
     alert_config_id: Uuid,
-) -> Result<(), Error> {
+) -> Result<NoContent, Error> {
     let mut delete_alert_config = get_delete_alert_config_service(pool);
 
     delete_alert_config
         .delete_by_id(alert_config_id, &jwt.tenant)
-        .await
+        .await?;
+
+    Ok(NoContent)
 }
 
 #[rocket::post("/alert-configs/<alert_config_id>/test")]
@@ -114,14 +115,14 @@ pub async fn test_alert_config(
     pool: &State<DbPool>,
     jwt: Jwt,
     alert_config_id: Uuid,
-) -> Result<Status, Error> {
+) -> Result<NoContent, Error> {
     let mut test_alert_config = get_test_alert_config_service(pool);
 
     test_alert_config
         .for_alert_config(alert_config_id, &jwt.tenant, &jwt.name)
         .await?;
 
-    Ok(Status::Created)
+    Ok(NoContent)
 }
 
 #[rocket::get("/monitors/<monitor_id>/alert-configs")]
