@@ -108,7 +108,7 @@ paths:
               expected_duration: 43200
               grace_duration: 7200
       responses:
-        "201":
+        "200":
           description: The newly created Monitor
           content:
             application/json:
@@ -509,7 +509,7 @@ paths:
             example:
               name: My API Key
       responses:
-        "201":
+        "200":
           description: The newly created API Key
           content:
             application/json:
@@ -654,7 +654,7 @@ paths:
                   channel: "#cron-alerts"
                   token: a-slack-bot-oauth-token
       responses:
-        "201":
+        "200":
           description: The newly created alert configuration
           content:
             application/json:
