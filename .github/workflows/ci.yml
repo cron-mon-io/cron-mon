@@ -15,7 +15,7 @@ jobs:
         working-directory: ./api
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install rust
         run: rustup install 1.86
@@ -36,7 +36,7 @@ jobs:
         working-directory: ./api
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install rust
         run: rustup install 1.86
@@ -57,7 +57,7 @@ jobs:
         working-directory: ./api
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install rust
         run: rustup install 1.86
@@ -84,7 +84,7 @@ jobs:
         working-directory: ./api
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install rust
         run: rustup install 1.86
